@@ -1,181 +1,223 @@
-# Default values
-## empty pointer
+# Plasmatum
+A minimal functional programming language.
+
+### data types
+```
+byte
+bool
+number
+```
+
+### empty pointer
 ```js
 null
 ```
-## number
-### definition per regular expression
+### number
+#### definition per regular expression
 ```bison
 ([0-9]+)?"."?[0-9]+
 ```
-### examples
+#### examples
 ```js
 10
 12.631
 .0834
 ```
-## expressions
-### true-false
+### expressions
+#### logical expressions
+##### true-false
 ```js
 true
 false
 ```
-### logical expressions
-#### value equality
+##### value equality
 ```js
 a == b
 ```
-#### instance equality
+##### instance equality
 ```js
 a === b
 ```
-#### greater than
+##### greater than
 ```js
 a > b
 ```
-#### greater than or equal
+##### greater than or equal
 ```js
 a >= b
 ```
-#### smaller than
+##### smaller than
 ```js
 a < b
 ```
-#### greater than or equal
+##### smaller than or equal
 ```js
-a >= b
+a <= b
 ```
 
-### connecting logical expressions
-#### not
+#### connecting logical expressions
+##### not
 ```python
-not expr1
+not expr
 ```
-#### and
+##### and
 ```python
 expr1 and expr2
 ```
-#### or
+##### or
 ```python
 expr1 or expr2
 ```
-#### xor
+##### xor
 ```python
 expr1 xor expr2
 ```
 
-
-## variables
-### declaration (normal)
+### comments
+```
+... this is a single-line comment
+../ this is a delimited comment /..
+```
+### variables
+#### declaration (normal)
 ```clojure
 def id = value
 ```
-### declaration (with data type)
+#### declaration (with data type)
 ```clojure
 def (data type) id = value
 ```
-### assignment
+#### assignment
 ```dart
 set id = value
 ```
-### deletion
+#### deletion
 ```dart
 undef id
 ```
-### constant values
+#### constant values
 ```clojure
 def id := value
 ```
 
-## functions
-### declaration (single line)
+### functions
+#### declaration (single line)
 ```clojure
 fdef id on [a, b, c] -> result
 ```
-### declaration (multi line)
+#### declaration (multi line)
 ```clojure
 fdef id on [a, b, c] -> (
     ... code here
 ) -> result
 ```
-### function calls
+#### function calls
 ```js
 id on (a, b, c)
 ```
 
-## branches
-### if (standalone)
-```
+### branches
+#### if (standalone)
+```js
 condition ? (
     ... code if true
 )
 ```
-### if else
-```
+#### if else
+```js
 condition ? (
     ... code if true
 ) : (
     ... code if false
 )
 ```
-### while (standalone)
+#### if else-if else
+```js
+cond1 ? (
+    ... code if true
+) : cond2 ? (
+    ... code if cond1 is false and cond2 is true
+) : (
+    ... code if cond1 and cond2 are false
+)
+
+... just two if-else statements merged together
 ```
+#### while (standalone)
+```js
 while condition ? (
     ... code if true
 )
 ```
-### while-else
-```
+#### while-else
+```js
 while condition ? (
     ... code if true
 ) : (
     ... code if false (once)
 )
 ```
-```
+##### examples
+```js
 while condition ? (
     ... code if true
 ) :: (
     ... code if false (once, but also when condition gets false)
 )
 ```
-### for
-```php
+```js
+cond1 ? (
+    ... code if true
+) : while cond2 ? (
+    ... code if false (once)
+)
+```
+#### for
+```js
 for i -> value (
     ... code here
 )
 ```
-```php
-for i=0 -> value (
+```js
+for i=default -> value (
     ... code here
 )
 ```
-```php
-for i -> 29 (
+```js
+for i -> value (
+    ... code here
+)
+```
+##### examples
+```js
+for id -> 29 (
     ... code runs 30 times
 )
 ```
-```php
-for i=1 -> 30 (
+```js
+for id=1 -> 30 (
     ... code runs 30 times
 )
 ```
 
-## data structures
-### declaration
-```python
+### data structures
+#### declaration
+```js
 ddef id (attr1, attr2, attr3)
 ```
-### instances
-```python
+```js
+ddef id (attr1, (data type) attr2, attr3)
+```
+#### instances
+```js
 id from (attr1=a, attr2=b)
 ```
-#### getting attributes of instances
-```
-attr1 of id
+##### getting attributes of instances
+```js
+attrName of id
 ```
 
-## console output
+### console output
 ```php
 echo value
 ```
