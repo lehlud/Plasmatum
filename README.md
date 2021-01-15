@@ -1,6 +1,3 @@
-# Plasmatum
-A minimal functional programming language.
-
 # Default values
 ## empty pointer
 ```js
