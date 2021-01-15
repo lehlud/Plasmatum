@@ -149,11 +149,11 @@ for i -> x (
 
 ## data structures
 ### declaration
-```clojure
+```python
 ddef id (attr1, attr2, attr3)
 ```
 ### instances
-```clojure
+```python
 id from (attr1=a, attr2=b)
 ```
 #### getting attributes of instances
