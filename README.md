@@ -183,11 +183,6 @@ for i=default -> value (
     ... code here
 )
 ```
-```js
-for i -> value (
-    ... code here
-)
-```
 ##### examples
 ```js
 for id -> 29 (
