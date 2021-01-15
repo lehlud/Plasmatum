@@ -1,6 +1,63 @@
 # Plasmatum
 A minimal functional programming language.
 
+# Default values
+## empty pointer
+```js
+null
+```
+## number
+### definition per regular expression
+```bison
+([0-9]+)?"."?[0-9]+
+```
+### examples
+```js
+10
+12.631
+.0834
+```
+## expressions
+### logical expressions
+#### value equality
+```js
+a == b
+```
+#### instance equality
+```js
+a === b
+```
+#### greater than
+```js
+a > b
+```
+#### greater than or equal
+```js
+a >= b
+```
+#### smaller than
+```js
+a < b
+```
+#### greater than or equal
+```js
+a >= b
+```
+
+### connecting logical expressions
+#### and
+```python
+expr1 and expr2
+```
+#### or
+```python
+expr1 or expr2
+```
+#### xor
+```python
+expr1 xor expr2
+```
+
 
 ## variables
 ### declaration (normal)
@@ -14,6 +71,10 @@ def (data type) id = value
 ### assignment
 ```dart
 set id = value
+```
+### deletion
+```dart
+undef id
 ```
 ### constant values
 ```clojure
@@ -68,7 +129,7 @@ while condition ? (
 ```
 while condition ? (
     ... code if true
-) : (
+) :: (
     ... code if false (once, but also when condition gets false)
 )
 ```
@@ -94,4 +155,13 @@ ddef id (attr1, attr2, attr3)
 ### instances
 ```clojure
 id from (attr1=a, attr2=b)
+```
+#### getting attributes of instances
+```
+attr1 of id
+```
+
+## console output
+```php
+echo value
 ```
