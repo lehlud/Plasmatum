@@ -1,7 +1,3 @@
----
-author: Ludwig Lehnert
----
-
 # Plasmatum
 A minimal functional programming language.
 
