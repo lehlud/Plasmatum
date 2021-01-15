@@ -40,6 +40,56 @@ fdef id on [a, b, c] -> (
 id on (a, b, c)
 ```
 
+## branches
+### if (standalone)
+```
+condition ? (
+    ... code if true
+)
+```
+### if else
+```
+condition ? (
+    ... code if true
+)
+```
+### while (standalone)
+```
+condition ? (
+    ... code if true
+) : (
+    ... code if false
+)
+```
+### while-else
+```
+while condition ? (
+    ... code if true
+) : (
+    ... code if false (once)
+)
+```
+```
+while condition ? (
+    ... code if true
+) : (
+    ... code if false (once, but also when condition gets false)
+)
+```
+### for
+```php
+for i -> value (
+    ... code here
+)
+```
+```php
+def x = 29
+def y = x + 1
+for i -> x (
+    ... code runs y times
+)
+```
+
 ## data structures
 ### declaration
 ```clojure
@@ -48,46 +98,4 @@ ddef id (attr1, attr2, attr3)
 ### instances
 ```clojure
 id from (attr1=a, attr2=b)
-```
-
-## branches
-### if (standalone)
-```
-condition
-? ... code if true
-```
-```
-condition
-? ... code if true
-: ... code if false
-```
-### if else
-```
-condition
-? ... code if true
-: ... code if false
-```
-### while
-```
-while condition
-? ... code if true
-```
-```
-while condition
-? ... code if true
-: ... code if false
-
-... breaking required!
-```
-
-### for
-```
-for i -> value (
-    ... code here
-)
-```
-```
-for i -> 29 (
-    ... code runs 30 times
-)
 ```
