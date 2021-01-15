@@ -42,6 +42,10 @@ a >= b
 ```
 
 ### connecting logical expressions
+#### not
+```python
+not expr1
+```
 #### and
 ```python
 expr1 and expr2
