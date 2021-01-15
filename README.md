@@ -108,14 +108,14 @@ condition ? (
 ```
 condition ? (
     ... code if true
+) : (
+    ... code if false
 )
 ```
 ### while (standalone)
 ```
 condition ? (
     ... code if true
-) : (
-    ... code if false
 )
 ```
 ### while-else
