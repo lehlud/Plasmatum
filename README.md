@@ -114,7 +114,7 @@ condition ? (
 ```
 ### while (standalone)
 ```
-condition ? (
+while condition ? (
     ... code if true
 )
 ```
