@@ -15,6 +15,11 @@ null
 .0834
 ```
 ## expressions
+### true-false
+```js
+true
+false
+```
 ### logical expressions
 #### value equality
 ```js
@@ -94,7 +99,7 @@ fdef id on [a, b, c] -> (
 ) -> result
 ```
 ### function calls
-```clojure
+```js
 id on (a, b, c)
 ```
 
@@ -141,10 +146,18 @@ for i -> value (
 )
 ```
 ```php
-def x = 29
-def y = x + 1
-for i -> x (
-    ... code runs y times
+for i=0 -> value (
+    ... code here
+)
+```
+```php
+for i -> 29 (
+    ... code runs 30 times
+)
+```
+```php
+for i=1 -> 30 (
+    ... code runs 30 times
 )
 ```
 
