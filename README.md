@@ -20,6 +20,7 @@ number
 null
 ```
 ### number
+Numbers are only stored as doubles in memory. This should make computing easier on 64-bit machines without any real drawbacks.
 #### definition per regular expression
 ```
 [0-9]*"."?[0-9]+
@@ -195,10 +196,14 @@ for i=default -> value (
 for id -> 29 (
     ... code runs 30 times
 )
-```
-```
+
 for id=1 -> 30 (
     ... code runs 30 times
+)
+
+for id=1 -> 30 (
+    set id = id + 1
+    ... code runs 15 times
 )
 ```
 
@@ -206,8 +211,6 @@ for id=1 -> 30 (
 #### declaration
 ```
 ddef id (attr1, attr2, attr3)
-```
-```
 ddef id (attr1, (data type) attr2, attr3)
 ```
 #### instances
@@ -221,5 +224,6 @@ attrName of id
 
 ### console output
 ```
-echo value
+echo expr       ... this produces a new line
+stdout expr     ... this doesn't
 ```
