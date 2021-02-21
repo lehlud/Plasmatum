@@ -183,17 +183,17 @@ for i=default -> value (
 ```
 ##### examples
 ```
-for id -> 29 (
-    ... code runs 30 times
+for id -> 41 (
+    ... code runs 42 times
 )
 
-for id=1 -> 30 (
-    ... code runs 30 times
+for id=1 -> 42 (
+    ... code runs 42 times
 )
 
-for id=1 -> 30 (
+for id=1 -> 84 (
     set id = id + 1
-    ... code runs 15 times
+    ... code runs 42 times
 )
 ```
 
