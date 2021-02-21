@@ -172,12 +172,12 @@ while condition ? (
 
 #### for
 ```
-for i -> value (
+for i -> max (
     ... code here
 )
 ```
 ```
-for i=default -> value (
+for i=default -> max (
     ... code here
 )
 ```
