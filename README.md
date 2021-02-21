@@ -4,14 +4,14 @@ A minimal functional programming language.
 
 ### comments
 ```
-... this line is ignored
-... and this line too!
+... this is a single line comment
+../ this is a delimited comment /..
 ```
 
 ### data types
 ```
-byte
 bool
+byte
 number
 ```
 
@@ -23,7 +23,7 @@ null
 Numbers are only stored as doubles in memory. This should make computing easier on 64-bit machines without any real drawbacks.
 #### definition per regular expression
 ```
-[0-9]*"."?[0-9]+
+"-"?[0-9]*"."?[0-9]+
 ```
 #### examples
 ```
@@ -148,8 +148,6 @@ cond1 ? (
 ) : (
     ... code if cond1 and cond2 are false
 )
-
-... just two if-else statements merged together
 ```
 #### while (standalone)
 ```
@@ -164,22 +162,14 @@ while condition ? (
 ) : (
     ... code if false (once)
 )
-```
-##### examples
-```
+
 while condition ? (
     ... code if true
 ) :: (
     ... code if false (once, but also when condition gets false)
 )
 ```
-```
-cond1 ? (
-    ... code if true
-) : while cond2 ? (
-    ... code if false (once)
-)
-```
+
 #### for
 ```
 for i -> value (
@@ -224,6 +214,15 @@ attrName of id
 
 ### console output
 ```
-echo expr       ... this produces a new line
-stdout expr     ... this doesn't
+echo expr                   ... this produces a new line
+stdout expr                 ... this doesn't
+```
+
+### file output
+```
+echo expr > filename        ... write to file
+echo expr >> filename       ... append to file
+
+stdout expr > filename      ... write to file
+stdout expt >> filename     ... append to file
 ```

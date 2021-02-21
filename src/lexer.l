@@ -6,18 +6,24 @@
 
 %%
 
-"...".*"..."?                   {/* IGNORE COMMENT */}
+"...".*                         {/* IGNORE COMMENT */}
+"../"(.|"\n")*"/.."             {/* IGNORE COMMENT */}
 
-[0-9]*"."?[0-9]+                {yylval.num_v = atof(yytext); return NUM;}
+"-"?[0-9]*"."?[0-9]+            {yylval.num_v = atof(yytext); return NUM;}
+"**"                            {return POW;}
 "+"                             {return ADD;}
 "-"                             {return SUB;}
 "*"                             {return MUL;}
 "/"                             {return DIV;}
+"%"                             {return MOD;}
 "|"                             {return ABS;}
-\n|EOF                          {return EOL;}
+
+"("                             {return BR_O;}
+")"                             {return BR_C;}
+
+"\n"|"\r"                       {return EOL;}
 
 [ \f\v\t]                       {/* IGNORE WHITESPACES */}
-.                               {printf("Unexpected character: %c\n", *yytext);}
+.                               {printf("unexpected character: '%d'\n", *yytext);}
 
 %%
-
