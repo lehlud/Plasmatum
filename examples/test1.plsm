@@ -1,6 +1,6 @@
-5 + 4
+(5 + 5) * 5
 
-... This is a comment and should be ignored.
+6 + 5 ... This is a comment and should be ignored.
 ../
  .
  . This comment should also be ignored. 
