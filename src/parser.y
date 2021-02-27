@@ -5,10 +5,6 @@
 #include <stdio.h>
 int yylex();
 int yyerror(const char *s);
-
-union plsm_dtype;
-struct map;
-struct list;
 %}
 
 %token POW ADD SUB MUL DIV MOD ABS
@@ -16,6 +12,8 @@ struct list;
 %token NUM
 
 %token BR_O BR_C
+
+%token ECHO STDOUT
 
 %token END 0
 
@@ -27,11 +25,24 @@ struct list;
 %type <num_v> factor
 %type <num_v> term
 
+%start program
+
 %%
 
 program
-    :
-    | program expr newline          {printf("%lf\n", $2);}
+    : statement
+    | program statement
+    ;
+
+statement
+    : expr newline
+    | output_statement
+    ;
+
+output_statement
+    : ECHO newline                  {printf("\n");}
+    | ECHO expr newline             {printf("%lf\n", $2);}
+    | STDOUT expr newline           {printf("%lf", $2);}
     ;
 
 expr: factor                        {$$ = $<num_v>1;}

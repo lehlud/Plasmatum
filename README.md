@@ -1,6 +1,6 @@
 # Plasmatum
 A minimal functional programming language.
-
+Although non-functional programming is possible, it is **not recommended**.
 
 ### comments
 ```

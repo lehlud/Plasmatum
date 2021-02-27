@@ -23,6 +23,9 @@
 
 "\n"|"\r"                       {return EOL;}
 
+"echo"                          {return ECHO;}
+"stdout"                        {return STDOUT;}
+
 [ \f\v\t]                       {/* IGNORE WHITESPACES */}
 .                               {printf("unexpected character: '%d'\n", *yytext);}
 
