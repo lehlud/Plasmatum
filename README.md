@@ -11,7 +11,7 @@ Although non-functional programming is possible, it is **not recommended**.
 ### data types
 ```
 bool
-byte
+char
 number
 ```
 

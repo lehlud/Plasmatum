@@ -1,4 +1,6 @@
-echo (5 + 5) * 5
+echo 5.1349624782388283
+
+echo 10 ** 15
 
 stdout 6 + 5 ... This statement outputs '11'
 echo
@@ -8,4 +10,4 @@ echo
  . because echo has no value to output but always outputs a new line.
 /..
 
-echo 5+8
+echo (char) 0 + 'A' + 10
