@@ -6,21 +6,28 @@
 #include "functions.h"
 int yylex();
 int yyerror(const char *s);
+
+map variables;
 %}
 
 %token POW ADD SUB MUL DIV MOD
 %token EOL
 %token VAL
+%token ID
+
+%token EQ
 
 %token BR_O BR_C
 %token CHAR BOOL NUMBER
 
 %token ECHO STDOUT
+%token DEF
 
 %token END 0
 
 %union {
     plsm_dtype value;
+    char *id;
 }
 
 %type <value> expr
@@ -32,8 +39,9 @@ int yyerror(const char *s);
 %%
 
 program
-    : statements END
-    | newline statements END
+    :
+    | program statements END
+    | program newline statements END
     ;
 
 statements
@@ -44,12 +52,17 @@ statements
 statement
     : expr newline
     | output_statement newline
+    | decl_assign newline
     ;
 
 output_statement
     : ECHO                          {printf("\n");}
     | ECHO expr                     {printval($2); printf("\n");}
     | STDOUT expr                   {printval($2);}
+    ;
+
+decl_assign
+    : DEF ID EQ expr                {map_set(&variables, $<id>2, $4);}
     ;
 
 expr: factor                        {$$ = $<value>1;}
@@ -67,6 +80,7 @@ factor
     ;
 
 term: VAL                           {$$ = $<value>1;}
+    | ID                            {$$ = map_get(&variables, $<id>1);}
     | BR_O expr BR_C                {$$ = $2;}
     | BR_O CHAR BR_C term           {$$ = cast($4, CHAR_INDEX);}
     | BR_O BOOL BR_C term           {$$ = cast($4, BOOL_INDEX);}

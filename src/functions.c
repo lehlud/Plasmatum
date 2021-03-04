@@ -23,7 +23,7 @@ plsm_dtype add(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = a.data.num_v + (b.data.num_v ? 1 : 0);
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -40,13 +40,13 @@ plsm_dtype add(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = (a.data.num_v + b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -69,7 +69,7 @@ plsm_dtype sub(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = a.data.num_v - (b.data.num_v ? 1 : 0);
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -86,13 +86,13 @@ plsm_dtype sub(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = (a.data.num_v - b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -115,7 +115,7 @@ plsm_dtype mul(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = a.data.num_v * (b.data.num_v ? 1 : 0);
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -132,13 +132,13 @@ plsm_dtype mul(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = (a.data.num_v * b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -160,7 +160,7 @@ plsm_dtype pdiv(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = a.data.num_v / (b.data.num_v ? 1 : 0);
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -177,13 +177,13 @@ plsm_dtype pdiv(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = (a.data.num_v / b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -205,7 +205,7 @@ plsm_dtype pmod(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = fmod(a.data.num_v, (b.data.num_v ? 1 : 0));
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -222,13 +222,13 @@ plsm_dtype pmod(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = fmod(a.data.num_v, b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -250,7 +250,7 @@ plsm_dtype ppow(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = pow(a.data.num_v, b.data.num_v ? 1 : 0);
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
@@ -267,13 +267,13 @@ plsm_dtype ppow(plsm_dtype a, plsm_dtype b) {
                     result.data.num_v = pow(a.data.num_v, b.data.num_v) ? 1 : 0;
                     break;
                 default:
-                    exit(1);    // TODO: IMPLEMENT ERROR MESSAGE
+                    result.used = NULL_INDEX;
                     break;
             }
             break;
 
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE
+            result.used = NULL_INDEX;
             break;
     }
     return result;
@@ -301,7 +301,54 @@ void printval(plsm_dtype val) {
             printf("%d", val.data.num_v ? 1 : 0);
             break;
         default:
-            exit(1);            // TODO: IMPLEMENT ERROR MESSAGE 
+            printf("null");
             break;
+    }
+}
+
+map map_init() {
+    map m;
+    m.keys = malloc(0);
+    m.values = malloc(0);
+    return m;
+}
+
+void map_set(map *m, char *key, plsm_dtype value) {
+    for (int i = 0; i < m->size; i++) {
+        if (strcmp(key, m->keys[i]) == 0) {
+            m->values[i] = value;
+            return;
+        }
+    }
+    m->keys = realloc(m->keys, (m->size+1) * sizeof(char*));
+    m->values = realloc(m->values, (m->size+1) * sizeof(plsm_dtype));
+    
+    m->keys[m->size] = key;
+    m->values[m->size] = value;
+    m->size = m->size + 1;
+}
+
+plsm_dtype map_get(map *m, char *key) {
+    for (int i = 0; i < m->size; i++) {
+        if (strcmp(key, m->keys[i]) == 0) {
+            return m->values[i]; 
+        }
+    }
+    plsm_dtype result;
+    return result;
+}
+
+void map_remove(map *m, char *key) {
+    for (int i = 0; i < m->size; i++) {
+        if (strcmp(key, m->keys[i]) == 0) {
+            for(int i1 = i; i1 < m->size - 1; i++)
+                m->keys[i] = m->keys[i + 1];
+            for(int i1 = i; i1 < m->size - 1; i++)
+                m->values[i] = m->values[i + 1];
+            m->size = m->size - 1;
+            m->keys = realloc(m->keys, (m->size) * sizeof(char*));
+            m->values = realloc(m->values, (m->size) * sizeof(plsm_dtype));
+            return;
+        }
     }
 }

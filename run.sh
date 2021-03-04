@@ -1,4 +1,4 @@
 #!/bin/sh
 
 sh build.sh
-./a.out
+./plsm < examples/test1.plsm

@@ -52,6 +52,8 @@
 "("                             {return BR_O;}
 ")"                             {return BR_C;}
 
+"="                             {return EQ;}
+
 "char"                          {return CHAR;}
 "bool"                          {return BOOL;}
 "number"                        {return NUMBER;}
@@ -60,6 +62,11 @@
 
 "echo"                          {return ECHO;}
 "stdout"                        {return STDOUT;}
+
+"def"                           {return DEF;}
+
+
+[_a-zA-Z][_a-zA-Z0-9]*          {yylval.id = strdup(yytext); return ID;}
 
 [ \f\v\t]                       {/* IGNORE WHITESPACES */}
 .                               {printf("unexpected character: '%d'\n", *yytext);}

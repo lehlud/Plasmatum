@@ -1,6 +1,5 @@
 # Plasmatum
 A minimal functional programming language.
-Although non-functional programming is possible, it is **not recommended**.
 
 ### comments
 ```
@@ -87,17 +86,13 @@ expr1 xor expr2
 ../ this is a delimited comment /..
 ```
 ### variables
-#### declaration (normal)
+#### declaration/assignment (normal)
 ```
 def id = value
 ```
-#### declaration (with data type)
+#### declaration/assignment (with data type)
 ```
 def (data type) id = value
-```
-#### assignment
-```
-set id = value
 ```
 #### deletion
 ```
