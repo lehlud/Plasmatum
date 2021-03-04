@@ -1,6 +1,5 @@
 echo 5.1349624782388283
-
-def abc = 5 * 5
+def abc = 3 * 5 
 
 echo abc ** 10
 

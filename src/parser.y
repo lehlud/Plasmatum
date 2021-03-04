@@ -1,13 +1,18 @@
-%locations
-
 %{
 #include <math.h>
 #include <stdio.h>
 #include "functions.h"
 int yylex();
-int yyerror(const char *s);
+int yy_scan_string(const char*);
+
+void yyerror(const char*);
+
+extern int yylineno;
+extern int column;
 
 map variables;
+
+#define YYERROR_VERBOSE 1
 %}
 
 %token POW ADD SUB MUL DIV MOD
@@ -20,7 +25,7 @@ map variables;
 %token BR_O BR_C
 %token CHAR BOOL NUMBER
 
-%token ECHO STDOUT
+%token PECHO STDOUT
 %token DEF UNDEF
 
 %token END 0
@@ -56,9 +61,9 @@ statement
     ;
 
 output_statement
-    : ECHO                          {printf("\n");}
-    | ECHO expr                     {printval($2); printf("\n");}
-    | STDOUT expr                   {printval($2);}
+    : PECHO                          {printf("\n");}
+    | PECHO expr                     {printval($2); printf("\n");}
+    | STDOUT expr                    {printval($2);}
     ;
 
 decl_assign
@@ -97,10 +102,24 @@ newline
 %%
 
 int main(int argc, char **argv) {
-    yyparse();
+    if (argc > 1) {
+        char *tmp = readfile(argv[1]);
+        if(tmp) {
+            yy_scan_string(tmp);
+            yyparse();
+        } else {
+            printf("Cannot read from file \'%s\'!\n", argv[1]);
+            return 1;
+        }
+    } else printf("Please specify a name of a file!\n");
     return 0;
 }
 
-int yyerror(const char *s) {
-    fprintf(stderr, "error: %s\n", s);
+/*
+ * This function is used to handle parse errors.
+ * The error messages, especially the position may
+ * be inaccurate by now.
+ */
+void yyerror(const char *s) {
+    fprintf(stderr,"error: %s in line %d, column %d\n", s, yylineno, column);
 }
