@@ -4,6 +4,10 @@ def abc = 5 * 5
 
 echo abc ** 10
 
+undef abc
+
+echo abc ** 10
+
 echo 10 ** 15
 
 stdout 6 + 5 ... This statement outputs '11'

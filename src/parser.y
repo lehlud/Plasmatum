@@ -21,7 +21,7 @@ map variables;
 %token CHAR BOOL NUMBER
 
 %token ECHO STDOUT
-%token DEF
+%token DEF UNDEF
 
 %token END 0
 
@@ -63,6 +63,7 @@ output_statement
 
 decl_assign
     : DEF ID EQ expr                {map_set(&variables, $<id>2, $4);}
+    | UNDEF ID                      {map_remove(&variables, $<id>2);}
     ;
 
 expr: factor                        {$$ = $<value>1;}

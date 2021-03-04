@@ -64,6 +64,7 @@
 "stdout"                        {return STDOUT;}
 
 "def"                           {return DEF;}
+"undef"                         {return UNDEF;}
 
 
 [_a-zA-Z][_a-zA-Z0-9]*          {yylval.id = strdup(yytext); return ID;}
