@@ -41,10 +41,6 @@ false
 ```
 a == b
 ```
-##### instance equality
-```
-a === b
-```
 ##### greater than
 ```
 a > b
