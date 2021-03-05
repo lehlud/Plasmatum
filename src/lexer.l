@@ -19,34 +19,46 @@ void hande_column();
 "../"(.|[\n\r])*"/.."           {HC /* IGNORE COMMENT */ return EOL;}
 
 "\'"[_a-zA-Z0-9]"\'"            {HC
-                                    plsm_dtype result;
-                                    result.used = CHAR_INDEX;
-                                    result.data.num_v = yytext[1];
-                                    yylval.value = result;
+                                    plsm_dtype tmp;
+                                    tmp.used = CHAR_INDEX;
+                                    tmp.data.num_v = yytext[1];
+                                    expr expr;
+                                    expr.used = PLSM_INDEX;
+                                    expr.data.plsm_v = tmp;
+                                    yylval.expr = expr;
                                     return VAL;
                                 }
 
 "-"?[0-9]*"."?[0-9]+            {HC
-                                    plsm_dtype result;
-                                    result.used = NUM_INDEX;
-                                    result.data.num_v = atof(yytext);
-                                    yylval.value = result;
+                                    plsm_dtype tmp;
+                                    tmp.used = NUM_INDEX;
+                                    tmp.data.num_v = atof(yytext);
+                                    expr expr;
+                                    expr.used = PLSM_INDEX;
+                                    expr.data.plsm_v = tmp;
+                                    yylval.expr = expr;
                                     return VAL;
                                 }
 
 "true"                          {HC 
-                                    plsm_dtype result;
-                                    result.used = BOOL_INDEX;
-                                    result.data.num_v = 1;
-                                    yylval.value = result;
+                                    plsm_dtype tmp;
+                                    tmp.used = BOOL_INDEX;
+                                    tmp.data.num_v = 1;
+                                    expr expr;
+                                    expr.used = PLSM_INDEX;
+                                    expr.data.plsm_v = tmp;
+                                    yylval.expr = expr;
                                     return VAL;
                                 }
 
 "false"                         {HC
-                                    plsm_dtype result;
-                                    result.used = BOOL_INDEX;
-                                    result.data.num_v = 0;
-                                    yylval.value = result;
+                                    plsm_dtype tmp;
+                                    tmp.used = BOOL_INDEX;
+                                    tmp.data.num_v = 0;
+                                    expr expr;
+                                    expr.used = PLSM_INDEX;
+                                    expr.data.plsm_v = tmp;
+                                    yylval.expr = expr;
                                     return VAL;
                                 }
 
@@ -74,7 +86,13 @@ void hande_column();
 "def"                           {HC return DEF;}
 "undef"                         {HC return UNDEF;}
 
-[_a-zA-Z][_a-zA-Z0-9]*          {HC yylval.id = strdup(yytext); return ID;}
+[_a-zA-Z][_a-zA-Z0-9]*          {HC
+                                    expr expr;
+                                    expr.used = ID_INDEX;
+                                    expr.data.id_v = strdup(yytext);
+                                    yylval.expr = expr;
+                                    return ID;
+                                }
 
 [ \f\v\t]                       {HC /* IGNORE WHITESPACES */}
 .                               {HC printf("unexpected character: '%c'\n", *yytext);}

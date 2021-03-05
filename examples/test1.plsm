@@ -1,20 +1,5 @@
-echo 5.1349624782388283
-def abc = 3 * 5 
+def a = 50
 
-echo abc ** 10
+echo a
+echo 5 + 5
 
-undef abc
-
-echo abc ** 10
-
-echo 10 ** 15
-
-stdout 6 + 5 ... This statement outputs '11'
-echo
-
-../
- . Using echo without any value outputs just a new line
- . because echo has no value to output but always outputs a new line.
-/..
-
-echo (char) 0 + 'A' + 10

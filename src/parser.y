@@ -1,6 +1,6 @@
 %{
-#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "functions.h"
 int yylex();
 int yy_scan_string(const char*);
@@ -10,7 +10,9 @@ void yyerror(const char*);
 extern int yylineno;
 extern int column;
 
-map variables;
+code_block program;
+
+int errors;
 
 #define YYERROR_VERBOSE 1
 %}
@@ -20,77 +22,76 @@ map variables;
 %token VAL
 %token ID
 
-%token EQ
-
 %token BR_O BR_C
 %token CHAR BOOL NUMBER
 
 %token PECHO STDOUT
 %token DEF UNDEF
+%token EQ
 
 %token END 0
 
 %union {
-    plsm_dtype value;
-    char *id;
+    expr expr;
+    statement stmt;
+    code_block cblock;
 }
 
-%type <value> expr
-%type <value> factor
-%type <value> term
+%type <expr> expr factor term
+%type <stmt> statement decl_assign output_statement
+%type <cblock> statements
 
 %start program
 
 %%
 
 program
-    :
-    | program statements END
-    | program newline statements END
+    : statements END                {program = $<cblock>1;}
+    | newline statements END        {program = $<cblock>2;}
     ;
 
 statements
-    : statement
-    | statements statement
+    : statement                     {$$ = init_cblock($<stmt>1);}
+    | statements statement          {$$ = append_cblock($1, $<stmt>2);}
     ;
 
 statement
-    : expr newline
-    | output_statement newline
-    | decl_assign newline
+    : expr newline                  {$$ = empty_stmt();}
+    | output_statement newline      {$$ = $<stmt>1;}
+    | decl_assign newline           {$$ = $<stmt>1;}
     ;
 
 output_statement
-    : PECHO                          {printf("\n");}
-    | PECHO expr                     {printval($2); printf("\n");}
-    | STDOUT expr                    {printval($2);}
+    : PECHO                         {$$ = create_output(0, 1);}
+    | PECHO expr                    {$$ = create_output(&($2), 1);}
+    | STDOUT expr                   {$$ = create_output(&($2), 0);}
     ;
 
 decl_assign
-    : DEF ID EQ expr                {map_set(&variables, $<id>2, $4);}
-    | UNDEF ID                      {map_remove(&variables, $<id>2);}
+    : DEF ID EQ expr                {$$ = create_decl_assign($<expr>2, &($4));}
+    | UNDEF ID                      {$$ = create_decl_assign($<expr>2, 0);}
     ;
 
-expr: factor                        {$$ = $<value>1;}
-    | expr SUB factor               {$$ = sub($1, $3);}
-    | expr ADD factor               {$$ = add($1, $3);}
+expr: factor                        {$$ = $<expr>1;}
+    | expr SUB factor               {$$ = create_term(SUB_OP, $1, $3);}
+    | expr ADD factor               {$$ = create_term(ADD_OP, $1, $3);}
     ;
 
 
 factor
-    : term                          {$$ = $<value>1;}
-    | factor POW term               {$$ = ppow($1, $<value>3);}
-    | factor DIV term               {$$ = pdiv($1, $3);}
-    | factor MOD term               {$$ = pmod($1, $3);}
-    | factor MUL term               {$$ = mul($1, $3);}
+    : term                          {$$ = $<expr>1;}
+    | factor POW term               {$$ = create_term(POW_OP, $1, $3);}
+    | factor DIV term               {$$ = create_term(DIV_OP, $1, $3);}
+    | factor MOD term               {$$ = create_term(MOD_OP, $1, $3);}
+    | factor MUL term               {$$ = create_term(MUL_OP, $1, $3);}
     ;
 
-term: VAL                           {$$ = $<value>1;}
-    | ID                            {$$ = map_get(&variables, $<id>1);}
+term: VAL                           {$$ = $<expr>1;}
+    | ID                            {$$ = $<expr>1;}
     | BR_O expr BR_C                {$$ = $2;}
-    | BR_O CHAR BR_C term           {$$ = cast($4, CHAR_INDEX);}
-    | BR_O BOOL BR_C term           {$$ = cast($4, BOOL_INDEX);}
-    | BR_O NUMBER BR_C term         {$$ = cast($4, NUM_INDEX);}
+    | BR_O CHAR BR_C term           {$$ = create_cast(CHAR_INDEX, $4);}
+    | BR_O BOOL BR_C term           {$$ = create_cast(BOOL_INDEX, $4);}
+    | BR_O NUMBER BR_C term         {$$ = create_cast(NUM_INDEX, $4);}
     ;
 
 
@@ -107,6 +108,8 @@ int main(int argc, char **argv) {
         if(tmp) {
             yy_scan_string(tmp);
             yyparse();
+            if (errors) exit(1);
+            exec_code_block(program);
         } else {
             printf("Cannot read from file \'%s\'!\n", argv[1]);
             return 1;
@@ -121,5 +124,6 @@ int main(int argc, char **argv) {
  * be inaccurate by now.
  */
 void yyerror(const char *s) {
-    fprintf(stderr,"error: %s in line %d, column %d\n", s, yylineno, column);
+    fprintf(stderr,"error: %s in line %d:%d\n", s, yylineno, column);
+    errors = 1;
 }
