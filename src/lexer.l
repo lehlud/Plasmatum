@@ -35,7 +35,18 @@ void hande_column();
 "("                             {HC return BR_O;}
 ")"                             {HC return BR_C;}
 
-"="                             {HC return EQ;}
+">"                             {HC return GR;}
+"<"                             {HC return LO;}
+">="                            {HC return GREQ;}
+"<="                            {HC return LOEQ;}
+"=="                            {HC return EQ;}
+
+"="                             {HC return ASSIGN;}
+
+"->"                            {HC return ARR;}
+
+"?"                             {HC return QM;}
+":"                             {HC return COL;}
 
 "char"                          {HC return CHAR;}
 "bool"                          {HC return BOOL;}
@@ -48,6 +59,8 @@ void hande_column();
 
 "def"                           {HC return DEF;}
 "undef"                         {HC return UNDEF;}
+
+"for"                           {HC return FOR;}
 
 [_a-zA-Z][_a-zA-Z0-9]*          {HC yylval.expr = create_id_expr(strdup(yytext)); return ID;}
 

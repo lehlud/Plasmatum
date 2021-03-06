@@ -1,10 +1,11 @@
+def a = 5
 
-5+5
+for i -> 5 (
+    def a = a + 1
+)
 
-def a = 5 + 5 * 5
-
-../
- . This line and one above and below is ignored.
-/..
-
-echo a * 5 + 5 ** 5
+a > 10 ? (
+    echo true
+) : (
+    echo false
+)

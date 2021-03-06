@@ -86,17 +86,9 @@ expr1 xor expr2
 ```
 def id = value
 ```
-#### declaration/assignment (with data type)
-```
-def (data type) id = value
-```
 #### deletion
 ```
 undef id
-```
-#### constant values
-```
-def id := value
 ```
 
 ### functions
@@ -140,28 +132,14 @@ cond1 ? (
     ... code if cond1 and cond2 are false
 )
 ```
-#### while (standalone)
+#### while loop
 ```
 while condition ? (
     ... code if true
-)
-```
-#### while-else
-```
-while condition ? (
-    ... code if true
-) : (
-    ... code if false (once)
-)
-
-while condition ? (
-    ... code if true
-) :: (
-    ... code if false (once, but also when condition gets false)
 )
 ```
 
-#### for
+#### for loop
 ```
 for i -> max (
     ... code here
