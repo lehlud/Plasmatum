@@ -295,20 +295,55 @@ char* readfile(char* path) {
  * This now all has to do with creating the AST
  */
 
-expr create_cast(int cast_to, expr *value) {
+expr* create_id_expr(char *s) {
+    expr *result = malloc(sizeof(expr));
+    result->used = ID_INDEX;
+    result->data.id_v = s;
+    return result;
+}
+
+expr* create_bool_expr(int value) {
+    plsm_dtype tmp;
+    tmp.used = BOOL_INDEX;
+    tmp.data.num_v = (double) value;
+    return create_plsm_expr(tmp);
+}
+
+expr* create_char_expr(char value) {
+    plsm_dtype tmp;
+    tmp.used = CHAR_INDEX;
+    tmp.data.num_v = (double) value;
+    return create_plsm_expr(tmp);
+}
+
+expr* create_num_expr(double value) {
+    plsm_dtype tmp;
+    tmp.used = NUM_INDEX;
+    tmp.data.num_v = value;
+    return create_plsm_expr(tmp);
+}
+
+expr* create_plsm_expr(plsm_dtype value) {
+    expr *result = malloc(sizeof(expr));
+    result->used = PLSM_INDEX;
+    result->data.plsm_v = value;
+    return result;
+}
+
+expr* create_cast(int cast_to, expr *value) {
     cast_term cast_term;
     cast_term.cast_to = cast_to;
     cast_term.value = malloc(sizeof(cast_term));
     *(cast_term.value) = *value;
 
-    expr result;
-    result.used = CTERM_INDEX;
-    result.data.cterm_v = malloc(sizeof(cast_term));
-    *(result.data.cterm_v) = cast_term;
+    expr *result = malloc(sizeof(expr));
+    result->used = CTERM_INDEX;
+    result->data.cterm_v = malloc(sizeof(cast_term));
+    *(result->data.cterm_v) = cast_term;
     return result;
 }
 
-expr create_term(int op, expr *left, expr *right) {
+expr* create_term(int op, expr *left, expr *right) {
     term term;
     term.left = malloc(sizeof(expr));
     term.right = malloc(sizeof(expr));
@@ -316,10 +351,10 @@ expr create_term(int op, expr *left, expr *right) {
     *(term.right) = *right;
     term.operator = op;
 
-    expr result;
-    result.used = TERM_INDEX;
-    result.data.term_v = malloc(sizeof(term));
-    *(result.data.term_v) = term;
+    expr *result = malloc(sizeof(expr));
+    result->used = TERM_INDEX;
+    result->data.term_v = malloc(sizeof(term));
+    *(result->data.term_v) = term;
     return result;
 }
 
@@ -385,6 +420,12 @@ code_block* append_cblock(code_block *cblock, statement *stmt) {
  * interpreting/executing the AST.
  */
 
+plsm_dtype null_val() {
+    plsm_dtype result;
+    result.used = NULL_INDEX;
+    return result;
+}
+
 plsm_dtype get_expr_val(expr *expr, map *m) {
     switch (expr->used) {
         case PLSM_INDEX:
@@ -442,15 +483,5 @@ void exec_stmt(statement *stmt, map *m) {
 void exec_code_block(code_block *code) {
     for (unsigned long i = 0; i < code->stmt_size; i++)
         exec_stmt(code->stmts[i], code->var_scope);
-}
-
-
-
-
-
-plsm_dtype null_val() {
-    plsm_dtype result;
-    result.used = NULL_INDEX;
-    return result;
 }
 

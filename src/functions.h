@@ -149,8 +149,14 @@ plsm_dtype get_expr_val(expr*, map*);
 
 expr simplify_expr(expr*);
 
-expr create_cast(int, expr*);
-expr create_term(int, expr*, expr*);
+expr* create_id_expr(char*);
+expr* create_bool_expr(int);
+expr* create_char_expr(char);
+expr* create_num_expr(double);
+expr* create_plsm_expr(plsm_dtype);
+
+expr* create_cast(int, expr*);
+expr* create_term(int, expr*, expr*);
 
 statement* empty_stmt();
 statement* create_output(expr*, int);

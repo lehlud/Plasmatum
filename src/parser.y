@@ -32,7 +32,7 @@ int errors;
 %token END 0
 
 %union {
-    expr expr;
+    expr *expr;
     statement *stmt;
     code_block *cblock;
 }
@@ -63,35 +63,35 @@ statement
 
 output_statement
     : PECHO                         {$$ = create_output(0, 1);}
-    | PECHO expr                    {$$ = create_output(&($2), 1);}
-    | STDOUT expr                   {$$ = create_output(&($2), 0);}
+    | PECHO expr                    {$$ = create_output($2, 1);}
+    | STDOUT expr                   {$$ = create_output($2, 0);}
     ;
 
 decl_assign
-    : DEF ID EQ expr                {$$ = create_decl_assign(&($<expr>2), &($<expr>4));}
-    | UNDEF ID                      {$$ = create_decl_assign(&($<expr>2), 0);}
+    : DEF ID EQ expr                {$$ = create_decl_assign($<expr>2, $<expr>4);}
+    | UNDEF ID                      {$$ = create_decl_assign($<expr>2, 0);}
     ;
 
 expr: factor                        {$$ = $<expr>1;}
-    | expr SUB factor               {$$ = create_term(SUB_OP, &($1), &($3));}
-    | expr ADD factor               {$$ = create_term(ADD_OP, &($1), &($3));}
+    | expr SUB factor               {$$ = create_term(SUB_OP, $1, $3);}
+    | expr ADD factor               {$$ = create_term(ADD_OP, $1, $3);}
     ;
 
 
 factor
     : term                          {$$ = $<expr>1;}
-    | factor POW term               {$$ = create_term(POW_OP, &($1), &($3));}
-    | factor DIV term               {$$ = create_term(DIV_OP, &($1), &($3));}
-    | factor MOD term               {$$ = create_term(MOD_OP, &($1), &($3));}
-    | factor MUL term               {$$ = create_term(MUL_OP, &($1), &($3));}
+    | factor POW term               {$$ = create_term(POW_OP, $1, $3);}
+    | factor DIV term               {$$ = create_term(DIV_OP, $1, $3);}
+    | factor MOD term               {$$ = create_term(MOD_OP, $1, $3);}
+    | factor MUL term               {$$ = create_term(MUL_OP, $1, $3);}
     ;
 
 term: VAL                           {$$ = $<expr>1;}
     | ID                            {$$ = $<expr>1;}
     | BR_O expr BR_C                {$$ = $2;}
-    | BR_O CHAR BR_C term           {$$ = create_cast(CHAR_INDEX, &($4));}
-    | BR_O BOOL BR_C term           {$$ = create_cast(BOOL_INDEX, &($4));}
-    | BR_O NUMBER BR_C term         {$$ = create_cast(NUM_INDEX, &($4));}
+    | BR_O CHAR BR_C term           {$$ = create_cast(CHAR_INDEX, $4);}
+    | BR_O BOOL BR_C term           {$$ = create_cast(BOOL_INDEX, $4);}
+    | BR_O NUMBER BR_C term         {$$ = create_cast(NUM_INDEX, $4);}
     ;
 
 
