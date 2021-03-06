@@ -15,290 +15,135 @@
  * 
  * Maybe I'll simplify this in a future commit.
  */
-// * ADD
-plsm_dtype add(plsm_dtype a, plsm_dtype b) {
+plsm_dtype calc(int operator, plsm_dtype a, plsm_dtype b) {
     plsm_dtype result;
     switch (a.used) {
+    case CHAR_INDEX:
+    case NUM_INDEX:
+        switch (b.used) {
         case CHAR_INDEX:
         case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v + b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v + (b.data.num_v ? 1 : 0);
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
+            result.used = NUM_INDEX;
+            switch (operator) {
+            case ADD_OP:
+                result.data.num_v = a.data.num_v + b.data.num_v;
+                break;
+            case SUB_OP:
+                result.data.num_v = a.data.num_v - b.data.num_v;
+                break;
+            case MUL_OP:
+                result.data.num_v = a.data.num_v * b.data.num_v;
+                break;
+            case DIV_OP:
+                result.data.num_v = a.data.num_v / b.data.num_v;
+                break;
+            case MOD_OP:
+                result.data.num_v = fmod(a.data.num_v, b.data.num_v);
+                break;
+            case POW_OP:
+                result.data.num_v = pow(a.data.num_v, b.data.num_v);
+                break;  
+            default:
+                result.used = NULL_INDEX;
+                break;
             }
             break;
-
         case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = (b.data.num_v ? 1 : 0) + b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = (a.data.num_v + b.data.num_v) ? 1 : 0;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
+            result.used = NUM_INDEX;
+            switch (operator) {
+            case ADD_OP:
+                result.data.num_v = (((int) a.data.num_v) + ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case SUB_OP:
+                result.data.num_v = (((int) a.data.num_v) - ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case MUL_OP:
+                result.data.num_v = ((int) a.data.num_v) && ((int) b.data.num_v);
+                break;
+            case DIV_OP:
+                result.data.num_v = (((int) a.data.num_v) / ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case MOD_OP:
+                result.data.num_v = (((int) a.data.num_v) % ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case POW_OP:
+                result.data.num_v = a.data.num_v || b.data.num_v;
+                break;  
+            default:
+                result = null_val();
+                break;
             }
             break;
-
         default:
             result.used = NULL_INDEX;
             break;
-    }
-    return result;
-}
+        }
+        break;
 
-// * SUBTRACT
-plsm_dtype sub(plsm_dtype a, plsm_dtype b) {
-    plsm_dtype result;
-    switch (a.used) {
+    case BOOL_INDEX:
+        switch (b.used) {
         case CHAR_INDEX:
         case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v - b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v - (b.data.num_v ? 1 : 0);
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
+            result.used = NUM_INDEX;
+            switch (operator) {
+            case ADD_OP:
+                result.data.num_v = ((int) a.data.num_v) + b.data.num_v;
+                break;
+            case SUB_OP:
+                result.data.num_v = ((int) a.data.num_v) - b.data.num_v;
+                break;
+            case MUL_OP:
+                result.data.num_v = ((int) a.data.num_v) * b.data.num_v;
+                break;
+            case DIV_OP:
+                result.data.num_v = ((int) a.data.num_v) / b.data.num_v;
+                break;
+            case MOD_OP:
+                result.data.num_v = fmod((int) a.data.num_v, b.data.num_v);
+                break;
+            case POW_OP:
+                result.data.num_v = pow((int) a.data.num_v, b.data.num_v);
+                break;  
+            default:
+                result = null_val();
+                break;
             }
             break;
-
         case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = (b.data.num_v ? 1 : 0) - b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = (a.data.num_v - b.data.num_v) ? 1 : 0;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
+            result.used = BOOL_INDEX;
+            switch (operator) {
+            case ADD_OP:
+                result.data.num_v = (((int) a.data.num_v) + ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case SUB_OP:
+                result.data.num_v = (((int) a.data.num_v) - ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case MUL_OP:
+                result.data.num_v = ((int) a.data.num_v) && ((int) b.data.num_v);
+                break;
+            case DIV_OP:
+                result.data.num_v = (((int) a.data.num_v) / ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case MOD_OP:
+                result.data.num_v = (((int) a.data.num_v) % ((int) b.data.num_v)) ? 1 : 0;
+                break;
+            case POW_OP:
+                result.data.num_v = a.data.num_v || b.data.num_v;
+                break;  
+            default:
+                result = null_val();
+                break;
             }
             break;
-
         default:
             result.used = NULL_INDEX;
             break;
-    }
-    return result;
-}
+        }
+        break;
 
-// * MULTIPLY
-plsm_dtype mul(plsm_dtype a, plsm_dtype b) {
-    plsm_dtype result;
-    switch (a.used) {
-        case CHAR_INDEX:
-        case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v * b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v * (b.data.num_v ? 1 : 0);
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = (b.data.num_v ? 1 : 0) * b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = a.data.num_v && b.data.num_v;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        default:
-            result.used = NULL_INDEX;
-            break;
-    }
-    return result;
-}
-
-/*
- * This function's name is 'pdiv' because there
- * already is a function called 'div' in the
- * 'math.h' library.
- */
-plsm_dtype pdiv(plsm_dtype a, plsm_dtype b) {
-    plsm_dtype result;
-    switch (a.used) {
-        case CHAR_INDEX:
-        case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v / b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = a.data.num_v / (b.data.num_v ? 1 : 0);
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = (b.data.num_v ? 1 : 0) / b.data.num_v;
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = (a.data.num_v / b.data.num_v) ? 1 : 0;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        default:
-            result.used = NULL_INDEX;
-            break;
-    }
-    return result;
-}
-
-/*
- * This function's name is 'pmod' because there
- * already is a function called 'mod' in the
- * 'math.h' library.
- */
-plsm_dtype pmod(plsm_dtype a, plsm_dtype b) {
-    plsm_dtype result;
-    switch (a.used) {
-        case CHAR_INDEX:
-        case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = fmod(a.data.num_v, b.data.num_v);
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = fmod(a.data.num_v, (b.data.num_v ? 1 : 0));
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = fmod((b.data.num_v ? 1 : 0), b.data.num_v);
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = fmod(a.data.num_v, b.data.num_v) ? 1 : 0;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        default:
-            result.used = NULL_INDEX;
-            break;
-    }
-    return result;
-}
-
-/*
- * This function's name is 'ppow' because there
- * already is a function called 'pow' in the
- * 'math.h' library.
- */
-plsm_dtype ppow(plsm_dtype a, plsm_dtype b) {
-    plsm_dtype result;
-    switch (a.used) {
-        case CHAR_INDEX:
-        case NUM_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = pow(a.data.num_v, b.data.num_v);
-                    break;
-                case BOOL_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = pow(a.data.num_v, b.data.num_v ? 1 : 0);
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        case BOOL_INDEX:
-            switch (b.used) {
-                case CHAR_INDEX:
-                case NUM_INDEX:
-                    result.used = NUM_INDEX;
-                    result.data.num_v = pow(b.data.num_v ? 1 : 0, b.data.num_v);
-                    break;
-                case BOOL_INDEX:
-                    result.used = BOOL_INDEX;
-                    result.data.num_v = pow(a.data.num_v, b.data.num_v) ? 1 : 0;
-                    break;
-                default:
-                    result.used = NULL_INDEX;
-                    break;
-            }
-            break;
-
-        default:
-            result.used = NULL_INDEX;
-            break;
+    default:
+        result.used = NULL_INDEX;
+        break;
     }
     return result;
 }
@@ -332,13 +177,13 @@ void printval(plsm_dtype val) {
             else printf("%lf", val.data.num_v);
             break;
         case CHAR_INDEX:
-            printf("%c", (int) val.data.num_v);
+            putchar((int) val.data.num_v);
             break;
         case BOOL_INDEX:
             printf("%s", val.data.num_v ? "true" : "false");
             break;
         default:
-            printf("null");
+            printf("%s", "null");
             break;
     }
 }
@@ -361,11 +206,11 @@ void printval(plsm_dtype val) {
  * }
  */
 
-map map_init() {
-    map m;
-    m.keys = malloc(0);
-    m.size = 0;
-    m.values = malloc(0);
+map* map_init() {
+    map *m = malloc(sizeof(map));
+    m->keys = malloc(0);
+    m->size = 0;
+    m->values = malloc(0);
     return m;
 }
 
@@ -428,78 +273,6 @@ void map_remove(map *m, char *key) {
     }
 }
 
-
-expr create_cast(int cast_to, expr value) {
-    cast_term cast_term;
-    cast_term.cast_to = cast_to;
-    cast_term.value = &value;
-    expr result;
-    result.used = CTERM_INDEX;
-    result.data.cterm_v = cast_term;
-    return result;
-}
-
-expr create_term(int op, expr left, expr right) {
-    term term;
-    term.left = &left;
-    term.right = &right;
-    term.operator = op;
-    expr result;
-    result.used = TERM_INDEX;
-    result.data.term_v = term;
-    return result;
-}
-
-statement empty_stmt() {
-    statement result;
-    result.used = -1;
-    return result;
-}
-
-statement create_output(expr *value, int prod_nl){
-    statement result;
-    output_stmt output_stmt;
-    output_stmt.prod_newline = prod_nl;
-    if (value) output_stmt.value = *value;
-    else output_stmt.value.used = -1;
-    result.used = OUTPUT_INDEX;
-    result.data.output_stmt = output_stmt;
-    return result;
-}
-
-statement create_decl_assign(expr id, expr *value) {
-    decl_assign_stmt decl_assign;
-    decl_assign.id = id.data.id_v;
-    if (value) decl_assign.value = *value;
-    else decl_assign.value.used = -1;
-    statement result;
-    result.used = DECL_ASS_INDEX;
-    result.data.decl_assign_stmt = decl_assign;
-    return result;
-}
-
-
-code_block init_cblock(statement stmt) {
-    code_block cblock;
-    cblock.var_scope = map_init();
-    cblock.stmts = malloc(sizeof(statement));
-    cblock.stmts[0] = stmt;
-    cblock.stmt_size = 1;
-    return cblock;
-}
-
-code_block append_cblock(code_block cblock, statement stmt) {
-    if(stmt.used >= 0) {
-        cblock.stmts = realloc(
-            cblock.stmts,
-            (cblock.stmt_size + 1) * sizeof(statement)
-        );
-        cblock.stmts[cblock.stmt_size] = stmt;
-        cblock.stmt_size = cblock.stmt_size + 1;
-    }
-    return cblock;
-}
-
 /*
  * This function reads the contents of a file and returns
  * it as a char array.
@@ -518,133 +291,166 @@ char* readfile(char* path) {
     return tmp;
 }
 
+/*
+ * This now all has to do with creating the AST
+ */
+
+expr create_cast(int cast_to, expr *value) {
+    cast_term cast_term;
+    cast_term.cast_to = cast_to;
+    cast_term.value = malloc(sizeof(cast_term));
+    *(cast_term.value) = *value;
+
+    expr result;
+    result.used = CTERM_INDEX;
+    result.data.cterm_v = malloc(sizeof(cast_term));
+    *(result.data.cterm_v) = cast_term;
+    return result;
+}
+
+expr create_term(int op, expr *left, expr *right) {
+    term term;
+    term.left = malloc(sizeof(expr));
+    term.right = malloc(sizeof(expr));
+    *(term.left) = *left;
+    *(term.right) = *right;
+    term.operator = op;
+
+    expr result;
+    result.used = TERM_INDEX;
+    result.data.term_v = malloc(sizeof(term));
+    *(result.data.term_v) = term;
+    return result;
+}
+
+statement* empty_stmt() {
+    statement *result = malloc(sizeof(statement));
+    result->used = -1;
+    return result;
+}
+
+statement* create_output(expr *value, int prod_nl){
+    output_stmt output;
+    output.prod_newline = prod_nl;
+    output.value = malloc(sizeof(expr));
+    if (value) *(output.value) = *value;
+    else output.value->used = -1;
+
+    statement *result = malloc(sizeof(statement));
+    result->used = OUTPUT_INDEX;
+    result->data.output_stmt = malloc(sizeof(output_stmt));
+    *(result->data.output_stmt) = output;
+    return result;
+}
+
+statement* create_decl_assign(expr *id, expr *value) {
+    decl_assign_stmt decl_assign;
+    decl_assign.id = id->data.id_v;
+    decl_assign.value = malloc(sizeof(expr));
+    if (value) *(decl_assign.value) = *value;
+    else decl_assign.value->used = -1;
+
+    statement *result = malloc(sizeof(statement));
+    result->used = DECL_ASS_INDEX;
+    result->data.decl_assign_stmt = malloc(sizeof(decl_assign_stmt));
+    *(result->data.decl_assign_stmt) = decl_assign;
+    return result;
+}
 
 
-void exec_stmt(statement stmt, map *m) {
-    switch (stmt.used) {
+code_block* init_cblock(statement *stmt) {
+    code_block *cblock = malloc(sizeof(cblock));
+    cblock->var_scope = malloc(sizeof(map));
+    *(cblock->var_scope) = *(map_init());
+    cblock->stmts = malloc(0);
+    cblock->stmt_size = 0;
+    return append_cblock(cblock, stmt);
+}
+
+code_block* append_cblock(code_block *cblock, statement *stmt) {
+    if(stmt->used >= 0) {
+        cblock->stmts = realloc(
+            cblock->stmts,
+            (cblock->stmt_size + 1) * sizeof(statement*)
+        );
+        cblock->stmts[cblock->stmt_size] = malloc(sizeof(statement));
+        *(cblock->stmts[cblock->stmt_size]) = *stmt;
+        cblock->stmt_size = cblock->stmt_size + 1;
+    }
+    return cblock;
+}
+
+/*
+ * The following functions are used for
+ * interpreting/executing the AST.
+ */
+
+plsm_dtype get_expr_val(expr *expr, map *m) {
+    switch (expr->used) {
+        case PLSM_INDEX:
+            return expr->data.plsm_v;
+        case TERM_INDEX:
+            return eval_term(expr->data.term_v, m);
+        case CTERM_INDEX:
+            return eval_cterm(expr->data.cterm_v, m);
+        case ID_INDEX:
+            return map_get(m, expr->data.id_v);
+        default:
+            return null_val();
+    }
+}
+
+plsm_dtype eval_term(term *t, map *m) {
+    return calc(
+        t->operator,
+        get_expr_val(t->left, m),
+        get_expr_val(t->right, m)
+    );
+}
+
+plsm_dtype eval_cterm(cast_term *ct, map *m) {
+    return cast(get_expr_val(ct->value, m), ct->cast_to);
+}
+
+
+void exec_output_stmt(output_stmt *stmt, map *m) {
+    if (stmt->value->used >= 0)
+        printval(get_expr_val(stmt->value, m));
+    if (stmt->prod_newline) printf("%s", "\n");
+}
+
+void exec_decl_ass_stmt(decl_assign_stmt *stmt, map *m) {
+    if (stmt->value->used < 0) {
+        map_remove(m, stmt->id);
+        return;
+    }
+    map_set(m, stmt->id, get_expr_val(stmt->value, m));
+}
+
+void exec_stmt(statement *stmt, map *m) {
+    switch (stmt->used) {
         case OUTPUT_INDEX:
-            printf("output statement! (%d)\n", stmt.data.output_stmt.value.used);
-            if (stmt.data.output_stmt.value.used >= 0) {
-                plsm_dtype tmp;
-                term t1;
-                switch (stmt.data.output_stmt.value.used) {
-                    case PLSM_INDEX:
-                        printval(stmt.data.output_stmt.value.data.plsm_v);
-                        break;
-                    case TERM_INDEX:
-                        t1 = stmt.data.output_stmt.value.data.term_v;
-                        printf("a\n");
-                        eval_term(t1, m);
-                        printf("b\n");
-                        tmp = eval_term(t1, m);
-                        printf("b\n");
-                        printval(tmp);
-                        break;
-                    case CTERM_INDEX:
-                        printval(eval_cterm(stmt.data.output_stmt.value.data.cterm_v, m));
-                        break;
-                    case ID_INDEX:
-                        printval(map_get(m, stmt.data.output_stmt.value.data.id_v));
-                        break;
-                }
-            }
-            if (stmt.data.output_stmt.prod_newline)
-                printf("\n");
+            exec_output_stmt(stmt->data.output_stmt, m);
             break;
         case DECL_ASS_INDEX:
-            if(stmt.data.decl_assign_stmt.value.used < 0)
-                map_remove(m, stmt.data.decl_assign_stmt.id);
-            else {
-                plsm_dtype val;
-                switch (stmt.data.decl_assign_stmt.value.used) {
-                    case PLSM_INDEX:
-                        val = stmt.data.decl_assign_stmt.value.data.plsm_v;
-                        break;
-                    case TERM_INDEX:
-                        val = eval_term(stmt.data.decl_assign_stmt.value.data.term_v, m);
-                        break;
-                    case CTERM_INDEX:
-                        val = eval_cterm(stmt.data.decl_assign_stmt.value.data.cterm_v, m);
-                        break;
-                    case ID_INDEX:
-                        val = map_get(m, stmt.data.decl_assign_stmt.value.data.id_v);
-                        break;
-                }
-                map_set(m, stmt.data.decl_assign_stmt.id, val);
-            }
-            break;
-        default:
+            exec_decl_ass_stmt(stmt->data.decl_assign_stmt, m);
             break;
     }
 }
 
-void exec_code_block(code_block code) {
-    for (unsigned long i = 0; i < code.stmt_size; i++)
-        exec_stmt(code.stmts[i], &(code.var_scope));
+
+void exec_code_block(code_block *code) {
+    for (unsigned long i = 0; i < code->stmt_size; i++)
+        exec_stmt(code->stmts[i], code->var_scope);
 }
 
 
 
-plsm_dtype eval_term(term t, map *m) {
-    printf("evaluating term...");
-    plsm_dtype left;
-    plsm_dtype right;
-    switch (t.left->used) {
-        case ID_INDEX:
-            left = map_get(m, t.left->data.id_v);
-            break;
-        case TERM_INDEX:
-            left = eval_term(t.left->data.term_v, m);
-            break;
-        case PLSM_INDEX:
-            left = t.left->data.plsm_v;
-            break;
-        case CTERM_INDEX:
-            left = eval_cterm(t.left->data.cterm_v, m);
-            break;
-    }
-    switch (t.right->used) {
-        case ID_INDEX:
-            right = map_get(m, t.right->data.id_v);
-            break;
-        case TERM_INDEX:
-            right = eval_term(t.right->data.term_v, m);
-            break;
-        case PLSM_INDEX:
-            right = t.right->data.plsm_v;
-            break;
-        case CTERM_INDEX:
-            right = eval_cterm(t.right->data.cterm_v, m);
-            break;
-    }
-    switch (t.operator) {
-        case ADD_OP: return add(left, right);
-        case SUB_OP: return sub(left, right);
-        case MUL_OP: return mul(left, right);
-        case DIV_OP: return pdiv(left, right);
-        case MOD_OP: return pmod(left, right);
-        case POW_OP: return ppow(left, right);
-    }
+
+
+plsm_dtype null_val() {
     plsm_dtype result;
     result.used = NULL_INDEX;
     return result;
 }
 
-plsm_dtype eval_cterm(cast_term ct, map *m) {
-    plsm_dtype value;
-    switch (ct.value->used) {
-        case ID_INDEX:
-            value = map_get(m, ct.value->data.id_v);
-            break;
-        case TERM_INDEX:
-            value = eval_term(ct.value->data.term_v, m);
-            break;
-        case PLSM_INDEX:
-            value = ct.value->data.plsm_v;
-            break;
-        case CTERM_INDEX:
-            value = eval_cterm(ct.value->data.cterm_v, m);
-            break;
-    }
-    return cast(value, ct.cast_to);
-}

@@ -45,13 +45,7 @@ typedef struct plsm_dtype {
  * If you want to know why this is bloated, look
  * at the 'function.c' source file.
  */
-
-plsm_dtype add(plsm_dtype, plsm_dtype);
-plsm_dtype sub(plsm_dtype, plsm_dtype);
-plsm_dtype mul(plsm_dtype, plsm_dtype);
-plsm_dtype pdiv(plsm_dtype, plsm_dtype);
-plsm_dtype pmod(plsm_dtype, plsm_dtype);
-plsm_dtype ppow(plsm_dtype, plsm_dtype);
+plsm_dtype calc(int, plsm_dtype, plsm_dtype);
 
 plsm_dtype cast(plsm_dtype, int);
 
@@ -75,7 +69,7 @@ typedef struct map {
     unsigned long size;
 } map;
 
-map map_init();
+map* map_init();
 plsm_dtype map_get(map*, char*);
 void map_set(map*, char*, plsm_dtype);
 void map_remove(map*, char*);
@@ -106,10 +100,10 @@ typedef struct cast_term {
 } cast_term;
 
 union expression_union {
-    char* id_v;
-    term term_v;
+    char *id_v;
+    term *term_v;
     plsm_dtype plsm_v;
-    cast_term cterm_v;
+    cast_term *cterm_v;
 };
 
 struct expression {
@@ -121,17 +115,17 @@ typedef struct statement statement;
 
 typedef struct output_stmt {
     int prod_newline;
-    expr value;
+    expr *value;
 } output_stmt;
 
 typedef struct decl_assign_stmt {
     char *id;
-    expr value;
+    expr *value;
 } decl_assign_stmt;
 
 union statement_union {
-    output_stmt output_stmt;
-    decl_assign_stmt decl_assign_stmt;
+    output_stmt *output_stmt;
+    decl_assign_stmt *decl_assign_stmt;
 };
 
 struct statement {
@@ -140,8 +134,8 @@ struct statement {
 };
 
 typedef struct code_block {
-    map var_scope;
-    statement *stmts;
+    map *var_scope;
+    statement **stmts;
     unsigned long stmt_size;
 } code_block;
 
@@ -151,26 +145,36 @@ typedef struct code_block {
  * useful.
  */
 
-expr create_cast(int, expr);
-expr create_term(int, expr, expr);
+plsm_dtype get_expr_val(expr*, map*);
 
-statement empty_stmt();
-statement create_output(expr*, int);
-statement create_decl_assign(expr, expr*);
+expr simplify_expr(expr*);
 
-code_block init_cblock(statement);
-code_block append_cblock(code_block, statement);
+expr create_cast(int, expr*);
+expr create_term(int, expr*, expr*);
 
-plsm_dtype eval_term(term, map*);
-plsm_dtype eval_cterm(cast_term, map*);
+statement* empty_stmt();
+statement* create_output(expr*, int);
+statement* create_decl_assign(expr*, expr*);
+
+code_block* init_cblock(statement*);
+code_block* append_cblock(code_block*, statement*);
+
+plsm_dtype eval_term(term*, map*);
+plsm_dtype eval_cterm(cast_term*, map*);
+
+plsm_dtype null_val();
 
 char *readfile(char*);
 
 
-void exec_stmt(statement, map*);
+void exec_output_stmt(output_stmt*, map*);
+void exec_decl_ass_stmt(decl_assign_stmt*, map*);
+
+void exec_stmt(statement*, map*);
+
 /*
  * This function is used for executing code blocks.
  */
-void exec_code_block(code_block);
+void exec_code_block(code_block*);
 
 #endif
