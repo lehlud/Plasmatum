@@ -427,8 +427,6 @@ expr* create_cast(int cast_to, expr *value) {
 
     expr *result = malloc(sizeof(expr));
     result->used = CTERM_INDEX;
-    result->data.cterm_v = malloc(sizeof(cast_term));
-    *(result->data.cterm_v) = cast_term;
     return simplify_expr(result);
 }
 
@@ -616,6 +614,19 @@ plsm_dtype eval_cond(condition *cond, map *m) {
     return calc_cond(cond->operator, left, right);
 }
 
+statement* create_while_stmt(expr *cond, code_block *body) {
+    while_stmt while_s;
+    while_s.condition = malloc(sizeof(expr));
+    while_s.body = malloc(sizeof(code_block));
+    *(while_s.condition) = *cond;
+    *(while_s.body) = *body;
+
+    statement *result = malloc(sizeof(statement));
+    result->used = WHILE_INDEX;
+    result->data.while_stmt = malloc(sizeof(while_stmt));
+    *(result->data.while_stmt) = while_s;
+    return result;
+}
 
 void exec_if_stmt(if_stmt *if_s, map *m) {
     if (get_expr_val(if_s->condition, m).data.num_v)
@@ -637,6 +648,11 @@ void exec_for_stmt(for_stmt *for_s, map *m) {
         map_set(m, for_s->counter_id, incr(map_get(m, for_s->counter_id)));
     }
     if(!var_defined) map_remove(m, for_s->counter_id);
+}
+
+void exec_while_stmt(while_stmt *while_s, map *m) {
+    while (get_expr_val(while_s->condition, m).data.num_v)
+        exec_code_block(while_s->body, m);
 }
 
 void exec_output_stmt(output_stmt *stmt, map *m) {
@@ -669,6 +685,9 @@ void exec_stmt(statement *stmt, map *m) {
         break;
     case CBLOCK_INDEX:
         exec_code_block(stmt->data.code_block, m);
+        break;
+    case WHILE_INDEX:
+        exec_while_stmt(stmt->data.while_stmt, m);
         break;
     }
 }

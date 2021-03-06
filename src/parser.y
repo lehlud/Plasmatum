@@ -27,7 +27,7 @@ int errors;
 
 %token PECHO STDOUT
 %token DEF UNDEF
-%token FOR
+%token FOR WHILE
 %token ASSIGN ARR QM COL
 
 %token GR LO EQ GREQ LOEQ NOT AND XOR OR
@@ -42,7 +42,7 @@ int errors;
 
 %type <expr> expr factor rel_term term term_expr
 %type <stmt> statement only_stmt
-%type <stmt> decl_assign output_statement for_statement if_statement
+%type <stmt> decl_assign output_statement for_statement if_statement while_statement
 %type <cblock> statements code_block
 
 %start program
@@ -72,6 +72,7 @@ only_stmt
     | decl_assign                               {$$ = $<stmt>1;}
     | if_statement                              {$$ = $<stmt>1;}
     | for_statement                             {$$ = $<stmt>1;}
+    | while_statement                           {$$ = $<stmt>1;}
     | output_statement                          {$$ = $<stmt>1;}
     | code_block                                {$$ = cblock_to_stmt($<cblock>1);}
     ;
@@ -87,6 +88,9 @@ if_statement
     | expr QM code_block COL if_statement       {$$ = create_if_stmt($<expr>1, $<cblock>3, init_cblock($<stmt>5));}
     ;
 
+while_statement
+    : WHILE expr QM code_block                  {$$ = create_while_stmt($<expr>2, $<cblock>4);}
+    ;
 
 code_block
     : BR_O BR_C                                 {$$ = init_cblock(0);}

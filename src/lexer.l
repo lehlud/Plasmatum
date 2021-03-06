@@ -61,6 +61,7 @@ void hande_column();
 "undef"                         {HC return UNDEF;}
 
 "for"                           {HC return FOR;}
+"while"                         {HC return WHILE;}
 
 [_a-zA-Z][_a-zA-Z0-9]*          {HC yylval.expr = create_id_expr(strdup(yytext)); return ID;}
 

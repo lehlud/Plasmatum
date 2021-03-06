@@ -35,6 +35,7 @@
 #define IF_INDEX            3
 #define FOR_INDEX           4
 #define CBLOCK_INDEX        5
+#define WHILE_INDEX         6
 
 /*
  * This union is used to store the data in the one
@@ -169,9 +170,15 @@ typedef struct if_stmt {
     code_block *else_part;
 } if_stmt;
 
+typedef struct while_stmt {
+    expr *condition;
+    code_block *body;
+} while_stmt;
+
 union statement_union {
     if_stmt *if_stmt;
     for_stmt *for_stmt;
+    while_stmt *while_stmt;
     code_block *code_block;
     output_stmt *output_stmt;
     decl_assign_stmt *decl_assign_stmt;
@@ -206,6 +213,7 @@ statement* cblock_to_stmt(code_block*);
 
 statement* create_output(expr*, int);
 statement* create_decl_assign(expr*, expr*);
+statement* create_while_stmt(expr*, code_block*);
 statement* create_if_stmt(expr*, code_block*, code_block*);
 statement* create_for_stmt(code_block*, expr*, expr*, expr*);
 
@@ -224,6 +232,7 @@ char* read_file(char*);
 
 void exec_if_stmt(if_stmt*, map*);
 void exec_for_stmt(for_stmt*, map*);
+void exec_while_stmt(while_stmt*, map*);
 void exec_output_stmt(output_stmt*, map*);
 void exec_decl_ass_stmt(decl_assign_stmt*, map*);
 
