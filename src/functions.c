@@ -168,6 +168,41 @@ plsm_dtype calc(int operator, plsm_dtype a, plsm_dtype b) {
     return result;
 }
 
+plsm_dtype calc_cond(int op, plsm_dtype a, plsm_dtype b) {
+    plsm_dtype result;
+    result.used = BOOL_INDEX;
+    switch (op) {
+    case GR_OP:
+        result.data.num_v = a.data.num_v > b.data.num_v;
+        break;
+    case LO_OP:
+        result.data.num_v = a.data.num_v < b.data.num_v;
+        break;
+    case EQ_OP:
+        result.data.num_v = a.data.num_v == b.data.num_v;
+        break;
+    case GREQ_OP:
+        result.data.num_v = a.data.num_v >= b.data.num_v;
+        break;
+    case LOEQ_OP:
+        result.data.num_v = a.data.num_v >= b.data.num_v;
+        break;
+    case OR_OP:
+        result.data.num_v = a.data.num_v || b.data.num_v;
+        break;
+    case XOR_OP:
+        result.data.num_v = a.data.num_v != b.data.num_v;
+        break;
+    case NOT_OP:
+        result.data.num_v = !a.data.num_v;
+        break;
+    case AND_OP:
+        result.data.num_v = a.data.num_v && b.data.num_v;
+        break;
+    default: return null_val();
+    }
+    return result;
+}
 
 /*
  * This simple function is used for casting values to
@@ -332,6 +367,16 @@ expr* simplify_expr(expr* expr) {
                 expr->data.term_v->operator,
                 expr->data.term_v->left->data.plsm_v,
                 expr->data.term_v->right->data.plsm_v
+            );
+        }
+        break;
+    case COND_INDEX:
+        if(expr->data.cond_v->left->used == PLSM_INDEX && expr->data.cond_v->right->used == PLSM_INDEX) {
+            expr->used = PLSM_INDEX;
+            expr->data.plsm_v = calc_cond(
+                expr->data.cond_v->operator,
+                expr->data.cond_v->left->data.plsm_v,
+                expr->data.cond_v->right->data.plsm_v
             );
         }
         break;
@@ -566,40 +611,9 @@ plsm_dtype eval_cond(condition *cond, map *m) {
         if (cond->right->used == PLSM_INDEX)
             right = cond->right->data.plsm_v;
         else right = get_expr_val(cond->right, m);
-    }
+    } else right = null_val();
 
-    plsm_dtype result;
-    result.used = BOOL_INDEX;
-    switch (cond->operator) {
-    case GR_OP:
-        result.data.num_v = left.data.num_v > right.data.num_v;
-        break;
-    case LO_OP:
-        result.data.num_v = left.data.num_v < right.data.num_v;
-        break;
-    case EQ_OP:
-        result.data.num_v = left.data.num_v == right.data.num_v;
-        break;
-    case GREQ_OP:
-        result.data.num_v = left.data.num_v >= right.data.num_v;
-        break;
-    case LOEQ_OP:
-        result.data.num_v = left.data.num_v >= right.data.num_v;
-        break;
-    case OR_OP:
-        result.data.num_v = left.data.num_v || right.data.num_v;
-        break;
-    case XOR_OP:
-        result.data.num_v = left.data.num_v != right.data.num_v;
-        break;
-    case NOT_OP:
-        result.data.num_v = !left.data.num_v;
-        break;
-    case AND_OP:
-        result.data.num_v = left.data.num_v && right.data.num_v;
-        break;
-    }
-    return result;
+    return calc_cond(cond->operator, left, right);
 }
 
 

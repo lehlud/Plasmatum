@@ -64,8 +64,8 @@ plsm_dtype decr(plsm_dtype);
  * at the 'function.c' source file.
  */
 plsm_dtype calc(int, plsm_dtype, plsm_dtype);
-
 plsm_dtype cast(plsm_dtype, int);
+plsm_dtype calc_cond(int, plsm_dtype, plsm_dtype);
 
 typedef struct expression expr;
 
