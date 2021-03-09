@@ -76,11 +76,6 @@ expr1 or expr2
 expr1 xor expr2
 ```
 
-### comments
-```
-... this is a single-line comment
-../ this is a delimited comment /..
-```
 ### variables
 #### declaration/assignment (normal)
 ```
