@@ -16,7 +16,7 @@ clang++ -dynamic -Wall -Wextra -lfl -lLLVM \
     -o ../plsm #\
     #`llvm-config --cxxflags --ldflags --system-libs --libs core orcjit native` \
 
-cd ..
+#cd ..
 
-strip plsm -s -R .comment -R .gnu.version --strip-unneeded
+#strip plsm -s -R .comment -R .gnu.version --strip-unneeded
 
