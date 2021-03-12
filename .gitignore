@@ -1,5 +1,5 @@
 .vscode
-*.out
+a.out
 *.yy.*
 *.tab.*
 plsm
