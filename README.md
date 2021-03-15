@@ -154,7 +154,7 @@ for id=1 -> 84 (
 not implemented yet
 #### declaration
 ```
-ddef id (attr1, attr2, attr3)
+sdef id (attr1, attr2, attr3)
 ```
 #### instances
 ```
@@ -172,6 +172,7 @@ stdout expr                 ... this doesn't
 ```
 
 ### file output
+not implemented yet
 ```
 echo expr > filename        ... write to file
 echo expr >> filename       ... append to file
