@@ -7,13 +7,6 @@ A minimal functional programming language.
 ../ this is a delimited comment /..
 ```
 
-### data types
-```
-bool
-char
-number
-```
-
 ### empty pointer
 ```
 null
@@ -71,10 +64,6 @@ expr1 and expr2
 ```
 expr1 or expr2
 ```
-##### xor
-```
-expr1 xor expr2
-```
 
 ### variables
 #### declaration/assignment (normal)
@@ -111,7 +100,7 @@ if condition ? (
 ```
 #### if else
 ```
-condition ? (
+if condition ? (
     ... code if true
 ) : (
     ... code if false
@@ -162,10 +151,10 @@ for id=1 -> 84 (
 ```
 
 ### data structures
+not implemented yet
 #### declaration
 ```
 ddef id (attr1, attr2, attr3)
-ddef id (attr1, (data type) attr2, attr3)
 ```
 #### instances
 ```
