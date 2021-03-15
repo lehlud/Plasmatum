@@ -89,11 +89,11 @@ undef id
 ### functions
 #### declaration (single line)
 ```
-fdef id on [a, b, c] -> result
+fdef id on (a, b, c) -> result
 ```
 #### declaration (multi line)
 ```
-fdef id on [a, b, c] -> (
+fdef id on (a, b, c) -> (
     ... code here
 ) -> result
 ```
@@ -105,7 +105,7 @@ id on (a, b, c)
 ### branches
 #### if (standalone)
 ```
-condition ? (
+if condition ? (
     ... code if true
 )
 ```
@@ -119,9 +119,9 @@ condition ? (
 ```
 #### if else-if else
 ```
-cond1 ? (
+if cond1 ? (
     ... code if true
-) : cond2 ? (
+) : if cond2 ? (
     ... code if cond1 is false and cond2 is true
 ) : (
     ... code if cond1 and cond2 are false

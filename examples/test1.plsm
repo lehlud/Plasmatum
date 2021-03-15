@@ -1,6 +1,3 @@
-def a = 0
+fdef fak on (i) -> i > 1 ? i * fak on (i-1) : i
 
-while a < 100 ? (
-    def a = a + 1
-    echo a
-)
+echo fak on (1000)

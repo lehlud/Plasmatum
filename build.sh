@@ -1,8 +1,7 @@
 #!/bin/sh
 
 cd src
-flex lexer.l
-bison -y parser.y
-bison -y -d parser.y
+flex --outfile=lex.yy.cc lexer.ll
+bison parser.yy
 
-gcc -Wextra -Wall -lfl functions.c lex.yy.c y.tab.c -lm -o ../plsm
+clang++ -Wextra -Wall -lfl main.cc utils.cc lex.yy.cc parser.tab.cc -lm -O3 -o ../plsm
