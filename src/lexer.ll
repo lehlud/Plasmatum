@@ -62,12 +62,11 @@ extern "C" int yylex();
 "undef"                         {return UNDEF;}
 
 "fdef"                          {return FDEF;}
+"sdef"                          {return SDEF;}
 
 "if"                            {return IF;}
 "for"                           {return FOR;}
 "while"                         {return WHILE;}
-
-"on"                            {return ON;}
 
 [_a-zA-Z][_a-zA-Z0-9]*          {yylval.expr = new VarExprAST(yytext); return ID;}
 

@@ -36,7 +36,7 @@ int errors;
     SET             "set"
     UNDEF           "undef"
     FDEF            "fdef"
-    ON              "on"
+    SDEF            "sdef"
 
     IF              "if"
     FOR             "for"
@@ -83,7 +83,8 @@ int errors;
 ;
 
 %type <stmt>
-    fun_decl                "function declaration"
+    fdef_stmt               "function definition"
+    sdef_stmt               "struct definition"
     assigment               "assigment"
     statement               "statement"
     declaration             "declaration"
@@ -112,7 +113,7 @@ int errors;
 %left ADD SUB
 %left MUL DIV MOD
 %left POW
-//%left ARR
+%left ARR
 %left BR_O BR_C
 
 %start program
@@ -139,15 +140,17 @@ statements
 statement
     : if_stmt                                   {$$ = $1;}
     | for_stmt                                  {$$ = $1;}
-    | fun_decl                                  {$$ = $1;}
+    | fdef_stmt                                 {$$ = $1;}
+    | sdef_stmt                                 {$$ = $1;}
     | assigment                                 {$$ = $1;}
     | while_stmt                                {$$ = $1;}
+    | block_stmt                                {$$ = $1;}
     | declaration                               {$$ = $1;}
     | output_stmt                               {$$ = $1;}
     ;
 
 output_stmt
-    : PECHO                                     {$$ = new OutputStmtAST(1, 0); }
+    : PECHO                                     {$$ = new OutputStmtAST(1, 0);}
     | STDOUT                                    {$$ = 0;}
     | PECHO expr                                {$$ = new OutputStmtAST(1, $2);}
     | STDOUT expr                               {$$ = new OutputStmtAST(0, $2);}
@@ -165,8 +168,8 @@ while_stmt
     ;
 
 for_stmt
-    : FOR ID ARR expr statement                 {$$ = new ForStmtAST(new NumExprAST(0), $4, $2, $5);}
-    | FOR ID ASSIGN expr ARR expr statement     {$$ = new ForStmtAST($4, $6, $2, $7);}
+    : FOR ID ARR expr COL statement             {$$ = new ForStmtAST(new NumExprAST(0), $4, $2, $6);}
+    | FOR ID ASSIGN expr ARR expr COL statement {$$ = new ForStmtAST($4, $6, $2, $8);}
     ;
 
 fun_params
@@ -174,9 +177,14 @@ fun_params
     | fun_params COMMA ID                       {$$ = $1; $$->push_back($3);}
     ;
 
-fun_decl
-    : FDEF ID ON BR_O BR_C ARR expr             {$$ = new FDefStmtAST($2, new std::vector<VarExprAST*>(), $7);}
-    | FDEF ID ON BR_O fun_params BR_C ARR expr  {$$ = new FDefStmtAST($2, $5, $8);}
+fdef_stmt
+    : FDEF ID BR_O BR_C ARR expr                {$$ = new FDefStmtAST($2, new std::vector<VarExprAST*>(), $6);}
+    | FDEF ID BR_O fun_params BR_C ARR expr     {$$ = new FDefStmtAST($2, $4, $7);}
+    ;
+
+sdef_stmt
+    : SDEF ID BR_O BR_C                         {$$ = new SDefStmtAST($2, new std::vector<VarExprAST*>());}
+    | SDEF ID BR_O fun_params BR_C              {$$ = new SDefStmtAST($2, $4);}
     ;
 
 assigment
@@ -202,8 +210,8 @@ call_params
     ;
 
 call_expr
-    : ID ON BR_O BR_C                           {$$ = new CallExprAST($1, new std::vector<ExprAST*>());}
-    | ID ON BR_O call_params BR_C               {$$ = new CallExprAST($1, $4);}
+    : ID BR_O BR_C                           {$$ = new CallExprAST($1, new std::vector<ExprAST*>());}
+    | ID BR_O call_params BR_C               {$$ = new CallExprAST($1, $3);}
     ;
 
 

@@ -167,6 +167,20 @@ public:
     int exec() override;
 };
 
+class SDefStmtAST : public StmtAST {
+private:
+    std::string id;
+    std::vector<std::string> *attrs;
+public:
+    SDefStmtAST(VarExprAST *varExpr, std::vector<VarExprAST*> *attrs)
+        : id(varExpr->getId()) {
+            this->attrs = new std::vector<std::string>();
+            for (unsigned long i = 0; i < attrs->size(); i++)
+                this->attrs->push_back(attrs->at(i)->getId());
+        }
+    int exec() override;
+};
+
 class DeclStmtAST : public StmtAST {
 private:
     std::string id;
