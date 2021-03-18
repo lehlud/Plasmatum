@@ -7,7 +7,7 @@ int yy_scan_string(const char*);
 extern int yyparse();
 
 extern int errors;
-extern std::vector<Stmt*> *program;
+extern std::vector<StmtAST*> *program;
 
 int main(int argc, char **argv) {
     if (argc > 1) {

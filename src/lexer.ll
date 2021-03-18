@@ -16,12 +16,12 @@ extern "C" int yylex();
 "...".*                         {/* IGNORE COMMENT */}
 "../"(.|[\n\r\v\t])*"/.."       {/* IGNORE COMMENT */ return EOL;}
 
-"\'"[_a-zA-Z0-9]"\'"            {yylval.expr = new NumExpr(yytext[1]); return VAL;}
+"\'"[_a-zA-Z0-9]"\'"            {yylval.expr = new NumExprAST(yytext[1]); return VAL;}
 
-[0-9]*"."?[0-9]+                {yylval.expr = new NumExpr(std::stod(yytext)); return VAL;}
+[0-9]*"."?[0-9]+                {yylval.expr = new NumExprAST(std::stod(yytext)); return VAL;}
 
-"true"                          {yylval.expr = new NumExpr((double) true); return VAL;}
-"false"                         {yylval.expr = new NumExpr((double) false); return VAL;}
+"true"                          {yylval.expr = new NumExprAST((double) true); return VAL;}
+"false"                         {yylval.expr = new NumExprAST((double) false); return VAL;}
 
 "**"                            {return POW;}
 "+"                             {return ADD;}
@@ -69,7 +69,7 @@ extern "C" int yylex();
 
 "on"                            {return ON;}
 
-[_a-zA-Z][_a-zA-Z0-9]*          {yylval.expr = new VarExpr(yytext); return ID;}
+[_a-zA-Z][_a-zA-Z0-9]*          {yylval.expr = new VarExprAST(yytext); return ID;}
 
 [\n\r]                          {return EOL;}
 

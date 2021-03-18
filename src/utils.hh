@@ -6,29 +6,30 @@
 #include <string>
 #include <vector>
 
+typedef long double num;
 
-class Expr {
+class ExprAST {
 public:
-    virtual ~Expr() = default;
-    virtual double eval() = 0;
+    virtual ~ExprAST() = default;
+    virtual num eval() = 0;
 };
 
-class NumExpr : public Expr {
+class NumExprAST : public ExprAST {
 private:
-    double val;
+    num val;
 public:
-    NumExpr(double val) : val(val) {}
-    double eval() override;
+    NumExprAST(num val) : val(val) {}
+    num eval() override;
 };
 
 
-class VarExpr : public Expr {
+class VarExprAST : public ExprAST {
 private:
     std::string id;
 public:
-    VarExpr(std::string id) : id(id) {}
+    VarExprAST(std::string id) : id(id) {}
     std::string getId() { return id; }
-    double eval() override;
+    num eval() override;
 };
 
 #define ADD_OP  10
@@ -48,117 +49,116 @@ public:
 #define LOEQ_OP 37
 
 
-class BinExpr : public Expr {
+class BinExprAST : public ExprAST {
 private:
     int op;
-    Expr *left, *right;
+    ExprAST *left, *right;
 public:
-    BinExpr(int op, Expr *left, Expr *right)
+    BinExprAST(int op, ExprAST *left, ExprAST *right)
         : op(op), left(std::move(left)), right(std::move(right)) {}
-    double eval() override;
+    num eval() override;
 };
 
-class CallExpr : public Expr {
+class CallExprAST : public ExprAST {
 private:
     std::string id;
-    std::vector<Expr*> *args;
+    std::vector<ExprAST*> *args;
 public:
-    CallExpr(VarExpr *varExpr, std::vector<Expr*> *args)
+    CallExprAST(VarExprAST *varExpr, std::vector<ExprAST*> *args)
         : id(varExpr->getId()), args(std::move(args)) {}
-    CallExpr(VarExpr *varExpr, std::vector<VarExpr*> *args)
+    CallExprAST(VarExprAST *varExpr, std::vector<VarExprAST*> *args)
         : id(varExpr->getId()) {
-            this->args = new std::vector<Expr*>();
+            this->args = new std::vector<ExprAST*>();
             this->args->insert(this->args->end(), args->begin(), args->end());
         }
-    double eval() override;
+    num eval() override;
 };
 
-class IfExpr : public Expr {
+class IfExprAST : public ExprAST {
 private:
-    Expr *cond, *exprTrue, *exprFalse;
+    ExprAST *cond, *exprTrue, *exprFalse;
 public:
-    IfExpr(Expr *cond, Expr *exprTrue, Expr *exprFalse)
+    IfExprAST(ExprAST *cond, ExprAST *exprTrue, ExprAST *exprFalse)
         :   cond(std::move(cond)), exprTrue(std::move(exprTrue)), 
             exprFalse(std::move(exprFalse)){}
-    double eval() override;
+    num eval() override;
 };
 
 
-class Stmt {
+class StmtAST {
 public:
-    virtual ~Stmt() = default;
+    virtual ~StmtAST() = default;
     virtual int exec() = 0;
 };
 
 
-class BlockStmt : public Stmt {
+class BlockStmtAST : public StmtAST {
 private:
-    std::vector<Stmt*> *stmts;
+    std::vector<StmtAST*> *stmts;
 public:
-    BlockStmt(std::vector<Stmt*> *stmts) : stmts(std::move(stmts)) {}
+    BlockStmtAST(std::vector<StmtAST*> *stmts) : stmts(std::move(stmts)) {}
     int exec() override;
 };
 
-class IfStmt : public Stmt {
+class IfStmtAST : public StmtAST {
 private:
-    Expr *cond;
-    Stmt *ifBody, *elseBody;
+    ExprAST *cond;
+    StmtAST *ifBody, *elseBody;
 public:
-    IfStmt(Expr *cond, Stmt *ifBody, Stmt *elseBody)
+    IfStmtAST(ExprAST *cond, StmtAST *ifBody, StmtAST *elseBody)
         :   cond(std::move(cond)), ifBody(std::move(ifBody)),
             elseBody(elseBody ? std::move(elseBody) : 0) {}
 
-    Expr *getCond() { return cond; }
-    Stmt *getIfBody() { return ifBody; }
-    Stmt *getElseBody() { return elseBody; }
+    ExprAST *getCond() { return cond; }
+    StmtAST *getIfBody() { return ifBody; }
+    StmtAST *getElseBody() { return elseBody; }
     
     int exec() override;
 };
 
 
-class ForStmt : public Stmt {
+class ForStmtAST : public StmtAST {
 private:
-    Expr *min, *max;
+    ExprAST *min, *max;
     std::string counterId;
-    Stmt *body;
+    StmtAST *body;
 public:
-    ForStmt(Expr *min, Expr *max, VarExpr *counter, Stmt *body)
+    ForStmtAST(ExprAST *min, ExprAST *max, VarExprAST *counter, StmtAST *body)
         :   min(std::move(min)), max(std::move(max)),
             counterId(counter->getId()), body(std::move(body)) {}
     int exec() override;
 };
 
 
-class WhileStmt : public Stmt {
+class WhileStmtAST : public StmtAST {
 private:
-    Expr *cond;
-    Stmt *ifBody, *elseBody;
+    ExprAST *cond;
+    StmtAST *ifBody, *elseBody;
 public:
-    WhileStmt(IfStmt *ifStmt)
-        :   cond(std::move(ifStmt->getCond())),
-            ifBody(std::move(ifStmt->getIfBody())),
-            elseBody(std::move(ifStmt->getElseBody())) {}
+    WhileStmtAST(ExprAST *cond, StmtAST *ifBody, StmtAST *elseBody)
+        :   cond(std::move(cond)), ifBody(std::move(ifBody)),
+            elseBody(elseBody ? std::move(elseBody) : 0) {}
     int exec() override;
 };
 
 
-class OutputStmt : public Stmt {
+class OutputStmtAST : public StmtAST {
 private:
     int prodNL;
-    Expr *val;
+    ExprAST *val;
 public:
-    OutputStmt(int prodNL, Expr *val)
+    OutputStmtAST(int prodNL, ExprAST *val)
         : prodNL(prodNL), val(val ? std::move(val) : 0) {}
     int exec() override;
 };
 
-class FDefStmt : public Stmt {
+class FDefStmtAST : public StmtAST {
 private:
     std::string id;
     std::vector<std::string> *args;
-    Expr *body;
+    ExprAST *body;
 public:
-    FDefStmt(VarExpr *varExpr, std::vector<VarExpr*> *args, Expr *body)
+    FDefStmtAST(VarExprAST *varExpr, std::vector<VarExprAST*> *args, ExprAST *body)
         : id(varExpr->getId()), body(std::move(body)) {
             this->args = new std::vector<std::string>();
             for (unsigned long i = 0; i < args->size(); i++)
@@ -167,32 +167,42 @@ public:
     int exec() override;
 };
 
-class DeclStmt : public Stmt {
+class DeclStmtAST : public StmtAST {
 private:
     std::string id;
-    Expr *val;
+    ExprAST *val;
 public:
-    DeclStmt(VarExpr *varExpr, Expr *val)
+    DeclStmtAST(VarExprAST *varExpr, ExprAST *val)
         : id(varExpr->getId()), val(std::move(val)) {}
     int exec() override;
 };
 
-class AssignStmt : public Stmt {
+class AssignStmtAST : public StmtAST {
 private:
     std::string id;
-    Expr *val;
+    ExprAST *val;
 public:
-    AssignStmt(VarExpr *varExpr, Expr *val)
+    AssignStmtAST(VarExprAST *varExpr, ExprAST *val)
         : id(varExpr->getId()), val(std::move(val)) {}
     int exec() override;
 };
 
-class UndefStmt : public Stmt {
+class UndefStmtAST : public StmtAST {
 private:
     std::string id;
 public:
-    UndefStmt(VarExpr *varExpr) : id(varExpr->getId()) {}
+    UndefStmtAST(VarExprAST *varExpr) : id(varExpr->getId()) {}
     int exec() override;
+};
+
+class BlockExprAST : public ExprAST {
+private:
+    BlockStmtAST *body;
+    ExprAST *result;
+public:
+    BlockExprAST(BlockStmtAST *body, ExprAST *result)
+        : body(std::move(body)), result(std::move(result)) {}
+    num eval() override;
 };
 
 
@@ -200,28 +210,18 @@ class Function {
 private:
     std::string id;
     std::vector<std::string> *args;
-    Expr *body;
+    ExprAST *body;
 public:
-    Function(std::string id, std::vector<std::string> *args, Expr *body)
+    Function(std::string id, std::vector<std::string> *args, ExprAST *body)
         : id(std::move(id)), args(std::move(args)), body(std::move(body)) {}
-    double exec(std::vector<Expr*> *inputArgs);
-};
-
-class BlockExpr : public Expr {
-private:
-    BlockStmt *body;
-    Expr *result;
-public:
-    BlockExpr(BlockStmt *body, Expr *result)
-        : body(std::move(body)), result(std::move(result)) {}
-    double eval() override;
+    num exec(std::vector<ExprAST*> *inputArgs);
 };
 
 
 std::string readFile(std::string name);
 
-int execProgram(std::vector<Stmt*> *program);
+int execProgram(std::vector<StmtAST*> *program);
 
-std::map<std::string, double> mergeScope(std::map<std::string, double> orig, std::map<std::string, double> curr);
+std::map<std::string, num> mergeScopes(std::map<std::string, num> orig, std::map<std::string, num> curr);
 
 #endif

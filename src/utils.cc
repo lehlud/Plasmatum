@@ -21,13 +21,13 @@ inline bool instanceof(const T*) {
 }
 
 std::map<std::string, Function*> functions;
-std::map<std::string, double> varValues;
+std::map<std::string, num> varValues;
 
-double NumExpr::eval() {
+num NumExprAST::eval() {
     return val;
 }
 
-double VarExpr::eval() {
+num VarExprAST::eval() {
     if (!varValues.count(id)) {
         std::cout << "Variable \'" << id << "\' is not defined." << std::endl;
         exit(1);
@@ -35,7 +35,7 @@ double VarExpr::eval() {
     return varValues[id];
 }
 
-double BinExpr::eval() {
+num BinExprAST::eval() {
     switch (op) {
     case ADD_OP:    return left->eval() + right->eval();
     case SUB_OP:    return left->eval() - right->eval();
@@ -57,7 +57,7 @@ double BinExpr::eval() {
     exit(1);
 }
 
-double CallExpr::eval() {
+num CallExprAST::eval() {
     if (!functions.count(id)) {
         std::cout << "Function \'" << id << "\' is not defined." << std::endl;
         exit(1);
@@ -65,36 +65,36 @@ double CallExpr::eval() {
     return functions[id]->exec(std::move(args));
 }
 
-double IfExpr::eval() {
+num IfExprAST::eval() {
     if (cond->eval()) return exprTrue->eval();
     return exprFalse->eval();
 }
 
-double BlockExpr::eval() {
+num BlockExprAST::eval() {
     auto tmpVars = varValues;
     body->exec();
-    varValues = mergeScope(tmpVars, varValues);
+    varValues = mergeScopes(tmpVars, varValues);
     return result->eval();
 }
 
 
-int BlockStmt::exec() {
+int BlockStmtAST::exec() {
     int res = 0;
     auto tmpVars = varValues;
     for (unsigned long i = 0; i < stmts->size(); i++) {
         res = stmts->at(i)->exec();
         if (res) break;
     }
-    varValues = mergeScope(tmpVars, varValues);
+    varValues = mergeScopes(tmpVars, varValues);
     return res;
 }
 
-int IfStmt::exec() {
+int IfStmtAST::exec() {
     if (cond->eval()) return ifBody->exec();
     return elseBody->exec();
 }
 
-int ForStmt::exec() {
+int ForStmtAST::exec() {
     while (varValues[counterId] < max->eval()) {
         if (body->exec()) break;
         varValues[counterId] = ((int) varValues[counterId]) + 1;
@@ -102,7 +102,7 @@ int ForStmt::exec() {
     return 0;
 }
 
-int WhileStmt::exec() {
+int WhileStmtAST::exec() {
     if (!cond->eval() && elseBody) return elseBody->exec();
     while (cond->eval())
         if (ifBody->exec()) break;
@@ -110,13 +110,13 @@ int WhileStmt::exec() {
 }
 
 
-int OutputStmt::exec() {
+int OutputStmtAST::exec() {
     if (val) std::cout << val->eval();
     if (prodNL) std::cout << std::endl;
     return 0;
 }
 
-int FDefStmt::exec() {
+int FDefStmtAST::exec() {
     if (functions.count(id)) {
         std::cout << "Function \'" << id << "\' is already defined." << std::endl;
         exit(1);
@@ -125,7 +125,7 @@ int FDefStmt::exec() {
     return 0;
 }
 
-int DeclStmt::exec() {
+int DeclStmtAST::exec() {
     if (varValues.count(id)) {
         std::cout << "Variable \'" << id << "\' is already defined." << std::endl;
         exit(1);
@@ -134,7 +134,7 @@ int DeclStmt::exec() {
     return 0;
 }
 
-int AssignStmt::exec() {
+int AssignStmtAST::exec() {
     if (!varValues.count(id)) {
         std::cout << "Variable \'" << id << "\' is not defined." << std::endl;
         exit(1);
@@ -143,7 +143,7 @@ int AssignStmt::exec() {
     return 0;
 }
 
-int UndefStmt::exec() {
+int UndefStmtAST::exec() {
     if (!varValues.count(id)) {
         std::cout << "Variable \'" << id << "\' is not defined." << std::endl;
         exit(1);
@@ -152,7 +152,7 @@ int UndefStmt::exec() {
     return 0;
 }
 
-double Function::exec(std::vector<Expr*> *inputArgs) {
+num Function::exec(std::vector<ExprAST*> *inputArgs) {
     if (args->size() > inputArgs->size()) {
         std::cout << "Got too many arguments for function \'" << id
             << "\'(exected: " << args->size() << ", got: "
@@ -165,7 +165,7 @@ double Function::exec(std::vector<Expr*> *inputArgs) {
         exit(1);
     }
 
-    std::map<std::string, double> funVars;
+    std::map<std::string, num> funVars;
 
     for (unsigned long i = 0; i < args->size(); i++) {
         if (funVars.count(args->at(i))) {
@@ -178,19 +178,19 @@ double Function::exec(std::vector<Expr*> *inputArgs) {
 
     auto tmpVars = varValues;
     varValues = funVars;
-    double result = body->eval();
+    num result = body->eval();
     varValues = tmpVars;
     return result;
 }
 
-int execProgram(std::vector<Stmt*> *program) {
+int execProgram(std::vector<StmtAST*> *program) {
     for (unsigned long i = 0; i < program->size(); i++)
         if (program->at(i)->exec()) return 1;
     return 0;
 }
 
-std::map<std::string, double> mergeScope(std::map<std::string, double> orig, 
-                                         std::map<std::string, double> curr) {
+std::map<std::string, num> mergeScopes(std::map<std::string, num> orig, 
+                                         std::map<std::string, num> curr) {
     for (auto it = curr.begin(); it != curr.end(); it++)
         if (!orig.count(it->first)) curr.erase(it->first);
     return curr;
