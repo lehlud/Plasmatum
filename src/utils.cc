@@ -152,6 +152,10 @@ int UndefStmtAST::exec() {
     return 0;
 }
 
+int SDefStmtAST::exec() {
+    return 0;
+}
+
 num Function::exec(std::vector<ExprAST*> *inputArgs) {
     if (args->size() > inputArgs->size()) {
         std::cout << "Got too many arguments for function \'" << id
