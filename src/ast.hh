@@ -62,31 +62,33 @@ namespace Plasmatum
         class BinExpr : public Expr
         {
         public:
-            enum Type {
-                ADD,    // '+'
-                SUB,    // '-'
-                MUL,    // '*'
-                DIV,    // '/'
-                MOD,    // '%'
-                POW,    // '**'
+            enum Type
+            {
+                ADD, // '+'
+                SUB, // '-'
+                MUL, // '*'
+                DIV, // '/'
+                MOD, // '%'
+                POW, // '**'
                 // bitwise operators
-                OR,     // '|'
-                AND,    // '&'
+                OR,  // '|'
+                AND, // '&'
                 // logical operators
-                LOR,    // 'or'
-                LAND,   // 'and'
-                EQ,     // '=='
-                NEQ,    // '!='
-                GT,     // '>'
-                LT,     // '<'
-                GTEQ,   // '>='
-                LTEQ,   // '<='
+                LOR,  // 'or'
+                LAND, // 'and'
+                EQ,   // '=='
+                NEQ,  // '!='
+                GT,   // '>'
+                LT,   // '<'
+                GTEQ, // '>='
+                LTEQ, // '<='
             };
+
         private:
             Type type;
             Expr *left, *right;
-        public:
 
+        public:
             BinExpr(Type type, Expr *left, Expr *right)
                 : type(type), left(left), right(right) {}
         };
@@ -145,17 +147,6 @@ namespace Plasmatum
             WhileExpr(Expr *cond, Expr *ifBody, Expr *elseBody)
                 : cond(cond), ifBody(ifBody),
                   elseBody(elseBody ? elseBody : 0) {}
-        };
-
-        class OutputExpr : public Expr
-        {
-        private:
-            int prodNL;
-            Expr *val;
-
-        public:
-            OutputExpr(int prodNL, Expr *val)
-                : prodNL(prodNL), val(val ? val : 0) {}
         };
 
         class FDefExpr : public Expr
