@@ -43,22 +43,6 @@ namespace Plasmatum
             std::string getId() { return id; }
         };
 
-#define ADD_OP 10
-#define SUB_OP 11
-#define MUL_OP 12
-#define DIV_OP 13
-#define MOD_OP 14
-#define POW_OP 15
-
-#define OR_OP 30
-#define AND_OP 31
-#define NEQ_OP 32
-#define EQ_OP 33
-#define GR_OP 34
-#define LO_OP 35
-#define GREQ_OP 36
-#define LOEQ_OP 37
-
         class BinExpr : public Expr
         {
         public:
