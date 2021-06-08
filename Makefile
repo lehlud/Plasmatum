@@ -1,12 +1,19 @@
-FILES = src/main.cc src/utils.cc src/lex.yy.cc src/parser.tab.cc
+FILES = $(wildcard src/*.cc)
+OBJ_FILES = $(FILES:.cc=.o)
+COMPILER = clang++
 
-bin: flex-bison
+CXXFLAGS = `llvm-config --cxxflags` -O3
+LDFLAGS = `llvm-config --ldflags --system-libs --libs all` -flto -lLLVM
+
+bin/plsm: $(OBJ_FILES)
 	mkdir -p bin
-	g++ $(FILES) -O3 -o bin/plsm
+	$(COMPILER) $(OBJ_FILES) -O3 -o bin/plsm
+
+%.o: %.cc
+	$(COMPILER) $(CXXFLAGS) -o $@ -c $<
 
 
-flex-bison:
-	flex --outfile=src/lex.yy.cc src/lexer.ll
-	bison src/parser.yy
-	mv parser.tab.cc src/
-	mv parser.tab.hh src/
+clean:
+	rm -rf bin $(OBJ_FILES)
+
+rebuild: clean bin/plsm

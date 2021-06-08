@@ -11,5 +11,9 @@ template <typename Base, typename T> inline bool instanceof (const T *) {
 
 std::string readFile(std::string name);
 
+bool isDigit(char c);
+bool isSpecial(char c);
+bool isWhitespace(char c);
+
 } // namespace Utils
 } // namespace Plasmatum

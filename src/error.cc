@@ -30,3 +30,8 @@ void Error::lexer(const std::string &msg) { error(Type::LEXER, msg); }
 void Error::parser(const std::string &msg) { error(Type::PARSER, msg); }
 
 void Error::compiler(const std::string &msg) { error(Type::COMPILER, msg); }
+
+void Error::parserExpected(const std::string &expected,
+                           const std::string &got) {
+  error(Type::PARSER, "expected " + expected + ", got '" + got + "'");
+}

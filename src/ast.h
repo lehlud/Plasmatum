@@ -174,17 +174,17 @@ public:
   UndefExpr(IdExpr *varExpr) : id(varExpr->getId()) {}
 };
 
-class Lambda {
+class Lambda : public Expr {
 private:
   Expr *body;
-  std::vector<const std::string&> args;
+  std::vector<std::string> args;
 
 public:
-  Lambda(const std::vector<const std::string&> &args, Expr *body)
+  Lambda(const std::vector<std::string> &args, Expr *body)
       : args(args), body(body) {}
 };
 
-class Function {
+class Function : public Expr {
 private:
   Lambda *base;
   std::string id;
