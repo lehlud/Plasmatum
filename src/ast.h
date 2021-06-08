@@ -177,10 +177,10 @@ public:
 class Lambda {
 private:
   Expr *body;
-  std::vector<std::string> args;
+  std::vector<const std::string&> args;
 
 public:
-  Lambda(const std::vector<std::string> &args, Expr *body)
+  Lambda(const std::vector<const std::string&> &args, Expr *body)
       : args(args), body(body) {}
 };
 

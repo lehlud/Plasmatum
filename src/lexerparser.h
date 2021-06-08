@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "ast.hh"
+#include "ast.h"
 
 namespace Plasmatum {
 
@@ -24,7 +24,7 @@ enum TokenType {
 };
 
 typedef struct Token_t {
-  TokenType tt;
+  TokenType type;
   std::string val;
 } Token;
 
@@ -35,18 +35,20 @@ private:
 
 public:
   Lexer(const std::string &text) : text(text) {}
-  Token nextT();
+  Token next();
 };
 
 class Parser {
 private:
   Lexer lexer;
-  Token tmpT;
+  Token token;
 
 public:
   Parser(const Lexer &lexer) : lexer(lexer) {}
 
-  AST::Expr *parseExpr();
+  void next() { token = lexer.next(); }
+
+  AST::Expr *parseExpr(bool topLevel = false);
 };
 
 } // namespace Plasmatum

@@ -1,9 +1,9 @@
 #include <iostream>
 #include <memory>
 
-#include "ast.hh"
-#include "error.hh"
-#include "utils.hh"
+#include "ast.h"
+#include "error.h"
+#include "utils.h"
 
 using namespace Plasmatum;
 

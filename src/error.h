@@ -20,5 +20,7 @@ void lexer(const std::string &msg);
 void parser(const std::string &msg);
 void compiler(const std::string &msg);
 
+void parserExpected(const std::string &expected, const std::string &got);
+
 } // namespace Error
 } // namespace Plasmatum

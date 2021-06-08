@@ -1,7 +1,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "utils.hh"
+#include "utils.h"
 
 std::string readFile(std::string name)
 {

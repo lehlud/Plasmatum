@@ -1,4 +1,4 @@
-#include "error.hh"
+#include "error.h"
 
 #include <iostream>
 

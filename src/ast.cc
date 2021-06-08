@@ -4,4 +4,4 @@
 #include <map>
 #include <sstream>
 
-#include "ast.hh"
+#include "ast.h"
