@@ -7,7 +7,7 @@ LDFLAGS = `llvm-config --ldflags --system-libs --libs all` -flto -lLLVM
 
 bin/plsm: $(OBJ_FILES)
 	mkdir -p bin
-	$(COMPILER) $(OBJ_FILES) -O3 -o bin/plsm
+	$(COMPILER) $(OBJ_FILES) $(LDFLAGS) -O3 -o bin/plsm
 
 %.o: %.cc
 	$(COMPILER) $(CXXFLAGS) -o $@ -c $<

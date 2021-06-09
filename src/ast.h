@@ -4,12 +4,17 @@
 #include <string>
 #include <vector>
 
+#include <llvm/IR/Value.h>
+
+#include "jit.h"
+
 namespace Plasmatum {
 namespace AST {
 
 class Expr {
 public:
   virtual ~Expr() = default;
+  virtual llvm::Value *genCode(Compiler::Context &context) = 0;
 };
 
 class IntExpr : public Expr {
@@ -18,6 +23,7 @@ private:
 
 public:
   IntExpr(long val) : val(val) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class FPExpr : public Expr {
@@ -26,6 +32,7 @@ private:
 
 public:
   FPExpr(double val) : val(val) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class IdExpr : public Expr {
@@ -35,6 +42,7 @@ private:
 public:
   IdExpr(std::string id) : id(id) {}
   std::string getId() { return id; }
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class BinExpr : public Expr {
@@ -67,16 +75,7 @@ private:
 public:
   BinExpr(Type type, Expr *left, Expr *right)
       : type(type), left(left), right(right) {}
-};
-
-class CallExpr : public Expr {
-private:
-  std::string id;
-  std::vector<Expr *> *args;
-
-public:
-  CallExpr(IdExpr *varExpr, std::vector<Expr *> *args)
-      : id(varExpr->getId()), args(args) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class IfExpr : public Expr {
@@ -86,6 +85,7 @@ private:
 public:
   IfExpr(Expr *cond, Expr *exprTrue, Expr *exprFalse)
       : cond(cond), exprTrue(exprTrue), exprFalse(exprFalse) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class BlockExpr : public Expr {
@@ -96,6 +96,7 @@ private:
 public:
   BlockExpr(std::vector<Expr *> body, Expr *result)
       : body(body), result(result) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class ForExpr : public Expr {
@@ -107,6 +108,7 @@ private:
 public:
   ForExpr(Expr *min, Expr *max, IdExpr *counter, Expr *body)
       : min(min), max(max), counterId(counter->getId()), body(body) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class WhileExpr : public Expr {
@@ -117,44 +119,7 @@ private:
 public:
   WhileExpr(Expr *cond, Expr *ifBody, Expr *elseBody)
       : cond(cond), ifBody(ifBody), elseBody(elseBody ? elseBody : 0) {}
-};
-
-class FDefExpr : public Expr {
-private:
-  std::string id;
-  std::vector<std::string> *args;
-  Expr *body;
-
-public:
-  FDefExpr(IdExpr *varExpr, std::vector<IdExpr *> *args, Expr *body)
-      : id(varExpr->getId()), body(body) {
-    this->args = new std::vector<std::string>();
-    for (unsigned long i = 0; i < args->size(); i++)
-      this->args->push_back(args->at(i)->getId());
-  }
-};
-
-class SDefExpr : public Expr {
-private:
-  std::string id;
-  std::vector<std::string> *attrs;
-
-public:
-  SDefExpr(IdExpr *varExpr, std::vector<IdExpr *> *attrs)
-      : id(varExpr->getId()) {
-    this->attrs = new std::vector<std::string>();
-    for (unsigned long i = 0; i < attrs->size(); i++)
-      this->attrs->push_back(attrs->at(i)->getId());
-  }
-};
-
-class DeclExpr : public Expr {
-private:
-  std::string id;
-  Expr *val;
-
-public:
-  DeclExpr(IdExpr *varExpr, Expr *val) : id(varExpr->getId()), val(val) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class AssignExpr : public Expr {
@@ -164,33 +129,39 @@ private:
 
 public:
   AssignExpr(IdExpr *varExpr, Expr *val) : id(varExpr->getId()), val(val) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
-class UndefExpr : public Expr {
+class CallExpr : public Expr {
 private:
   std::string id;
+  std::vector<Expr *> *args;
 
 public:
-  UndefExpr(IdExpr *varExpr) : id(varExpr->getId()) {}
+  CallExpr(IdExpr *varExpr, std::vector<Expr *> *args)
+      : id(varExpr->getId()), args(args) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
-class Lambda : public Expr {
+class LambdaExpr : public Expr {
 private:
   Expr *body;
   std::vector<std::string> args;
 
 public:
-  Lambda(const std::vector<std::string> &args, Expr *body)
+  LambdaExpr(const std::vector<std::string> &args, Expr *body)
       : args(args), body(body) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 class Function : public Expr {
 private:
-  Lambda *base;
+  LambdaExpr *base;
   std::string id;
 
 public:
-  Function(Lambda *base, const std::string &id) : base(base), id(id) {}
+  Function(LambdaExpr *base, const std::string &id) : base(base), id(id) {}
+  llvm::Value *genCode(Compiler::Context &context) override;
 };
 
 } // namespace AST

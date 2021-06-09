@@ -148,7 +148,7 @@ AST::Expr *Parser::parseExpr(bool topLevel) {
 
         next();
 
-        auto base = new AST::Lambda(args, body);
+        auto base = new AST::LambdaExpr(args, body);
 
         if (lambda)
           return base;
