@@ -1,7 +1,6 @@
 .vscode
 *.out
-*.yy.*
-*.tab.*
-plsm
 
 *.o
+
+bin
