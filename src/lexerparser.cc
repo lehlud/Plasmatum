@@ -74,7 +74,8 @@ Lexer::Token Lexer::next() {
       c = getc(++index);
     }
 
-    if (c != '.') return Token(TT::INT, str);
+    if (c != '.')
+      return Token(TT::INT, str);
   }
 
   if (c == '.' && Utils::isDigit((c1 = getc(index + 1)))) {
@@ -97,67 +98,63 @@ Lexer::Token Lexer::next() {
     c = getc(++index);
   }
 
-  if (str.size() > 0) return Token(TT::ID, str);
+  if (str.size() > 0)
+    return Token(TT::ID, str);
 
   Error::lexer("unexpected lexer input ('" + std::string(1, c) + "')");
 
   return Token(TT::EOF, "EOF");
 }
 
+AST::LambdaExpr *Parser::parseLambda() {
+  next();
+
+  if (token.type != TT::PO)
+    Error::parserExpected("'('", token.val);
+
+  next();
+
+  std::vector<std::string> args;
+  while (token.type != TT::PC) {
+    if (token.type != TT::ID)
+      Error::parserExpected("identifer", token.val);
+
+    args.push_back(token.val);
+
+    next();
+  }
+
+  auto body = parseExpr(false);
+
+  next();
+
+  return new AST::LambdaExpr(args, body);
+}
+
 AST::Expr *Parser::parseExpr(bool topLevel) {
   if (topLevel) {
     if (token.type == TT::ID) {
-
-      bool def = false;
-      bool lambda = false;
-
-      std::string defId;
-
       if (token.val == "def") {
         next();
 
         if (token.type != TT::ID)
           Error::parserExpected("identifier", token.val);
 
-        defId = token.val;
+        std::string id = token.val;
 
         next();
 
-        def = true;
-      } else if (token.val == "lambda") {
-        next();
-      }
+        auto base = parseLambda();
 
-      if (def || lambda) {
-        if (token.type != TT::PO)
-          Error::parserExpected("'('", token.val);
-
-        next();
-
-        std::vector<std::string> args;
-        while (token.type != TT::PC) {
-          if (token.type != TT::ID)
-            Error::parserExpected("identifer", token.val);
-
-          args.push_back(token.val);
-
-          next();
-        }
-
-        auto body = parseExpr(false);
-
-        next();
-
-        auto base = new AST::LambdaExpr(args, body);
-
-        if (lambda)
-          return base;
-        else
-          return new AST::Function(base, defId);
+        return new AST::Function(base, id);
       }
     }
-    return nullptr;
+
+    Error::parser("expected top level expression");
   } else {
+    if (token.type == TT::ID) {
+      if (token.val == "lambda") return parseLambda();
+    }
     return nullptr;
   }
 }

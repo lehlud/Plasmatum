@@ -72,6 +72,7 @@ public:
   }
 
   AST::Expr *parseExpr(bool topLevel = false);
+  AST::LambdaExpr *parseLambda();
 };
 
 } // namespace Plasmatum
