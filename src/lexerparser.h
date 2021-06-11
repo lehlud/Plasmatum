@@ -14,7 +14,7 @@ private:
 public:
   typedef struct Token_t {
     enum Type {
-      #undef EOF
+#undef EOF
       EOF,   // end of file
       INT,   // integer literal
       FLOAT, // float literal
@@ -49,6 +49,13 @@ public:
     std::string val;
 
     Token_t(Type type, const std::string &val) : type(type), val(val) {}
+
+    bool operator!=(Type t) { return type != t; }
+    bool operator==(Type t) { return type == t; }
+    bool operator!=(const std::string &s) { return val.compare(s); }
+    bool operator==(const std::string &s) { return !val.compare(s); }
+
+    bool isBinOperator() { return type >= Type::ADD && type <= Type::POW; }
   } Token;
 
   Lexer(const std::string &text) : text(text) {}

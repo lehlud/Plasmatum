@@ -2,6 +2,9 @@
 
 #include <string>
 
+#include "ast.h"
+#include "lexerparser.h"
+
 namespace Plasmatum {
 namespace Utils {
 
@@ -14,6 +17,8 @@ std::string readFile(std::string name);
 bool isDigit(char c);
 bool isSpecial(char c);
 bool isWhitespace(char c);
+
+AST::BinExpr::Type TTToBET(Lexer::Token::Type type);
 
 } // namespace Utils
 } // namespace Plasmatum

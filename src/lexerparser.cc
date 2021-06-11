@@ -106,17 +106,61 @@ Lexer::Token Lexer::next() {
   return Token(TT::EOF, "EOF");
 }
 
+AST::Expr *Parser::parseExpr(bool topLevel) {
+  AST::Expr *result = nullptr;
+  if (topLevel) {
+    if (token == TT::ID) {
+      if (token == "def") {
+        next();
+
+        if (token != TT::ID)
+          Error::parserExpected("identifier", token.val);
+
+        auto id = token.val;
+
+        next();
+
+        auto base = parseLambda();
+
+        result = new AST::Function(base, id);
+      }
+    }
+
+    Error::parser("expected top level expression");
+  } else {
+    if (token == TT::ID) {
+      if (token == "lambda") result = parseLambda();
+      else {
+        result = new AST::IdExpr(token.val);
+        next();
+      }
+    }
+  }
+
+  if (result && token.isBinOperator()) {
+    auto op = Utils::TTToBET(token.type);
+
+    next();
+
+    auto right = parseExpr(false);
+
+    return new AST::BinExpr(op, result, right);
+  }
+
+  return result;
+}
+
 AST::LambdaExpr *Parser::parseLambda() {
   next();
 
-  if (token.type != TT::PO)
+  if (token != TT::PO)
     Error::parserExpected("'('", token.val);
 
   next();
 
   std::vector<std::string> args;
-  while (token.type != TT::PC) {
-    if (token.type != TT::ID)
+  while (token != TT::PC) {
+    if (token != TT::ID)
       Error::parserExpected("identifer", token.val);
 
     args.push_back(token.val);
@@ -129,32 +173,4 @@ AST::LambdaExpr *Parser::parseLambda() {
   next();
 
   return new AST::LambdaExpr(args, body);
-}
-
-AST::Expr *Parser::parseExpr(bool topLevel) {
-  if (topLevel) {
-    if (token.type == TT::ID) {
-      if (token.val == "def") {
-        next();
-
-        if (token.type != TT::ID)
-          Error::parserExpected("identifier", token.val);
-
-        std::string id = token.val;
-
-        next();
-
-        auto base = parseLambda();
-
-        return new AST::Function(base, id);
-      }
-    }
-
-    Error::parser("expected top level expression");
-  } else {
-    if (token.type == TT::ID) {
-      if (token.val == "lambda") return parseLambda();
-    }
-    return nullptr;
-  }
 }

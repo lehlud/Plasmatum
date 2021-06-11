@@ -39,3 +39,16 @@ bool Utils::isSpecial(char c) {
 bool Utils::isWhitespace(char c) {
     return c <= ' ';
 }
+
+AST::BinExpr::Type Utils::TTToBET(Lexer::Token::Type type) {
+    switch (type) {
+        case Lexer::Token::Type::ADD: return AST::BinExpr::ADD;
+        case Lexer::Token::Type::SUB: return AST::BinExpr::SUB;
+        case Lexer::Token::Type::MUL: return AST::BinExpr::MUL;
+        case Lexer::Token::Type::DIV: return AST::BinExpr::DIV;
+        case Lexer::Token::Type::MOD: return AST::BinExpr::MOD;
+        case Lexer::Token::Type::POW: return AST::BinExpr::POW;
+        default: Error::def("unable to convert token to binary operator");
+    }
+    return AST::BinExpr::ADD;
+}

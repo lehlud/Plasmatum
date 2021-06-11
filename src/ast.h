@@ -40,7 +40,7 @@ private:
   std::string id;
 
 public:
-  IdExpr(std::string id) : id(id) {}
+  IdExpr(const std::string& id) : id(id) {}
   std::string getId() { return id; }
   llvm::Value *genCode(Compiler::Context &context) override;
 };
