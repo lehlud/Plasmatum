@@ -21,9 +21,6 @@ llvm::Value *IdExpr::genCode(Compiler::Context &context) {
 }
 
 llvm::Value *BinExpr::genCode(Compiler::Context &context) {
-    switch (type) {
-        case ADD:
-    }
     return nullptr;
 }
 
