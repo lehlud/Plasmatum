@@ -9,12 +9,11 @@
 
 #include "error.h"
 
-#define TYPE_INT    1
-#define TYPE_FLOAT  1
-#define TYPE_ARRAY  1
-#define TYPE_FUNC   1
+#define TYPE_INT 1
+#define TYPE_FLOAT 1
+#define TYPE_ARRAY 1
+#define TYPE_FUNC 1
 #define TYPE_STRUCT 1
-
 
 namespace Plasmatum {
 namespace Compiler {

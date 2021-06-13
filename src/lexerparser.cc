@@ -25,6 +25,9 @@ Lexer::Token Lexer::next() {
   while (Utils::isWhitespace((c = getc(index))))
     index += 1;
 
+  if (c == -1)
+    return Token(TT::EOF, "EOF");
+
   Lexer::Token *t = nullptr;
 
   switch (c) {
@@ -105,7 +108,7 @@ Lexer::Token Lexer::next() {
     Error::lexer("expected digit after '.', got '" + std::string(1, c) + "'");
   }
 
-  while (!Utils::isSpecial(c) && c != -1) {
+  while (!Utils::isSpecial(c) && !Utils::isWhitespace(c) && c != -1) {
     str += c;
     c = getc(++index);
   }
@@ -138,12 +141,16 @@ AST::Expr *Parser::parseExpr(bool topLevel) {
       }
     }
 
-    Error::parser("expected top level expression");
+    if (!result)
+      Error::parser("expected top level expression");
+
+    return result;
   } else {
     if (token == TT::ID) {
-      if (token == "lambda")
+      if (token == "lambda") {
+        next();
         result = parseLambda();
-      else {
+      } else {
         result = new AST::IdExpr(token.val);
         next();
       }
@@ -155,6 +162,12 @@ AST::Expr *Parser::parseExpr(bool topLevel) {
       if (token != TT::PC)
         Error::parserExpected("')'", token.val);
 
+      next();
+    } else if (token == TT::INT) {
+      result = new AST::IntExpr(std::stol(token.val));
+      next();
+    } else if (token == TT::FLOAT) {
+      result = new AST::FPExpr(std::stod(token.val));
       next();
     }
   }
@@ -169,7 +182,8 @@ AST::Expr *Parser::parseExpr(bool topLevel) {
 
     auto exprTrue = parseExpr();
 
-    if (token != TT::COL) Error::parserExpected("':'", token.val);
+    if (token != TT::COL)
+      Error::parserExpected("':'", token.val);
 
     next();
 
@@ -200,13 +214,12 @@ AST::Expr *Parser::parseOptBinExpr(AST::Expr *left) {
     }
 
     return new AST::BinExpr(op, left, right);
-  } else
+  } else {
     return left;
+  }
 }
 
 AST::LambdaExpr *Parser::parseLambda() {
-  next();
-
   if (token != TT::PO)
     Error::parserExpected("'('", token.val);
 
@@ -221,6 +234,13 @@ AST::LambdaExpr *Parser::parseLambda() {
 
     next();
   }
+
+  next();
+
+  if (token != TT::ARR)
+    Error::parserExpected("'->'", token.val);
+
+  next();
 
   auto body = parseExpr(false);
 

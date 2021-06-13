@@ -2,6 +2,4 @@
 
 using namespace Plasmatum;
 
-void Compiler::Context::runFPM(llvm::Function *f) {
-    fpm.run(*f, fam);
-}
+void Compiler::Context::runFPM(llvm::Function *f) { fpm.run(*f, fam); }

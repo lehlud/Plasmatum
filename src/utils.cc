@@ -41,7 +41,7 @@ bool Utils::isSpecial(char c) {
 }
 
 bool Utils::isWhitespace(char c) {
-    return c <= ' ';
+    return c >= 0 && c <= ' ';
 }
 
 AST::BinExpr::Type Utils::TTToBET(Lexer::Token::Type type) {
@@ -52,6 +52,16 @@ AST::BinExpr::Type Utils::TTToBET(Lexer::Token::Type type) {
         case Lexer::Token::Type::DIV: return AST::BinExpr::DIV;
         case Lexer::Token::Type::MOD: return AST::BinExpr::MOD;
         case Lexer::Token::Type::POW: return AST::BinExpr::POW;
+        // bitwise operators
+        case Lexer::Token::Type::OR: return AST::BinExpr::OR;
+        case Lexer::Token::Type::AND: return AST::BinExpr::AND;
+        // logical operators
+        case Lexer::Token::Type::EQ: return AST::BinExpr::EQ;
+        case Lexer::Token::Type::NE: return AST::BinExpr::NE;
+        case Lexer::Token::Type::GT: return AST::BinExpr::GT;
+        case Lexer::Token::Type::LT: return AST::BinExpr::LT;
+        case Lexer::Token::Type::GE: return AST::BinExpr::GE;
+        case Lexer::Token::Type::LE: return AST::BinExpr::LE;
         default: Error::def("unable to convert token to binary operator");
     }
     return AST::BinExpr::ERR;

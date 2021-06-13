@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 
 #include "ast.h"
@@ -29,6 +30,8 @@ public:
       COL,   // ':'
       ASS,   // '='
       ARR,   // '->'
+      OR,    // '|'
+      AND,   // '&'
       EQ,    // '=='
       NE,    // '!='
       LT,    // '<'
@@ -52,6 +55,7 @@ public:
     Type type;
     std::string val;
 
+    Token_t() : type(EOF), val("EOF") {}
     Token_t(Type type, const std::string &val) : type(type), val(val) {}
 
     bool operator!=(Type t) { return type != t; }
@@ -67,6 +71,8 @@ public:
   char getc(size_t index) { return index >= text.size() ? -1 : text[index]; }
 
   Token next();
+
+  void reset() { index = 0; }
 };
 
 class Parser {
@@ -75,7 +81,7 @@ private:
   Lexer::Token token;
 
 public:
-  Parser(const Lexer &lexer) : lexer(lexer), token(next()) {}
+  Parser(const Lexer &lexer) : lexer(lexer) { next(); }
 
   Lexer::Token next() {
     token = lexer.next();
@@ -86,8 +92,8 @@ public:
   AST::Expr *parseOptBinExpr(AST::Expr *left);
   AST::LambdaExpr *parseLambda();
 
-  std::vector<AST::Expr*> parse() {
-    std::vector<AST::Expr*> result;
+  std::vector<AST::Expr *> parse() {
+    std::vector<AST::Expr *> result;
     while (token != Lexer::Token::Type::EOF) {
       result.push_back(parseExpr(true));
     }

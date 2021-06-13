@@ -62,11 +62,11 @@ public:
     LOR,  // 'or'
     LAND, // 'and'
     EQ,   // '=='
-    NEQ,  // '!='
+    NE,   // '!='
     GT,   // '>'
     LT,   // '<'
-    GTEQ, // '>='
-    LTEQ, // '<='
+    GE,   // '>='
+    LE,   // '<='
   };
 
 private:
