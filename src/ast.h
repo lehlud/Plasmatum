@@ -48,6 +48,7 @@ public:
 class BinExpr : public Expr {
 public:
   enum Type {
+    ERR, // error type
     ADD, // '+'
     SUB, // '-'
     MUL, // '*'
@@ -77,6 +78,8 @@ public:
       : type(type), left(left), right(right) {}
   llvm::Value *genCode(Compiler::Context &context) override;
 };
+
+extern std::map<BinExpr::Type, uint8_t> BinOpPrecedence;
 
 class IfExpr : public Expr {
 private:

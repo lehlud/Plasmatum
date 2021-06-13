@@ -5,11 +5,22 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Passes/PassBuilder.h>
 
+#include "error.h"
+
+#define TYPE_INT    1
+#define TYPE_FLOAT  1
+#define TYPE_ARRAY  1
+#define TYPE_FUNC   1
+#define TYPE_STRUCT 1
+
+
 namespace Plasmatum {
 namespace Compiler {
 
 class Context {
 private:
+  std::map<std::string, std::pair<llvm::Type *, llvm::Value *>> vars;
+
   llvm::ModuleAnalysisManager mam;
   llvm::CGSCCAnalysisManager gam;
   llvm::FunctionAnalysisManager fam;
@@ -45,6 +56,28 @@ public:
     gam.clear();
     fam.clear();
     lam.clear();
+  }
+
+  void setVar(const std::string &id,
+              const std::pair<llvm::Type *, llvm::Value *> &value) {
+    if (vars.count(id))
+      Error::compiler("'" + id + "' already defined");
+    vars[id] = value;
+  }
+
+  std::pair<llvm::Type *, llvm::Value *> getVar(const std::string &id) {
+    if (vars.count(id)) {
+      return vars[id];
+    } else {
+      auto f = mod->getFunction(id);
+      if (f) {
+        return {f->getType(), f};
+      }
+    }
+
+    Error::compiler("undefined reference to '" + id + "'");
+
+    return {nullptr, nullptr};
   }
 };
 

@@ -13,10 +13,17 @@ llvm::Value *FPExpr::genCode(Compiler::Context &context) {
 }
 
 llvm::Value *IdExpr::genCode(Compiler::Context &context) {
-    return nullptr;
+    auto var = context.getVar(id);
+
+    if (var.first->isFunctionTy()) return var.second;
+
+    return context.builder->CreateLoad(var.first, var.second);
 }
 
 llvm::Value *BinExpr::genCode(Compiler::Context &context) {
+    switch (type) {
+        case ADD:
+    }
     return nullptr;
 }
 

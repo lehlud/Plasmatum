@@ -34,6 +34,18 @@ Lexer::Token Lexer::next() {
   case ')':
     index += 1;
     return Token(TT::PC, ")");
+  case '[':
+    index += 1;
+    return Token(TT::BO, "[");
+  case ']':
+    index += 1;
+    return Token(TT::BC, "]");
+  case '{':
+    index += 1;
+    return Token(TT::CO, "{");
+  case '}':
+    index += 1;
+    return Token(TT::CC, "}");
   case '?':
     index += 1;
     return Token(TT::QM, "?");
@@ -129,25 +141,67 @@ AST::Expr *Parser::parseExpr(bool topLevel) {
     Error::parser("expected top level expression");
   } else {
     if (token == TT::ID) {
-      if (token == "lambda") result = parseLambda();
+      if (token == "lambda")
+        result = parseLambda();
       else {
         result = new AST::IdExpr(token.val);
         next();
       }
+    } else if (token == TT::PO) {
+      next();
+
+      result = parseExpr();
+
+      if (token != TT::PC)
+        Error::parserExpected("')'", token.val);
+
+      next();
     }
   }
 
-  if (result && token.isBinOperator()) {
+  if (!result)
+    Error::parserExpected("expression", token.val);
+
+  result = parseOptBinExpr(result);
+
+  if (token == TT::QM) {
+    next();
+
+    auto exprTrue = parseExpr();
+
+    if (token != TT::COL) Error::parserExpected("':'", token.val);
+
+    next();
+
+    auto exprFalse = parseExpr();
+
+    return new AST::IfExpr(result, exprTrue, exprFalse);
+  }
+
+  return result;
+}
+
+AST::Expr *Parser::parseOptBinExpr(AST::Expr *left) {
+  if (token.isBinOperator()) {
     auto op = Utils::TTToBET(token.type);
 
     next();
 
-    auto right = parseExpr(false);
+    auto right = parseExpr();
 
-    return new AST::BinExpr(op, result, right);
-  }
+    if (token.isBinOperator()) {
+      auto tmpOp = Utils::TTToBET(token.type);
 
-  return result;
+      if (AST::BinOpPrecedence[tmpOp] <= AST::BinOpPrecedence[op]) {
+        return parseOptBinExpr(new AST::BinExpr(op, left, right));
+      }
+
+      right = parseOptBinExpr(right);
+    }
+
+    return new AST::BinExpr(op, left, right);
+  } else
+    return left;
 }
 
 AST::LambdaExpr *Parser::parseLambda() {
@@ -169,8 +223,6 @@ AST::LambdaExpr *Parser::parseLambda() {
   }
 
   auto body = parseExpr(false);
-
-  next();
 
   return new AST::LambdaExpr(args, body);
 }

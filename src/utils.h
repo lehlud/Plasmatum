@@ -3,6 +3,7 @@
 #include <string>
 
 #include "ast.h"
+#include "jit.h"
 #include "lexerparser.h"
 
 namespace Plasmatum {
@@ -19,6 +20,10 @@ bool isSpecial(char c);
 bool isWhitespace(char c);
 
 AST::BinExpr::Type TTToBET(Lexer::Token::Type type);
+
+llvm::Value *plsmVal(llvm::Value *v);
+
+llvm::Value *tryCast(llvm::Value *v, llvm::Type *t);
 
 } // namespace Utils
 } // namespace Plasmatum

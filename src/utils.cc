@@ -23,6 +23,10 @@ bool Utils::isDigit(char c) {
 bool Utils::isSpecial(char c) {
     return c == '('
         || c == ')'
+        || c == '['
+        || c == ']'
+        || c == '{'
+        || c == '}'
         || c == '*'
         || c == '?'
         || c == ':'
@@ -50,5 +54,13 @@ AST::BinExpr::Type Utils::TTToBET(Lexer::Token::Type type) {
         case Lexer::Token::Type::POW: return AST::BinExpr::POW;
         default: Error::def("unable to convert token to binary operator");
     }
-    return AST::BinExpr::ADD;
+    return AST::BinExpr::ERR;
+}
+
+llvm::Value *Utils::plsmVal(llvm::Value *v) {
+    return nullptr;
+}
+
+llvm::Value *Utils::tryCast(llvm::Value *v, llvm::Type *t) {
+    return nullptr;
 }

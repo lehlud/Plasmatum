@@ -21,6 +21,10 @@ public:
       ID,    // identifier
       PO,    // '('
       PC,    // ')'
+      BO,    // '['
+      BC,    // ']'
+      CO,    // '{'
+      CC,    // '}'
       QM,    // '?'
       COL,   // ':'
       ASS,   // '='
@@ -55,7 +59,7 @@ public:
     bool operator!=(const std::string &s) { return val.compare(s); }
     bool operator==(const std::string &s) { return !val.compare(s); }
 
-    bool isBinOperator() { return type >= Type::ADD && type <= Type::POW; }
+    bool isBinOperator() { return type >= Type::EQ && type <= Type::POW; }
   } Token;
 
   Lexer(const std::string &text) : text(text) {}
@@ -79,7 +83,16 @@ public:
   }
 
   AST::Expr *parseExpr(bool topLevel = false);
+  AST::Expr *parseOptBinExpr(AST::Expr *left);
   AST::LambdaExpr *parseLambda();
+
+  std::vector<AST::Expr*> parse() {
+    std::vector<AST::Expr*> result;
+    while (token != Lexer::Token::Type::EOF) {
+      result.push_back(parseExpr(true));
+    }
+    return result;
+  }
 };
 
 } // namespace Plasmatum
