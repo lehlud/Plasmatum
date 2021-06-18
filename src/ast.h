@@ -137,12 +137,12 @@ public:
 
 class CallExpr : public Expr {
 private:
-  std::string id;
+  Expr *callee;
   std::vector<Expr *> *args;
 
 public:
-  CallExpr(IdExpr *varExpr, std::vector<Expr *> *args)
-      : id(varExpr->getId()), args(args) {}
+  CallExpr(Expr *callee, std::vector<Expr *> *args)
+      : callee(callee), args(args) {}
   llvm::Value *genCode(Compiler::Context &context) override;
 };
 

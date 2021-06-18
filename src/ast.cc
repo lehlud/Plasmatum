@@ -85,7 +85,16 @@ llvm::Value *WhileExpr::genCode(Compiler::Context &context) { return nullptr; }
 
 llvm::Value *AssignExpr::genCode(Compiler::Context &context) { return nullptr; }
 
-llvm::Value *CallExpr::genCode(Compiler::Context &context) { return nullptr; }
+llvm::Value *CallExpr::genCode(Compiler::Context &context) {
+  if (Utils::instanceof<IdExpr>(callee)) {
+    auto var = context.getVar(((IdExpr*) callee)->getId());
+    if (var->isFunctionValue()) {
+      
+    }
+  }
+
+  return nullptr;
+}
 
 llvm::Value *LambdaExpr::genCode(Compiler::Context &context) { return nullptr; }
 
