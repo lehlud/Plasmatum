@@ -14,12 +14,16 @@ llvm::Value *FPExpr::genCode(Compiler::Context &context) {
 }
 
 llvm::Value *IdExpr::genCode(Compiler::Context &context) {
+  return nullptr;
+
   auto var = context.getVar(id);
 
-  if (var.first->isFunctionTy())
-    return var.second;
+  if (var->isFunctionValue())
+    return ((Compiler::FunctionValue*) var)->lambda->genCode(context);
 
-  return context.builder->CreateLoad(var.first, var.second);
+  auto tmpVar = (Compiler::LLVMValue*) var;
+
+  return context.builder->CreateLoad(tmpVar->type, tmpVar->value);
 }
 
 llvm::Value *BinExpr::genCode(Compiler::Context &context) { return nullptr; }
@@ -67,7 +71,13 @@ llvm::Value *IfExpr::genCode(Compiler::Context &context) {
   return phiNode;
 }
 
-llvm::Value *BlockExpr::genCode(Compiler::Context &context) { return nullptr; }
+llvm::Value *BlockExpr::genCode(Compiler::Context &context) {
+  for (auto &expr : body) {
+    expr->genCode(context);
+  }
+
+  return result->genCode(context);
+}
 
 llvm::Value *ForExpr::genCode(Compiler::Context &context) { return nullptr; }
 
@@ -79,4 +89,12 @@ llvm::Value *CallExpr::genCode(Compiler::Context &context) { return nullptr; }
 
 llvm::Value *LambdaExpr::genCode(Compiler::Context &context) { return nullptr; }
 
-llvm::Value *Function::genCode(Compiler::Context &context) { return nullptr; }
+llvm::Value *Function::genCode(Compiler::Context &context) {
+  if (context.getVar(id)) {
+    // TODO: implement error message
+  }
+
+  context.setVar(id, new Compiler::FunctionValue(base));
+
+  return base->genCode(context);
+}

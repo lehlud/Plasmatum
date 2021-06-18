@@ -16,11 +16,40 @@
 #define TYPE_STRUCT 1
 
 namespace Plasmatum {
+namespace AST {
+class LambdaExpr;
+}
 namespace Compiler {
+
+class Value {
+public:
+  virtual ~Value() = default;
+  virtual bool isLLVMValue() { return false; }
+  virtual bool isFunctionValue() { return false; }
+};
+class LLVMValue : public Value {
+public:
+  llvm::Type *type;
+  llvm::Value *value;
+
+  LLVMValue(llvm::Type *type, llvm::Value *value) : type(type), value(value) {}
+
+  bool isLLVMValue() override { return true; }
+};
+class FunctionValue : public Value {
+public:
+  ::Plasmatum::AST::LambdaExpr *lambda;
+
+  FunctionValue(::Plasmatum::AST::LambdaExpr *lambda) : lambda(lambda) {}
+
+  bool isFunctionValue() override { return true; }
+};
+
+typedef std::map<std::string, Value *> scope;
 
 class Context {
 private:
-  std::map<std::string, std::pair<llvm::Type *, llvm::Value *>> vars;
+  std::vector<scope> scopes;
 
   llvm::ModuleAnalysisManager mam;
   llvm::CGSCCAnalysisManager gam;
@@ -59,26 +88,26 @@ public:
     lam.clear();
   }
 
-  void setVar(const std::string &id,
-              const std::pair<llvm::Type *, llvm::Value *> &value) {
-    if (vars.count(id))
-      Error::compiler("'" + id + "' already defined");
-    vars[id] = value;
-  }
-
-  std::pair<llvm::Type *, llvm::Value *> getVar(const std::string &id) {
-    if (vars.count(id)) {
-      return vars[id];
-    } else {
-      auto f = mod->getFunction(id);
-      if (f) {
-        return {f->getType(), f};
+  void setVar(const std::string &id, Value *value) {
+    for (size_t i = scopes.size() - 1; i >= 0; i--) {
+      auto scope = scopes[i];
+      if (scope.count(id)) {
+        scope[id] = value;
       }
     }
 
-    Error::compiler("undefined reference to '" + id + "'");
+    scopes.back()[id] = value;
+  }
 
-    return {nullptr, nullptr};
+  Value *getVar(const std::string &id) {
+    for (size_t i = scopes.size() - 1; i >= 0; i--) {
+      auto scope = scopes[i];
+      if (scope.count(id)) {
+        return scope[id];
+      }
+    }
+
+    return nullptr;
   }
 };
 
