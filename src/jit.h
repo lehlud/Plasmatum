@@ -62,6 +62,7 @@ public:
   llvm::IRBuilder<> *builder;
 
   bool needsRef = false;
+  std::vector<llvm::Type *> *argTypes = nullptr;
 
   Context(llvm::Module *mod, llvm::IRBuilder<> *builder)
       : mod(mod), builder(builder) {

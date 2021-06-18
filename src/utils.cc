@@ -65,7 +65,16 @@ AST::BinExpr::Type Utils::TTToBET(Lexer::Token::Type type) {
   return AST::BinExpr::ERR;
 }
 
-llvm::Value *Utils::plsmVal(llvm::Value *v) { return nullptr; }
+llvm::Value *Utils::plsmVal(Compiler::Context &context, llvm::Value *v) {
+  auto &ctx = context.mod->getContext();
+
+  auto vT = v->getType();
+
+  if (vT->isIntegerTy()) {
+  }
+
+  return nullptr;
+}
 
 llvm::Value *Utils::tryCast(Compiler::Context &context, llvm::Value *v,
                             llvm::Type *t) {
@@ -97,19 +106,19 @@ llvm::Value *Utils::tryCast(Compiler::Context &context, llvm::Value *v,
 }
 
 llvm::Value *Utils::tryLogicalVal(Compiler::Context &context, llvm::Value *v) {
-	auto vT = v->getType();
+  auto vT = v->getType();
 
-	if (vT->isIntegerTy()) {
-		auto zero = llvm::ConstantInt::get(vT, 0);
-		return context.builder->CreateICmpNE(v, zero);
-	} else if (vT->isFloatingPointTy()) {
-		auto zero = llvm::ConstantFP::get(vT, 0);
-		return context.builder->CreateFCmpUNE(v, zero);
-	} else if (vT->isPointerTy()) {
-		auto intT = llvm::Type::getInt32Ty(context.mod->getContext());
-		auto ptr = tryCast(context, v, intT);
-		return tryLogicalVal(context, ptr);
-	}
+  if (vT->isIntegerTy()) {
+    auto zero = llvm::ConstantInt::get(vT, 0);
+    return context.builder->CreateICmpNE(v, zero);
+  } else if (vT->isFloatingPointTy()) {
+    auto zero = llvm::ConstantFP::get(vT, 0);
+    return context.builder->CreateFCmpUNE(v, zero);
+  } else if (vT->isPointerTy()) {
+    auto intT = llvm::Type::getInt32Ty(context.mod->getContext());
+    auto ptr = tryCast(context, v, intT);
+    return tryLogicalVal(context, ptr);
+  }
 
   return nullptr;
 }

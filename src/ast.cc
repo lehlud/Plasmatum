@@ -14,14 +14,12 @@ llvm::Value *FPExpr::genCode(Compiler::Context &context) {
 }
 
 llvm::Value *IdExpr::genCode(Compiler::Context &context) {
-  return nullptr;
-
   auto var = context.getVar(id);
 
   if (var->isFunctionValue())
-    return ((Compiler::FunctionValue*) var)->lambda->genCode(context);
+    return ((Compiler::FunctionValue *)var)->lambda->genCode(context);
 
-  auto tmpVar = (Compiler::LLVMValue*) var;
+  auto tmpVar = (Compiler::LLVMValue *)var;
 
   return context.builder->CreateLoad(tmpVar->type, tmpVar->value);
 }
@@ -85,20 +83,74 @@ llvm::Value *WhileExpr::genCode(Compiler::Context &context) { return nullptr; }
 
 llvm::Value *AssignExpr::genCode(Compiler::Context &context) { return nullptr; }
 
-llvm::Value *CallExpr::genCode(Compiler::Context &context) {
-  if (Utils::instanceof<IdExpr>(callee)) {
-    auto var = context.getVar(((IdExpr*) callee)->getId());
-    if (var->isFunctionValue()) {
-      
+llvm::CallInst *CallExpr::genCode(Compiler::Context &context) {
+  LambdaExpr *function = nullptr;
+
+  if (Utils::instanceof <IdExpr>(callee)) {
+    auto id = ((IdExpr *)callee)->getId();
+    auto var = context.getVar(id);
+    if (!var) {
+      Error::compiler("undefined reference to '" + id + "'");
+    } else if (var->isFunctionValue()) {
+      auto funVal = ((Compiler::FunctionValue *)var);
+      auto function = funVal->lambda;
+    } else if (var->isLLVMValue()) {
+      auto tmpVar = ((Compiler::LLVMValue *) var);
+      if (tmpVar->type->isFunctionTy()) {
+        auto f = (llvm::Function *) tmpVar->value;
+        
+        if (f->arg_size() != args.size()) {
+          Error::compiler("invalid argument size");
+        }
+
+        std::vector<llvm::Value *> callArgs;
+        for (int i = 0; i < args.size(); i++) {
+          auto expr = args[i]->genCode(context);
+          expr = Utils::tryCast(context, expr, f->getArg(i)->getType());
+          callArgs.push_back(expr);
+        }
+
+        return context.builder->CreateCall(f, callArgs);
+      }
     }
+  } else if (Utils::instanceof <LambdaExpr>(callee)) {
+    function = (LambdaExpr *) callee;
+  }
+
+  if (!function) {
+    Error::compiler("invalid call instruction");
+  } else if (function->args.size() != args.size()) {
+    Error::compiler("invalid argument size");
+  }
+
+  auto prevArgTypes = context.argTypes;
+  auto argTypes = new std::vector<llvm::Type *>();
+  std::vector<llvm::Value *> callArgs;
+
+  for (auto &arg : args) {
+    auto expr = arg->genCode(context);
+    argTypes->push_back(expr->getType());
+    callArgs.push_back(expr);
+  }
+
+  context.argTypes = argTypes;
+
+  auto f = function->genCode(context);
+
+  context.argTypes = prevArgTypes;
+
+  return context.builder->CreateCall(f, callArgs);
+}
+
+llvm::Function *LambdaExpr::genCode(Compiler::Context &context) {
+  if (!context.argTypes) {
+    Error::compiler("invalid types for function arguments");
   }
 
   return nullptr;
 }
 
-llvm::Value *LambdaExpr::genCode(Compiler::Context &context) { return nullptr; }
-
-llvm::Value *Function::genCode(Compiler::Context &context) {
+llvm::Function *Function::genCode(Compiler::Context &context) {
   if (context.getVar(id)) {
     // TODO: implement error message
   }

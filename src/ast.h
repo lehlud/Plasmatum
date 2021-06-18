@@ -40,7 +40,7 @@ private:
   std::string id;
 
 public:
-  IdExpr(const std::string& id) : id(id) {}
+  IdExpr(const std::string &id) : id(id) {}
   std::string getId() { return id; }
   llvm::Value *genCode(Compiler::Context &context) override;
 };
@@ -138,23 +138,24 @@ public:
 class CallExpr : public Expr {
 private:
   Expr *callee;
-  std::vector<Expr *> *args;
+  std::vector<Expr *> args;
 
 public:
-  CallExpr(Expr *callee, std::vector<Expr *> *args)
+  CallExpr(Expr *callee, const std::vector<Expr *> &args)
       : callee(callee), args(args) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
+  llvm::CallInst *genCode(Compiler::Context &context) override;
 };
 
 class LambdaExpr : public Expr {
 private:
   Expr *body;
-  std::vector<std::string> args;
 
 public:
+  std::vector<std::string> args;
+
   LambdaExpr(const std::vector<std::string> &args, Expr *body)
       : args(args), body(body) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
+  llvm::Function *genCode(Compiler::Context &context) override;
 };
 
 class Function : public Expr {
@@ -164,7 +165,7 @@ private:
 
 public:
   Function(LambdaExpr *base, const std::string &id) : base(base), id(id) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
+  llvm::Function *genCode(Compiler::Context &context) override;
 };
 
 } // namespace AST
