@@ -1,104 +1,36 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-
 #include "ast.h"
 
-namespace Plasmatum {
+#define TT_EOF 0    // end of file
+#define TT_INT 1    // integer literal
+#define TT_FLOAT 2  // float literal
 
-class Lexer {
-private:
-  size_t index = 0;
-  std::string text;
+#define TT_ID 10    // identifier
 
-public:
-  typedef struct Token_t {
-    enum Type {
-#undef EOF
-      EOF,   // end of file
-      INT,   // integer literal
-      FLOAT, // float literal
-      ID,    // identifier
-      PO,    // '('
-      PC,    // ')'
-      BO,    // '['
-      BC,    // ']'
-      CO,    // '{'
-      CC,    // '}'
-      QM,    // '?'
-      COL,   // ':'
-      ASS,   // '='
-      ARR,   // '->'
-      OR,    // '|'
-      AND,   // '&'
-      EQ,    // '=='
-      NE,    // '!='
-      LT,    // '<'
-      GT,    // '>'
-      LE,    // '<='
-      GE,    // '>='
-      ADD,   // '+'
-      SUB,   // '-'
-      MUL,   // '*'
-      DIV,   // '/'
-      MOD,   // '%'
-      POW,   // '**'
-      ADDA,  // '+='
-      SUBA,  // '-='
-      MULA,  // '*='
-      DIVA,  // '/='
-      MODA,  // '%='
-      POWA,  // '**='
-    };
+#define TT_PO 20    // '('
+#define TT_PC 21    // ')'
+#define TT_BO 22    // '['
+#define TT_BC 23    // ']'
+#define TT_CO 24    // '{'
+#define TT_CC 25    // '}'
 
-    Type type;
-    std::string val;
+#define TT_QM 30    // '?'
+#define TT_COL 31   // ':'
 
-    Token_t() : type(EOF), val("EOF") {}
-    Token_t(Type type, const std::string &val) : type(type), val(val) {}
+#define TT_ARR 40   // '->'
+#define TT_ASS 41   // '='
 
-    bool operator!=(Type t) { return type != t; }
-    bool operator==(Type t) { return type == t; }
-    bool operator!=(const std::string &s) { return val.compare(s); }
-    bool operator==(const std::string &s) { return !val.compare(s); }
+#define TT_ADD 60   // '+'
+#define TT_SUB 61   // '-'
+#define TT_MUL 62   // '*'
+#define TT_DIV 63   // '/'
 
-    bool isBinOperator() { return type >= Type::EQ && type <= Type::POW; }
-  } Token;
+typedef struct token_t {
+  uint8_t type;
+  char *string;
+} token;
 
-  Lexer(const std::string &text) : text(text) {}
+token **lex(char *text);
+expr **parse(token **tokens);
 
-  char getc(size_t index) { return index >= text.size() ? -1 : text[index]; }
-
-  Token next();
-
-  void reset() { index = 0; }
-};
-
-class Parser {
-private:
-  Lexer lexer;
-  Lexer::Token token;
-
-public:
-  Parser(const Lexer &lexer) : lexer(lexer) { next(); }
-
-  Lexer::Token next() {
-    token = lexer.next();
-    return token;
-  }
-
-  AST::Expr *parseExpr(bool topLevel = false);
-  AST::Expr *parseOptBinExpr(AST::Expr *left);
-  AST::LambdaExpr *parseLambda();
-
-  std::vector<AST::Expr *> parse() {
-    std::vector<AST::Expr *> result;
-    while (token != Lexer::Token::Type::EOF) {
-      result.push_back(parseExpr(true));
-    }
-    return result;
-  }
-};
-
-} // namespace Plasmatum

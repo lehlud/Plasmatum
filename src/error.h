@@ -1,26 +1,11 @@
 #pragma once
 
-#include <string>
+#include <stdint.h>
 
-namespace Plasmatum {
-namespace Error {
+#define ERR_DEFAULT 1
+#define ERR_LEXER 2
+#define ERR_PARSER 3
+#define ERR_COMPILER 4
 
-enum Type {
-  DEFAULT,
-  LEXER,
-  PARSER,
-  COMPILER,
-};
-
-std::string typeToString(Type type);
-
-void error(Type type, const std::string &msg);
-void def(const std::string &msg);
-void lexer(const std::string &msg);
-void parser(const std::string &msg);
-void compiler(const std::string &msg);
-
-void parserExpected(const std::string &expected, const std::string &got);
-
-} // namespace Error
-} // namespace Plasmatum
+void error(uint8_t type, char *msg);
+void error_expected(uint8_t type, char *exp, char *got);

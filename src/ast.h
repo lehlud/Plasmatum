@@ -1,172 +1,58 @@
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
+#include <stdint.h>
 
-#include <llvm/IR/Value.h>
+typedef struct expr_t expr;
 
-#include "jit.h"
+typedef struct ifexpr_t {
+  expr *cond, *true_v, *false_v;
+} ifexpr;
 
-namespace Plasmatum {
-namespace AST {
+#define BET_ADD 1
+#define BET_SUB 2
+#define BET_MUL 3
+#define BET_DIV 4
 
-class Expr {
-public:
-  virtual ~Expr() = default;
-  virtual llvm::Value *genCode(Compiler::Context &context) = 0;
-};
+typedef struct binexpr_t {
+  uint8_t type;
+  expr *left, *right;
+} binexpr;
 
-class IntExpr : public Expr {
-private:
-  long val;
+typedef struct assignexpr_t {
+  char *id;
+  expr *value;
+} assignexpr;
 
-public:
-  IntExpr(long val) : val(val) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
+typedef struct loopexpr_t {
+  expr *cond, *body;
+} loopexpr;
 
-class FPExpr : public Expr {
-private:
-  double val;
+typedef struct callexpr_t {
+  expr *callee, **args;
+} callexpr;
 
-public:
-  FPExpr(double val) : val(val) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
+typedef struct function_t {
+  char **args;
+  expr *body;
+} function;
 
-class IdExpr : public Expr {
-private:
-  std::string id;
+#define ET_INT 1
+#define ET_FLOAT 2
 
-public:
-  IdExpr(const std::string &id) : id(id) {}
-  std::string getId() { return id; }
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
+#define ET_IDENTIFIER 30
+#define ET_IFEXPR 31
+#define ET_BINEXPR 32
+#define ET_FUNCTION 33
 
-class BinExpr : public Expr {
-public:
-  enum Type {
-    ERR, // error type
-    ADD, // '+'
-    SUB, // '-'
-    MUL, // '*'
-    DIV, // '/'
-    MOD, // '%'
-    POW, // '**'
-    // bitwise operators
-    OR,  // '|'
-    AND, // '&'
-    // logical operators
-    LOR,  // 'or'
-    LAND, // 'and'
-    EQ,   // '=='
-    NE,   // '!='
-    GT,   // '>'
-    LT,   // '<'
-    GE,   // '>='
-    LE,   // '<='
+struct expr_t {
+  uint8_t used;
+  union {
+    long long int_v;
+    long double float_v;
+
+    char *identifier;
+    ifexpr *ifexpr;
+    binexpr *binexpr;
+    function *function;
   };
-
-private:
-  Type type;
-  Expr *left, *right;
-
-public:
-  BinExpr(Type type, Expr *left, Expr *right)
-      : type(type), left(left), right(right) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
 };
-
-extern std::map<BinExpr::Type, uint8_t> BinOpPrecedence;
-
-class IfExpr : public Expr {
-private:
-  Expr *cond, *exprTrue, *exprFalse;
-
-public:
-  IfExpr(Expr *cond, Expr *exprTrue, Expr *exprFalse)
-      : cond(cond), exprTrue(exprTrue), exprFalse(exprFalse) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
-
-class BlockExpr : public Expr {
-private:
-  Expr *result;
-  std::vector<Expr *> body;
-
-public:
-  BlockExpr(std::vector<Expr *> body, Expr *result)
-      : body(body), result(result) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
-
-class ForExpr : public Expr {
-private:
-  Expr *min, *max;
-  std::string counterId;
-  Expr *body;
-
-public:
-  ForExpr(Expr *min, Expr *max, IdExpr *counter, Expr *body)
-      : min(min), max(max), counterId(counter->getId()), body(body) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
-
-class WhileExpr : public Expr {
-private:
-  Expr *cond;
-  Expr *ifBody, *elseBody;
-
-public:
-  WhileExpr(Expr *cond, Expr *ifBody, Expr *elseBody)
-      : cond(cond), ifBody(ifBody), elseBody(elseBody ? elseBody : 0) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
-
-class AssignExpr : public Expr {
-private:
-  std::string id;
-  Expr *val;
-
-public:
-  AssignExpr(IdExpr *varExpr, Expr *val) : id(varExpr->getId()), val(val) {}
-  llvm::Value *genCode(Compiler::Context &context) override;
-};
-
-class CallExpr : public Expr {
-private:
-  Expr *callee;
-  std::vector<Expr *> args;
-
-public:
-  CallExpr(Expr *callee, const std::vector<Expr *> &args)
-      : callee(callee), args(args) {}
-  llvm::CallInst *genCode(Compiler::Context &context) override;
-};
-
-class LambdaExpr : public Expr {
-private:
-  Expr *body;
-
-public:
-  std::vector<std::string> args;
-
-  LambdaExpr(const std::vector<std::string> &args, Expr *body)
-      : args(args), body(body) {}
-  llvm::Function *genCode(Compiler::Context &context) override;
-};
-
-class Function : public Expr {
-private:
-  LambdaExpr *base;
-  std::string id;
-
-public:
-  Function(LambdaExpr *base, const std::string &id) : base(base), id(id) {}
-  llvm::Function *genCode(Compiler::Context &context) override;
-};
-
-} // namespace AST
-} // namespace Plasmatum

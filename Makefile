@@ -1,15 +1,17 @@
-FILES = $(wildcard src/*.cc)
-OBJ_FILES = $(FILES:.cc=.o)
-COMPILER = clang++
+FILES = $(wildcard src/*.c)
+OBJ_FILES = $(FILES:.c=.o)
+COMPILER = clang
 
-CXXFLAGS = `llvm-config --cxxflags` -O3
-LDFLAGS = `llvm-config --ldflags --system-libs --libs all` -flto -lLLVM
+CXXFLAGS = -O3
+LDFLAGS = -flto -O3
+
+all: bin/plsm
 
 bin/plsm: $(OBJ_FILES)
 	mkdir -p bin
-	$(COMPILER) $(OBJ_FILES) $(LDFLAGS) -O3 -o bin/plsm
+	$(COMPILER) $(OBJ_FILES) $(LDFLAGS) -o bin/plsm
 
-%.o: %.cc
+%.o: %.c
 	$(COMPILER) $(CXXFLAGS) -o $@ -c $<
 
 

@@ -1,14 +1,9 @@
-#include <iostream>
-#include <memory>
-
 #include "ast.h"
 #include "error.h"
 #include "utils.h"
+#include "lexerparser.h"
 
-using namespace Plasmatum;
-
-std::map<AST::BinExpr::Type, uint8_t> AST::BinOpPrecedence;
-
+/*
 void setBinOpPrecedence() {
   AST::BinOpPrecedence = {
       // logical operators
@@ -32,20 +27,17 @@ void setBinOpPrecedence() {
       {AST::BinExpr::Type::POW, 32},
   };
 }
+*/
+
+#include <stdio.h>
 
 int main(int argc, char **argv) {
   if (argc > 1) {
-    std::string tmp = Utils::readFile(argv[1]);
-    setBinOpPrecedence();
+    char *text = readfile(argv[1]);
 
-    Lexer lexer(tmp);
-
-    Parser parser(lexer);
-
-    parser.parse();
+    token *lex_result = lex(text);
   } else {
-    std::puts("Please specify a name of a file!");
-    return 1;
+    error(ERR_DEFAULT, "Please specify a name of a file!");
   }
   return 0;
 }

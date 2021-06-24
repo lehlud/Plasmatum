@@ -1,39 +1,19 @@
 #pragma once
 
-#include <string>
+#include <stdarg.h>
+#include <stdlib.h>
 
-#include "ast.h"
-#include "jit.h"
-#include "lexerparser.h"
+char *plsm_sprintf(const char *format, ...);
+void plsm_str_appendc(char *str, char c);
 
-namespace Plasmatum {
-namespace Utils {
+char *readfile(const char *fname);
 
-template <typename Base, typename T> inline bool instanceof (const T *) {
-  return std::is_base_of<Base, T>::value;
-}
+int is_digit(char c);
+int is_letter(char c);
+int is_idchar(char c);
+int is_special(char c);
+int is_whitespace(char c);
 
-template <typename Base1, typename Base2, typename T> inline bool instanceof (const T *) {
-  return std::is_base_of<Base1, T>::value || std::is_base_of<Base2, T>::value;
-}
-
-std::string readFile(std::string name);
-
-bool isDigit(char c);
-bool isSpecial(char c);
-bool isWhitespace(char c);
-
-AST::BinExpr::Type TTToBET(Lexer::Token::Type type);
-
-#define TYPE_INT 1
-#define TYPE_FLOAT 2
-#define TYPE_LIST 3
-
-llvm::Value *plsmVal(Compiler::Context &context, llvm::Value *v);
-
-llvm::Value *tryCast(Compiler::Context &context, llvm::Value *v, llvm::Type *t);
-
-llvm::Value *tryLogicalVal(Compiler::Context &context, llvm::Value *v);
-
-} // namespace Utils
-} // namespace Plasmatum
+#define array_push(size, type, array, element) \
+  array = (type *) realloc(array, ++size * sizeof(element)); \
+  array[size - 1] = element
