@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+int plsm_streq(const char *s1, const char *s2) {
+  return strcmp(s1, s2) == 0;
+}
+
 char *plsm_sprintf(const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -22,10 +26,10 @@ char *plsm_sprintf(const char *format, ...) {
   return result;
 }
 
-void plsm_str_appendc(char *str, char c) {
-  size_t len = strlen(str) + 1;
-  str = (char*) realloc(str, len * sizeof(char));
-  sprintf(str, "%s%c", str, c);
+void plsm_str_appendc(char **str, char c) {
+  size_t len = strlen(*str) + 1;
+  *str = (char*) realloc(*str, len * sizeof(char));
+  sprintf(*str, "%s%c", *str, c);
 }
 
 char *readfile(const char *fname) {

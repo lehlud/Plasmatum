@@ -2,8 +2,10 @@
 
 #include <stdint.h>
 
-typedef struct expr_t expr;
+typedef long long int_t;
+typedef long double float_t;
 
+typedef struct expr_t expr;
 typedef struct ifexpr_t {
   expr *cond, *true_v, *false_v;
 } ifexpr;
@@ -42,17 +44,33 @@ typedef struct function_t {
 #define ET_IDENTIFIER 30
 #define ET_IFEXPR 31
 #define ET_BINEXPR 32
-#define ET_FUNCTION 33
+#define ET_ASSIGNEXPR 33
+#define ET_LOOPEXPR 34
+#define ET_CALLEXPR 35
+#define ET_FUNCTION 36
 
 struct expr_t {
   uint8_t used;
   union {
-    long long int_v;
-    long double float_v;
+    int_t int_v;
+    float_t float_v;
 
     char *identifier;
     ifexpr *ifexpr;
     binexpr *binexpr;
+    assignexpr *assignexpr;
+    loopexpr *loopexpr;
+    callexpr *callexpr;
     function *function;
   };
 };
+
+expr *create_int(int_t int_v);
+expr *create_float(float_t float_v);
+expr *create_identifier(char *identifier);
+expr *create_ifexpr(expr *cond, expr *true_v, expr *false_v);
+expr *create_binexpr(uint8_t type, expr *left, expr *right);
+expr *create_assignexpr(char *id, expr *value);
+expr *create_loopexpr(expr *cond, expr *body);
+expr *create_callexpr(expr *callee, expr **args);
+expr *create_function(char **args, expr *body);

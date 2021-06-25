@@ -2,9 +2,9 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-
+int plsm_streq(const char *s1, const char *s2);
 char *plsm_sprintf(const char *format, ...);
-void plsm_str_appendc(char *str, char c);
+void plsm_str_appendc(char **str, char c);
 
 char *readfile(const char *fname);
 

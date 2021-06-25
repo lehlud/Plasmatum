@@ -35,7 +35,16 @@ int main(int argc, char **argv) {
   if (argc > 1) {
     char *text = readfile(argv[1]);
 
-    token *lex_result = lex(text);
+    token **lex_result = lex(text);
+
+    size_t idx = 0;
+    token *t;
+    while ((t = lex_result[idx++]) != 0) {
+      puts(t->string);
+    }
+
+    expr **parse_result = parse(lex_result);
+
   } else {
     error(ERR_DEFAULT, "Please specify a name of a file!");
   }
