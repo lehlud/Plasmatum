@@ -24,13 +24,6 @@ void setBinOpPrecedence() {
 }
 */
 
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Type.h>
-
-llvm::LLVMContext context;
-llvm::Type *IntType = (llvm::Type *)llvm::Type::getInt128Ty(context);
-llvm::Type *FloatType = (llvm::Type *)llvm::Type::getDoubleTy(context);
-
 int main(int argc, char **argv) {
   if (argc <= 1) {
     // error here
