@@ -1,3 +1,9 @@
-define mul(a b) a * b
+define function mul(a b) {
+    return a * b;
+}
 
-40 1230 03 02.20 203
+// define struct (a b c) {
+//     define function abc() {
+//         return a + b + c;
+//     }
+// }

@@ -1,8 +1,3 @@
-#include "ast.h"
-#include "error.h"
-#include "utils.h"
-#include "lexerparser.h"
-
 /*
 void setBinOpPrecedence() {
   AST::BinOpPrecedence = {
@@ -29,24 +24,17 @@ void setBinOpPrecedence() {
 }
 */
 
-#include <stdio.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
+
+llvm::LLVMContext context;
+llvm::Type *IntType = (llvm::Type *)llvm::Type::getInt128Ty(context);
+llvm::Type *FloatType = (llvm::Type *)llvm::Type::getDoubleTy(context);
 
 int main(int argc, char **argv) {
-  if (argc > 1) {
-    char *text = readfile(argv[1]);
-
-    token **lex_result = lex(text);
-
-    size_t idx = 0;
-    token *t;
-    while ((t = lex_result[idx++]) != 0) {
-      puts(t->string);
-    }
-
-    expr **parse_result = parse(lex_result);
-
-  } else {
-    error(ERR_DEFAULT, "Please specify a name of a file!");
+  if (argc <= 1) {
+    // error here
   }
+
   return 0;
 }

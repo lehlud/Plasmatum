@@ -1,9 +1,9 @@
-FILES = $(wildcard src/*.c)
-OBJ_FILES = $(FILES:.c=.o)
-COMPILER = clang
+FILES = $(wildcard src/*.cc)
+OBJ_FILES = $(FILES:.cc=.o)
+COMPILER = clang++
 
-CXXFLAGS = -O3
-LDFLAGS = -flto -O3
+CXXFLAGS = `llvm-config --cxxflags` -O3
+LDFLAGS = `llvm-config --ldflags --system-libs --libs all` -flto -lLLVM
 
 all: bin/plsm
 
@@ -12,7 +12,7 @@ bin/plsm: $(OBJ_FILES)
 	$(COMPILER) $(OBJ_FILES) $(LDFLAGS) -o bin/plsm
 	strip bin/plsm
 
-%.o: %.c
+%.o: %.cc
 	$(COMPILER) $(CXXFLAGS) -o $@ -c $<
 
 
