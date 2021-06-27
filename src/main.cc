@@ -24,10 +24,18 @@ void setBinOpPrecedence() {
 }
 */
 
+
+
+void initializeModule() {
+
+}
+
 int main(int argc, char **argv) {
   if (argc <= 1) {
     // error here
   }
+
+  initializeModule();
 
   return 0;
 }

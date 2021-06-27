@@ -44,11 +44,8 @@ llvm::Value *PlsmValue(llvm::Value *value) {
 
   auto result = llvm::UndefValue::get(PlsmType);
 
-  auto one = llvm::ConstantInt::get(IntType, 1);
-  auto zero = llvm::ConstantInt::get(IntType, 0);
-
-  auto typePointer = Builder.CreateGEP(result, zero);
-  auto valuePointer = Builder.CreateGEP(result, one);
+  auto typePointer = Builder.CreateStructGEP(result, 0);
+  auto valuePointer = Builder.CreateStructGEP(result, 1);
 
   auto typeValue = llvm::ConstantInt::get(IntType, type);
 
@@ -59,9 +56,46 @@ llvm::Value *PlsmValue(llvm::Value *value) {
 }
 
 llvm::Value *NullValue() {
+  extern llvm::Type *IntType;
+  extern llvm::Type *PlsmType;
+  extern llvm::Type *ValueType;
+  extern llvm::IRBuilder<> Builder;
   extern llvm::LLVMContext Context;
-  auto voidPointerType = llvm::Type::getVoidTy(Context)->getPointerTo();
-  auto nullPointer = llvm::ConstantPointerNull::get(voidPointerType);
 
-  return PlsmValue(nullPointer);
+  auto nullPointerType = llvm::Type::getInt8PtrTy(Context);
+  auto nullPointer = llvm::ConstantPointerNull::get(nullPointerType);
+
+  auto result = llvm::UndefValue::get(PlsmType);
+
+  auto typePointer = Builder.CreateStructGEP(result, 0);
+  auto valuePointer = Builder.CreateStructGEP(result, 1);
+
+  auto typeValue = llvm::ConstantInt::get(IntType, TYPE_POINTER);
+
+  Builder.CreateStore(typePointer, typeValue);
+  Builder.CreateStore(valuePointer, nullPointer);
+
+  return result;
+}
+
+llvm::Function *createAddFunction() {
+  extern llvm::Type *PlsmType;
+  extern llvm::Module Module;
+  extern llvm::IRBuilder<> Builder;
+  extern llvm::LLVMContext Context;
+
+  auto functionType = llvm::FunctionType::get(PlsmType, false);
+  auto function = llvm::Function::Create(
+      functionType, llvm::Function::ExternalLinkage, "", Module);
+
+  auto previousBasicBlock = Builder.GetInsertBlock();
+  auto functionBasicBlock = llvm::BasicBlock::Create(Context, "", function);
+
+  Builder.SetInsertPoint(functionBasicBlock);
+
+  // add body here
+
+  Builder.SetInsertPoint(previousBasicBlock);
+
+  return function;
 }

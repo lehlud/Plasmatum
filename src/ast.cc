@@ -1,10 +1,10 @@
 #include "ast.hh"
 #include "utils.hh"
 
-#include <llvm/IR/Type.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Type.h>
 
 extern llvm::Module Module;
 extern llvm::LLVMContext Context;
@@ -45,7 +45,9 @@ llvm::Value *LambdaExpr::genCode() {
 
   Builder.CreateRet(NullValue());
 
-      return function;
+  Builder.SetInsertPoint(previousBasicBlock);
+
+  return function;
 }
 
 llvm::Value *DefineGlobalStmt::genCode() { return nullptr; }
