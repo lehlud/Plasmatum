@@ -12,11 +12,6 @@ public:
   virtual llvm::Value *genCode() = 0;
 };
 
-class Stmt {
-public:
-  virtual llvm::Value *genCode() = 0;
-};
-
 class IntExpr : public Expr {
 public:
   const uint64_t value;
@@ -36,7 +31,7 @@ public:
 };
 
 class BinExpr : public Expr {
-private:
+protected:
   Expr *left, *right;
 
 public:
@@ -71,29 +66,13 @@ public:
   llvm::Value *genCode() override;
 };
 
-class LambdaExpr : public Expr {
+class FunctionExpr : public Expr {
 public:
-  const std::vector<std::string> args;
-  const std::vector<Stmt *> body;
+  std::vector<std::string> args;
+  Expr *body;
 
-  llvm::Value *genCode() override;
-};
-
-class DefineStmt : public Stmt {};
-
-class DefineGlobalStmt : public DefineStmt {
-public:
-  const std::string id;
-
-  DefineGlobalStmt(const std::string &id) : id(id) {}
-
-  llvm::Value *genCode() override;
-};
-
-class DefineFunctionStmt : public DefineStmt {
-public:
-  const std::string id;
-  const LambdaExpr base;
+  FunctionExpr(const std::vector<std::string> &args, Expr *body)
+      : args(args), body(body) {}
 
   llvm::Value *genCode() override;
 };

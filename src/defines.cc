@@ -1,26 +1,23 @@
 #include "defines.hh"
+#include "ast.hh"
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 
+#include <map>
+#include <vector>
+
 llvm::LLVMContext Context;
 llvm::Module Module("", Context);
 llvm::IRBuilder<> Builder(Context);
 
 llvm::Type *IntType = llvm::IntegerType::get(Context, INT_SIZE);
-llvm::Type *CharType = llvm::IntegerType::get(Context, CHAR_SIZE);
 llvm::Type *FloatType = llvm::Type::getDoubleTy(Context);
 
-llvm::Type *TypeType = llvm::Type::getInt8Ty(Context);
-llvm::Type *ValueType = llvm::Type::getInt8PtrTy(Context);
-llvm::Type *PlsmType = llvm::StructType::get(Context, {TypeType, ValueType});
+typedef std::map<std::string, llvm::Value *> var_scope_t;
+std::vector<var_scope_t> VarScopes = {var_scope_t()};
 
-int isMap = 0, isList = 0, isReference = 0;
-
-llvm::Function *AddFunction;
-llvm::Function *SubFunction;
-llvm::Function *MulFunction;
-llvm::Function *DivFunction;
-
+std::map<std::string, std::pair<FunctionExpr *, std::vector<llvm::Function *>>>
+    Functions;

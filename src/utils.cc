@@ -6,96 +6,132 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Type.h>
 
-llvm::Value *PlsmValue(llvm::Value *value) {
-  extern llvm::Type *IntType;
-  extern llvm::Type *PlsmType;
-  extern llvm::IRBuilder<> Builder;
+#include <iostream>
 
-  auto valueType = value->getType();
+llvm::Value *createBinExpr(llvm::Value *left, llvm::Value *right,
+                           BinExprCreator intBEC, BinExprCreator floatBEC,
+                           const std::string &name) {
+  auto leftT = left->getType();
+  auto rightT = right->getType();
 
-  uint8_t type = TYPE_ERR;
-  if (valueType->isIntegerTy()) {
-    auto integerType = (llvm::IntegerType *)valueType;
-    auto integerBitWidth = integerType->getIntegerBitWidth();
-    if (integerBitWidth == INT_SIZE) {
-      type = TYPE_INT;
-    } else if (integerBitWidth == CHAR_SIZE) {
-      type = TYPE_CHAR;
+  if (leftT->isIntegerTy() && rightT->isIntegerTy()) {
+    return intBEC(left, right);
+  } else if (leftT->isFloatingPointTy() || rightT->isFloatingPointTy()) {
+    if (!(leftT->isFloatingPointTy())) {
+      left = createFloatCast(left);
+    } else if (!(rightT->isFloatingPointTy())) {
+      right = createFloatCast(right);
     }
-  } else if (valueType->isFloatingPointTy()) {
-    type = TYPE_FLOAT;
-  } else if (valueType->isPointerTy()) {
-    extern int isMap;
-    extern int isList;
-    extern int isReference;
-    if (isMap) {
-      type = TYPE_MAP;
-    } else if (isList) {
-      type = TYPE_LIST;
-    } else if (isReference) {
-      type = TYPE_POINTER;
-    }
+
+    return floatBEC(left, createFloatCast(right));
+  } else {
+    std::cout << "unable to create " << name << " instruction" << std::endl;
   }
 
-  if (type == TYPE_ERR) {
-    // error here
-    exit(1);
+  return nullptr;
+}
+
+extern llvm::IRBuilder<> Builder;
+
+llvm::Value *createIntCast(llvm::Value *v) {
+  auto vT = v->getType();
+
+  if (vT->isIntegerTy()) {
+    return v;
+  } else if (vT->isFloatingPointTy()) {
+    extern llvm::Type *IntType;
+
+    return Builder.CreateFPToSI(v, IntType);
+  } else {
+    std::cout << "unable to create integer cast" << std::endl;
   }
 
-  auto result = llvm::UndefValue::get(PlsmType);
-
-  auto typePointer = Builder.CreateStructGEP(result, 0);
-  auto valuePointer = Builder.CreateStructGEP(result, 1);
-
-  auto typeValue = llvm::ConstantInt::get(IntType, type);
-
-  Builder.CreateStore(typePointer, typeValue);
-  Builder.CreateStore(valuePointer, value);
-
-  return result;
+  return nullptr;
 }
 
-llvm::Value *NullValue() {
-  extern llvm::Type *IntType;
-  extern llvm::Type *PlsmType;
-  extern llvm::Type *ValueType;
-  extern llvm::IRBuilder<> Builder;
-  extern llvm::LLVMContext Context;
+llvm::Value *createFloatCast(llvm::Value *v) {
+  auto vT = v->getType();
 
-  auto nullPointerType = llvm::Type::getInt8PtrTy(Context);
-  auto nullPointer = llvm::ConstantPointerNull::get(nullPointerType);
+  if (vT->isFloatingPointTy()) {
+    return v;
+  } else if (vT->isIntegerTy()) {
+    extern llvm::Type *FloatType;
 
-  auto result = llvm::UndefValue::get(PlsmType);
+    return Builder.CreateSIToFP(v, FloatType);
+  } else {
+    std::cout << "unable to create floating point cast" << std::endl;
+  }
 
-  auto typePointer = Builder.CreateStructGEP(result, 0);
-  auto valuePointer = Builder.CreateStructGEP(result, 1);
-
-  auto typeValue = llvm::ConstantInt::get(IntType, TYPE_POINTER);
-
-  Builder.CreateStore(typePointer, typeValue);
-  Builder.CreateStore(valuePointer, nullPointer);
-
-  return result;
+  return nullptr;
 }
 
-llvm::Function *createAddFunction() {
-  extern llvm::Type *PlsmType;
-  extern llvm::Module Module;
-  extern llvm::IRBuilder<> Builder;
-  extern llvm::LLVMContext Context;
+llvm::Value *createIntAdd(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateAdd(left, right);
+}
 
-  auto functionType = llvm::FunctionType::get(PlsmType, false);
-  auto function = llvm::Function::Create(
-      functionType, llvm::Function::ExternalLinkage, "", Module);
+llvm::Value *createFloatAdd(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateFAdd(left, right);
+}
 
-  auto previousBasicBlock = Builder.GetInsertBlock();
-  auto functionBasicBlock = llvm::BasicBlock::Create(Context, "", function);
+llvm::Value *createIntSub(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateSub(left, right);
+}
 
-  Builder.SetInsertPoint(functionBasicBlock);
+llvm::Value *createFloatSub(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateFSub(left, right);
+}
 
-  // add body here
+llvm::Value *createIntMul(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateMul(left, right);
+}
 
-  Builder.SetInsertPoint(previousBasicBlock);
+llvm::Value *createFloatMul(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateFMul(left, right);
+}
 
-  return function;
+llvm::Value *createIntMod(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateSRem(left, right);
+}
+
+llvm::Value *createFloatMod(llvm::Value *left, llvm::Value *right) {
+  return Builder.CreateFRem(left, right);
+}
+
+
+
+llvm::Value *createAdd(llvm::Value *left, llvm::Value *right) {
+  if (!right) {
+    extern llvm::Type *IntType;
+
+    right = llvm::ConstantInt::get(IntType, 0);
+  }
+
+  return createBinExpr(left, right, createIntAdd, createFloatAdd, "add");
+}
+
+llvm::Value *createSub(llvm::Value *left, llvm::Value *right) {
+  if (!right) {
+    extern llvm::Type *IntType;
+
+    auto temp = left;
+    left = llvm::ConstantInt::get(IntType, 0);
+    right = temp;
+  }
+
+  return createBinExpr(left, right, createIntSub, createFloatSub, "sub");
+}
+
+llvm::Value *createMul(llvm::Value *left, llvm::Value *right) {
+  return createBinExpr(left, right, createIntMul, createFloatMul, "mul");
+}
+
+llvm::Value *createDiv(llvm::Value *left, llvm::Value *right) {
+  left = createFloatCast(left);
+  right = createFloatCast(right);
+
+  return Builder.CreateFDiv(left, right);
+}
+
+llvm::Value *createMod(llvm::Value *left, llvm::Value *right) {
+  return createBinExpr(left, right, createIntMod, createFloatMod, "mod");
 }

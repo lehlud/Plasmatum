@@ -20,36 +20,35 @@ llvm::Value *FloatExpr::genCode() {
   return llvm::ConstantFP::get(FloatType, value);
 }
 
-llvm::Value *AddBinExpr::genCode() { return nullptr; }
+llvm::Value *AddBinExpr::genCode() {
+  auto leftV = left->genCode();
+  auto rightV = right->genCode();
 
-llvm::Value *SubBinExpr::genCode() { return nullptr; }
-
-llvm::Value *MulBinExpr::genCode() { return nullptr; }
-
-llvm::Value *DivBinExpr::genCode() { return nullptr; }
-
-llvm::Value *LambdaExpr::genCode() {
-  extern llvm::Type *PlsmType;
-  auto functionType = llvm::FunctionType::get(PlsmType, false);
-  auto function = llvm::Function::Create(
-      functionType, llvm::Function::ExternalLinkage, "", Module);
-
-  auto previousBasicBlock = Builder.GetInsertBlock();
-  auto functionBasicBlock = llvm::BasicBlock::Create(Context, "", function);
-
-  Builder.SetInsertPoint(functionBasicBlock);
-
-  for (auto &statement : body) {
-    statement->genCode();
-  }
-
-  Builder.CreateRet(NullValue());
-
-  Builder.SetInsertPoint(previousBasicBlock);
-
-  return function;
+  return createAdd(leftV, rightV);
 }
 
-llvm::Value *DefineGlobalStmt::genCode() { return nullptr; }
+llvm::Value *SubBinExpr::genCode() {
+  auto leftV = left->genCode();
+  auto rightV = right->genCode();
 
-llvm::Value *DefineFunctionStmt::genCode() { return nullptr; }
+  return createSub(leftV, rightV);
+}
+
+llvm::Value *MulBinExpr::genCode() {
+  auto leftV = left->genCode();
+  auto rightV = right->genCode();
+
+  return createMul(leftV, rightV);
+}
+
+llvm::Value *DivBinExpr::genCode() {
+  auto leftV = left->genCode();
+  auto rightV = right->genCode();
+
+  return createDiv(leftV, rightV);
+}
+
+llvm::Value *FunctionExpr::genCode() {
+  // asdf
+  return nullptr;
+}
