@@ -19,5 +19,5 @@ llvm::Type *FloatType = llvm::Type::getDoubleTy(Context);
 typedef std::map<std::string, llvm::Value *> var_scope_t;
 std::vector<var_scope_t> VarScopes = {var_scope_t()};
 
-std::map<std::string, std::pair<FunctionExpr *, std::vector<llvm::Function *>>>
+std::map<std::string, std::pair<Function *, std::vector<llvm::Function *>>>
     Functions;

@@ -48,7 +48,7 @@ llvm::Value *DivBinExpr::genCode() {
   return createDiv(leftV, rightV);
 }
 
-llvm::Value *FunctionExpr::genCode() {
+llvm::Value *FunctionStmt::genCode() {
   // asdf
   return nullptr;
 }

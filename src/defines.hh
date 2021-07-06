@@ -8,4 +8,3 @@
 
 #define TYPE_NATIVE_INT 64
 #define TYPE_NATIVE_FLOAT 65
-
