@@ -3,8 +3,27 @@
 #define INT_SIZE 64
 #define CHAR_SIZE 8
 
-#define TYPE_NULL 0
-#define TYPE_OBJECT 1
+#include <stdint.h>
 
-#define TYPE_NATIVE_INT 64
-#define TYPE_NATIVE_FLOAT 65
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+
+typedef struct _plsm_val {
+    int8_t type;
+    int8_t *value;
+} plsm_val;
+
+#define TYPE_NULL 0
+#define TYPE_INT 1
+#define TYPE_FLOAT 2
+#define TYPE_STRING 3
+#define TYPE_LIST 4
+#define TYPE_MAP 5
+
+
+llvm::ExecutionEngine &getExecutionEngine();
+
+void initFunctions();
+
+void resetScopes();
+void resetFunctions();
+void resetFlags();

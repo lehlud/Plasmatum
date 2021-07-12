@@ -1,9 +1,4 @@
-f(x) = x ** 2;
+Int f(x:Int) = x ** 2
+Float g(x:Float) = x / 2
 
-fib(x) = 
-    if (x < 2)
-        if (x < 0) -1 else 1
-        else fib(x - 1) + fib(x - 2);
 
-print(f(2));
-print(fib(8));

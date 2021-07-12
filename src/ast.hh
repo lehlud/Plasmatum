@@ -71,25 +71,47 @@ public:
   llvm::Value *genCode() override;
 };
 
-class Function {
+class CallExpr : public Expr {
+private:
+  std::string callee;
+  std::vector<Expr *> args;
+
 public:
-  std::vector<std::string> args;
-  Expr *body;
+  CallExpr(const std::string &callee, const std::vector<Expr *> &args)
+    : callee(callee), args(args) {}
 
-  Function(const std::vector<std::string> &args, Expr *body)
-      : args(args), body(body) {}
+  llvm::Value *genCode() override;
+};
 
-  llvm::Value *genCode();
+class ExprStmt : public Stmt {
+private:
+  Expr *expr;
+
+public:
+  ExprStmt(Expr *expr) : expr(expr) {}
+
+  llvm::Value *genCode() override;
+};
+
+class ReturnStmt : public Stmt {
+private:
+  Expr *value;
+public:
+  ReturnStmt(Expr *value) : value(value) {}
+
+  llvm::Value *genCode() override;
 };
 
 class FunctionStmt : public Stmt {
 private:
   std::string id;
-  Function *function;
+  std::vector<Stmt *> body;
+  std::vector<std::string> args;
 
 public:
-  FunctionStmt(const std::string &id, Function *function)
-      : id(id), function(function) {}
+  FunctionStmt(const std::string &id, const std::vector<Stmt *> &body,
+               const std::vector<std::string> &args)
+      : id(id), body(body), args(args) {}
 
   llvm::Value *genCode() override;
 };

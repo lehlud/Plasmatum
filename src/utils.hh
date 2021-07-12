@@ -5,19 +5,12 @@
 
 #include <string>
 
-llvm::Value *NullValue();
+llvm::Function *createMain();
 
-llvm::Value *createIntCast(llvm::Value *v);
-llvm::Value *createFloatCast(llvm::Value *v);
+llvm::Function *createAddFunction();
 
-typedef llvm::Value *(*BinExprCreator)(llvm::Value *left, llvm::Value *right);
 
-llvm::Value *createBinExpr(llvm::Value *left, llvm::Value *right,
-                           BinExprCreator intBEC, BinExprCreator floatBEC,
-                           const std::string &name = "binary expression");
+llvm::Value *plsmValue(int8_t type, llvm::Value *value);
+llvm::Constant *plsmConstValue(int8_t type, llvm::Constant *value);
 
-llvm::Value *createAdd(llvm::Value *left, llvm::Value *right);
-llvm::Value *createSub(llvm::Value *left, llvm::Value *right);
-llvm::Value *createMul(llvm::Value *left, llvm::Value *right);
-llvm::Value *createDiv(llvm::Value *left, llvm::Value *right);
-llvm::Value *createMod(llvm::Value *left, llvm::Value *right);
+llvm::Constant *nullValue(int8_t type = 0);
