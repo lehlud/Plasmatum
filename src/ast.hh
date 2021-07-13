@@ -35,6 +35,16 @@ public:
   llvm::Value *genCode() override;
 };
 
+class StringExpr : public Expr {
+private:
+  std::u32string value;
+
+public:
+  StringExpr(const std::u32string &value) : value(value) {}
+
+  llvm::Value *genCode() override;
+};
+
 class BinExpr : public Expr {
 protected:
   Expr *left, *right;

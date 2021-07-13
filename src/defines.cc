@@ -14,6 +14,8 @@
 llvm::LLVMContext Context;
 llvm::Module Module("", Context);
 llvm::IRBuilder<> Builder(Context);
+/*llvm::DataLayout DataLayout =
+    llvm::EngineBuilder().selectTarget()->createDataLayout();*/
 
 llvm::Type *IntType = llvm::IntegerType::get(Context, INT_SIZE);
 llvm::Type *FloatType = llvm::Type::getDoubleTy(Context);
@@ -22,6 +24,11 @@ llvm::Type *TypeType = llvm::Type::getInt8Ty(Context);
 llvm::PointerType *PointerType = llvm::Type::getInt8PtrTy(Context);
 llvm::StructType *PlsmType =
     llvm::StructType::get(Context, {TypeType, PointerType});
+
+llvm::Function *MallocFunc = llvm::Function::Create(
+    llvm::FunctionType::get(llvm::Type::getInt8PtrTy(Context),
+                            {llvm::Type::getInt64Ty(Context)}, false),
+    llvm::Function::ExternalLinkage, "malloc", Module);
 
 llvm::FunctionType *FunctionType = llvm::FunctionType::get(
     PlsmType, {IntType, PlsmType->getPointerTo()}, false);
@@ -37,11 +44,13 @@ int8_t valueType = -1;
 llvm::ExecutionEngine &getExecutionEngine() {
   auto &result = *(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(&Module))
                        .setEngineKind(llvm::EngineKind::JIT)
-                       .setOptLevel(llvm::CodeGenOpt::Level::Aggressive)
+                       .setOptLevel(llvm::CodeGenOpt::Level::None)
                        .setRelocationModel(llvm::Reloc::Model::PIC_)
                        .create());
 
   result.DisableSymbolSearching();
+
+  result.addGlobalMapping(MallocFunc, (void *)&malloc);
 
   result.addGlobalMapping(Functions["print"], (void *)&print);
   result.addGlobalMapping(Functions["println"], (void *)&println);

@@ -2,18 +2,18 @@
 #include "lib.hh"
 #include "utils.hh"
 
-#include <llvm/IR/Verifier.h>
+#include <llvm/ADT/APInt.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Type.h>
-#include <llvm/ADT/APInt.h>
+#include <llvm/IR/Verifier.h>
 
 #include <llvm/Support/TargetSelect.h>
 
-#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 extern llvm::Module Module;
 
@@ -42,14 +42,18 @@ int main(int argc, char **argv) {
     // error here
   }
 
+  // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0};
+  // plsm_val args[] = {(plsm_val){TYPE_STRING, (int8_t *)plsm_str}};
+  // println(1, args);
+
   initLLVM();
   initializeModule();
 
-  auto call = new CallExpr("println", {new IntExpr(42)});
-  std::vector<Stmt *> body = {new ExprStmt(call)};//{new ReturnStmt(call)};
+  auto call = new CallExpr("println", {new StringExpr(U"Hello World!")});
+  std::vector<Stmt *> body = {new ReturnStmt(call)};
   auto f = new FunctionStmt("main", body, {});
 
-  auto func = (llvm::Function *) f->genCode();
+  auto func = (llvm::Function *)f->genCode();
 
   std::string errString;
   llvm::raw_string_ostream str(errString);
@@ -61,7 +65,7 @@ int main(int argc, char **argv) {
 
   auto &engine = getExecutionEngine();
 
-  Module.print(llvm::errs(), 0);
+  // Module.print(llvm::errs(), 0);
 
   engine.runFunctionAsMain(mainFunc, {}, nullptr);
 

@@ -1,3 +1,4 @@
+#include "ast.hh"
 #include "utils.hh"
 #include "defines.hh"
 
@@ -8,6 +9,13 @@
 
 #include <iostream>
 
+int64_t typeSize(llvm::Type *type) {
+  return 8;
+  /*extern llvm::DataLayout DataLayout;
+
+  return DataLayout.getTypeAllocSize(type).getValue();*/
+}
+
 llvm::Function *createMain() {
   extern llvm::LLVMContext Context;
   extern llvm::Module Module;
@@ -16,8 +24,7 @@ llvm::Function *createMain() {
   extern llvm::StructType *PlsmType;
   extern std::map<std::string, llvm::Function *> Functions;
 
-  auto mainFunc = Functions["main"];
-  if (!mainFunc) return nullptr;
+  if (!Functions.count("main")) return nullptr;
 
   auto retT = llvm::IntegerType::getInt8Ty(Context);
   auto ft = llvm::FunctionType::get(retT, false);
@@ -28,10 +35,8 @@ llvm::Function *createMain() {
 
   Builder.SetInsertPoint(bb);
 
-  auto zero = llvm::ConstantInt::get(IntType, 0);
-  auto ptr = llvm::ConstantPointerNull::get(PlsmType->getPointerTo());
-
-  Builder.CreateCall(mainFunc, {zero, ptr});
+  auto callExpr = new CallExpr("main", {});
+  callExpr->genCode();
 
   Builder.CreateRet(llvm::ConstantInt::get(retT, 42));
 
@@ -70,4 +75,17 @@ llvm::Constant *plsmConstValue(int8_t type, llvm::Constant *value) {
 llvm::Constant *nullValue(int8_t type) {
   extern llvm::PointerType *PointerType;
   return plsmConstValue(type, llvm::ConstantPointerNull::get(PointerType));
+}
+
+llvm::Value *plsmMalloc(int64_t size, llvm::Type *pointerType) {
+  extern llvm::LLVMContext Context;
+  extern llvm::IRBuilder<> Builder;
+  extern llvm::Function *MallocFunc;
+  
+  auto arg = llvm::ConstantInt::get(llvm::Type::getInt64Ty(Context), size);
+
+  auto result = (llvm::Value *) Builder.CreateCall(MallocFunc, {arg});
+  result = Builder.CreatePointerCast(result, pointerType->getPointerTo());
+
+  return result;
 }

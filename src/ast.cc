@@ -18,22 +18,43 @@ llvm::Value *IntExpr::genCode() {
   extern llvm::Type *IntType;
   auto intVal = llvm::ConstantInt::get(IntType, value);
 
-  auto alloca = Builder.CreateAlloca(IntType);
-  Builder.CreateStore(intVal, alloca);
+  auto ptr = plsmMalloc(typeSize(IntType), IntType);
+  Builder.CreateStore(intVal, ptr);
 
-  auto result = plsmValue(TYPE_INT, alloca);
-
-  return result;
+  return plsmValue(TYPE_INT, ptr);
 }
 
 llvm::Value *FloatExpr::genCode() {
   extern llvm::Type *FloatType;
-
-  auto alloca = Builder.CreateAlloca(FloatType);
   auto floatVal = llvm::ConstantFP::get(FloatType, value);
-  Builder.CreateStore(floatVal, alloca);
 
-  return plsmValue(TYPE_FLOAT, alloca);
+  auto ptr = plsmMalloc(typeSize(FloatType), FloatType);
+  Builder.CreateStore(floatVal, ptr);
+
+  return plsmValue(TYPE_FLOAT, ptr);
+}
+
+llvm::Value *StringExpr::genCode() {
+  extern llvm::Type *IntType;
+
+  auto charType = llvm::Type::getInt32Ty(Context);
+
+  std::vector<llvm::Constant *> chars;
+  for (auto &c : value) {
+    chars.push_back(llvm::ConstantInt::get(charType, c));
+  }
+
+  chars.push_back(llvm::ConstantInt::get(charType, 0));
+
+  auto arrT = llvm::ArrayType::get(charType, value.size() + 1);
+  auto str = llvm::ConstantArray::get(arrT, chars);
+
+  auto ptr = plsmMalloc(typeSize(charType) * (value.size() + 1), charType);
+  ptr = Builder.CreatePointerCast(ptr, arrT->getPointerTo());
+
+  Builder.CreateStore(str, ptr);
+
+  return plsmValue(TYPE_STRING, ptr);
 }
 
 llvm::Value *AddBinExpr::genCode() {

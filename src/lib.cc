@@ -5,7 +5,9 @@
 #include <locale>
 #include <string>
 
-extern "C" plsm_val null_plsm_val(int64_t value) { return (plsm_val){TYPE_NULL, nullptr}; }
+extern "C" plsm_val null_plsm_val(int64_t value) {
+  return (plsm_val){TYPE_NULL, nullptr};
+}
 
 extern "C" plsm_val int_plsm_val(int64_t value) {
   int64_t *valueptr = (int64_t *)std::malloc(sizeof(int64_t));
@@ -41,7 +43,7 @@ int64_t print_float(int8_t *value) {
 }
 
 int64_t print_string(int8_t *value) {
-  uint32_t *u32val = *(uint32_t **)value;
+  uint32_t *u32val = (uint32_t *)value;
   std::u32string u32string((char32_t *)u32val);
 
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
@@ -68,7 +70,8 @@ inline int64_t plsm_printv(plsm_val value) {
 }
 
 extern "C" plsm_val print(int64_t count, plsm_val *args) {
-  if (count == 0) return int_plsm_val(0);
+  if (count == 0)
+    return int_plsm_val(0);
 
   int64_t result = 0;
   for (int64_t i = 0; i < count - 1; i++) {
