@@ -18,12 +18,3 @@ typedef struct _plsm_val {
 #define TYPE_STRING 3
 #define TYPE_LIST 4
 #define TYPE_MAP 5
-
-
-llvm::ExecutionEngine &getExecutionEngine();
-
-void initFunctions();
-
-void resetScopes();
-void resetFunctions();
-void resetFlags();

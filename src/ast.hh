@@ -7,14 +7,16 @@
 
 #include <llvm/IR/Value.h>
 
+class PlsmContext;
+
 class Expr {
 public:
-  virtual llvm::Value *genCode() = 0;
+  virtual llvm::Value *genCode(PlsmContext &context) = 0;
 };
 
 class Stmt {
 public:
-  virtual llvm::Value *genCode() = 0;
+  virtual llvm::Value *genCode(PlsmContext &context) = 0;
 };
 
 class IntExpr : public Expr {
@@ -23,7 +25,7 @@ public:
 
   IntExpr(uint64_t value) : value(value) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class FloatExpr : public Expr {
@@ -32,7 +34,7 @@ public:
 
   FloatExpr(double_t value) : value(value) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class StringExpr : public Expr {
@@ -42,7 +44,7 @@ private:
 public:
   StringExpr(const std::u32string &value) : value(value) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class BinExpr : public Expr {
@@ -57,28 +59,28 @@ class AddBinExpr : public BinExpr {
 public:
   AddBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class SubBinExpr : public BinExpr {
 public:
   SubBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class MulBinExpr : public BinExpr {
 public:
   MulBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class DivBinExpr : public BinExpr {
 public:
   DivBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class CallExpr : public Expr {
@@ -90,7 +92,7 @@ public:
   CallExpr(const std::string &callee, const std::vector<Expr *> &args)
     : callee(callee), args(args) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class ExprStmt : public Stmt {
@@ -100,7 +102,7 @@ private:
 public:
   ExprStmt(Expr *expr) : expr(expr) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class ReturnStmt : public Stmt {
@@ -109,7 +111,7 @@ private:
 public:
   ReturnStmt(Expr *value) : value(value) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class FunctionStmt : public Stmt {
@@ -123,5 +125,5 @@ public:
                const std::vector<std::string> &args)
       : id(id), body(body), args(args) {}
 
-  llvm::Value *genCode() override;
+  llvm::Value *genCode(PlsmContext &context) override;
 };

@@ -1,6 +1,6 @@
 #include "ast.hh"
+#include "context.hh"
 #include "lib.hh"
-#include "utils.hh"
 
 #include <llvm/ADT/APInt.h>
 #include <llvm/IR/Function.h>
@@ -23,15 +23,6 @@ void initLLVM() {
   llvm::InitializeAllAsmPrinters();
 }
 
-void initializeModule() {
-  auto targetMachine = llvm::EngineBuilder().selectTarget();
-  auto dataLayout = targetMachine->createDataLayout();
-
-  Module.setDataLayout(dataLayout);
-
-  initFunctions();
-}
-
 extern "C" int64_t foo() {
   std::cout << "Hello World!" << std::endl;
   return 1;
@@ -47,13 +38,16 @@ int main(int argc, char **argv) {
   // println(1, args);
 
   initLLVM();
-  initializeModule();
 
-  auto call = new CallExpr("println", {new StringExpr(U"Hello World!")});
+  auto call = new CallExpr("println", {new IntExpr(42)});
   std::vector<Stmt *> body = {new ReturnStmt(call)};
   auto f = new FunctionStmt("main", body, {});
 
-  auto func = (llvm::Function *)f->genCode();
+  PlsmContext context;
+
+  auto func = (llvm::Function *)f->genCode(context);
+
+  context.printLLVMIR();
 
   std::string errString;
   llvm::raw_string_ostream str(errString);
@@ -61,11 +55,9 @@ int main(int argc, char **argv) {
     std::cout << "error: " << errString << std::endl;
   }
 
-  auto mainFunc = createMain();
+  auto mainFunc = context.getMain();
 
-  auto &engine = getExecutionEngine();
-
-  // Module.print(llvm::errs(), 0);
+  auto &engine = context.getExecutionEngine();
 
   engine.runFunctionAsMain(mainFunc, {}, nullptr);
 
