@@ -1,5 +1,6 @@
 #include "context.hh"
 #include "defines.hh"
+#include "lib.hh"
 
 #include <iostream>
 #include <llvm/IR/Verifier.h>
@@ -17,7 +18,7 @@ void PlsmContext::initLogicals() {
 
   auto floatLogical = llvm::Function::Create(
       lft, llvm::Function::ExternalLinkage, "float_logical", module);
-  
+
   bb = llvm::BasicBlock::Create(context, "", floatLogical);
   builder.SetInsertPoint(bb);
 
@@ -47,17 +48,13 @@ int64_t PlsmContext::getTypeSize(llvm::Type *type) {
   return dataLayout.getTypeAllocSize(type);
 }
 
-llvm::Value *PlsmContext::malloc(int64_t size, llvm::Type *resultType) {
-  auto arg = getI64(size);
+llvm::Value *PlsmContext::createMalloc(llvm::Type *resultType,
+                                       int64_t numElements) {
+  auto arg = getI64(getTypeSize(resultType) * numElements);
 
   auto result = (llvm::Value *)builder.CreateCall(mallocFunction, {arg});
-  result = builder.CreatePointerCast(result, resultType->getPointerTo());
 
-  return result;
-}
-
-llvm::Value *PlsmContext::malloc(llvm::Type *resultType, int64_t numElements) {
-  return malloc(getTypeSize(resultType) * numElements, resultType);
+  return builder.CreatePointerCast(result, resultType->getPointerTo());
 }
 
 llvm::Value *PlsmContext::getPlsmValue(int8_t type, llvm::Value *valuePointer) {
@@ -83,7 +80,7 @@ llvm::Value *PlsmContext::getPlsmNull() {
 }
 
 llvm::Value *PlsmContext::getPlsmInt(int64_t value) {
-  auto ptr = malloc(intType);
+  auto ptr = createMalloc(intType);
 
   builder.CreateStore(getInt(value), ptr);
 
@@ -91,7 +88,7 @@ llvm::Value *PlsmContext::getPlsmInt(int64_t value) {
 }
 
 llvm::Value *PlsmContext::getPlsmFloat(double value) {
-  auto ptr = malloc(floatingPointType);
+  auto ptr = createMalloc(floatingPointType);
 
   builder.CreateStore(getFloat(value), ptr);
 
@@ -109,7 +106,7 @@ llvm::Value *PlsmContext::getPlsmString(const std::u32string &string) {
   auto arrT = llvm::ArrayType::get(charType, string.size() + 1);
   auto str = llvm::ConstantArray::get(arrT, chars);
 
-  auto ptr = malloc(arrT);
+  auto ptr = createMalloc(arrT);
 
   builder.CreateStore(str, ptr);
 
@@ -206,17 +203,15 @@ llvm::Value *PlsmContext::createPlsmIf(llvm::Value *cond, llvm::Value *trueV,
 
 llvm::ExecutionEngine &PlsmContext::getExecutionEngine() {
   auto &result = *(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(&module))
-                       .setEngineKind(llvm::EngineKind::Interpreter)
-                       .setOptLevel(llvm::CodeGenOpt::Level::None)
-                       .setRelocationModel(llvm::Reloc::Model::PIC_)
+                       .setEngineKind(llvm::EngineKind::JIT)
                        .create());
 
   result.DisableSymbolSearching();
 
-  result.addGlobalMapping(mallocFunction, (void *)&::std::malloc);
+  result.addGlobalMapping(mallocFunction, (void *)&malloc);
 
-  result.addGlobalMapping(functions["print"], (void *)&::print);
-  result.addGlobalMapping(functions["println"], (void *)&::println);
+  result.addGlobalMapping(functions["print"], (void *)&print);
+  result.addGlobalMapping(functions["println"], (void *)&println);
 
   result.finalizeObject();
   return result;

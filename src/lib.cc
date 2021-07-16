@@ -70,7 +70,6 @@ inline int64_t plsm_printv(plsm_val value) {
 }
 
 extern "C" plsm_val print(int64_t count, plsm_val *args) {
-  std::cout << "printing!" << std::endl;
   if (count == 0)
     return int_plsm_val(0);
 

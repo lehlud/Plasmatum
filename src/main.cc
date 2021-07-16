@@ -15,8 +15,6 @@
 #include <iostream>
 #include <vector>
 
-extern llvm::Module Module;
-
 void initLLVM() {
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -47,6 +45,8 @@ int main(int argc, char **argv) {
 
   auto func = (llvm::Function *)f->genCode(context);
 
+  auto mainFunc = context.getMain();
+
   context.printLLVMIR();
 
   std::string errString;
@@ -54,8 +54,6 @@ int main(int argc, char **argv) {
   if (llvm::verifyFunction(*func, &str)) {
     std::cout << "error: " << errString << std::endl;
   }
-
-  auto mainFunc = context.getMain();
 
   auto &engine = context.getExecutionEngine();
 

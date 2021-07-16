@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ast.hh"
-#include "lib.hh"
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -9,10 +8,10 @@
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 
+#include <cstdlib>
 #include <map>
 #include <string>
 #include <vector>
-#include <cstdlib>
 
 class PlsmContext {
 private:
@@ -57,7 +56,8 @@ public:
         charType(i32Type), floatingPointType(llvm::Type::getDoubleTy(context)),
         typeType(llvm::Type::getInt8Ty(context)),
         pointerType(llvm::Type::getInt8PtrTy(context)),
-        plsmType(llvm::StructType::get(context, {typeType, pointerType})),
+        plsmType(llvm::StructType::create(context, {typeType, pointerType},
+                                          "plsm_val")),
         functionType(llvm::FunctionType::get(
             plsmType, {intType, plsmType->getPointerTo()}, false)),
         functions(), variableScopes(), mainFunction(nullptr) {
@@ -75,7 +75,7 @@ public:
       functions[function] = tmp;
     }
 
-    initLogicals();
+    // initLogicals();
   }
 
   llvm::LLVMContext &getContext() { return context; }
@@ -96,9 +96,6 @@ public:
 
   int64_t getTypeSize(llvm::Type *type);
 
-  llvm::Value *malloc(int64_t size, llvm::Type *resultType);
-  llvm::Value *malloc(llvm::Type *resultType, int64_t numElements = 1);
-
   llvm::Value *getPlsmValue(int8_t type, llvm::Value *valuePointer);
   llvm::Value *getPlsmNull();
   llvm::Value *getPlsmInt(int64_t value);
@@ -107,8 +104,8 @@ public:
 
   llvm::Function *getMain();
 
+  llvm::Value *createMalloc(llvm::Type *resultType, int64_t numElements = 1);
   llvm::Value *createRet(llvm::Value *value);
-
   llvm::Value *createPlsmFunction(const std::string &id,
                                   std::vector<Stmt *> body);
 
