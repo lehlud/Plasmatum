@@ -6,31 +6,95 @@
 #include <llvm/IR/Verifier.h>
 
 void PlsmContext::initLogicals() {
-  auto lft = llvm::FunctionType::get(i1Type, {plsmType}, false);
+  auto nullLogical = getNullLogical();
+  auto intLogical = getIntLogical();
+  auto floatLogical = getFloatLogical();
 
-  auto intLogical = llvm::Function::Create(lft, llvm::Function::ExternalLinkage,
-                                           "int_logical", module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", intLogical);
-  builder.SetInsertPoint(bb);
-
-  builder.CreateRet(llvm::ConstantInt::get(i1Type, 1));
-
-  auto floatLogical = llvm::Function::Create(
-      lft, llvm::Function::ExternalLinkage, "float_logical", module);
-
-  bb = llvm::BasicBlock::Create(context, "", floatLogical);
-  builder.SetInsertPoint(bb);
-
-  builder.CreateRet(llvm::ConstantInt::get(i1Type, 1));
-
-  std::vector<llvm::Constant *> funcs = {intLogical, floatLogical};
-  auto arrT = llvm::ArrayType::get(lft, funcs.size());
+  std::vector<llvm::Constant *> funcs = {nullLogical, intLogical, floatLogical};
+  auto arrT =
+      llvm::ArrayType::get(logicalFunctionType->getPointerTo(), funcs.size());
   auto arr = llvm::ConstantArray::get(arrT, funcs);
 
   logicalFuncs = new llvm::GlobalVariable(
       module, arrT, true, llvm::GlobalVariable::ExternalLinkage, arr);
 }
+
+llvm::Function *PlsmContext::getNullLogical() {
+  auto name = "null_logical";
+
+  llvm::Function *f = module.getFunction(name);
+  if (f)
+    return f;
+
+  f = llvm::Function::Create(logicalFunctionType,
+                             llvm::Function::ExternalLinkage, name, module);
+
+  auto bb = llvm::BasicBlock::Create(context, "", f);
+  builder.SetInsertPoint(bb);
+
+  auto result = llvm::ConstantInt::get(i1Type, 0);
+  builder.CreateRet(result);
+
+  return f;
+}
+
+llvm::Function *PlsmContext::getIntLogical() {
+  auto name = "int_logical";
+
+  llvm::Function *f = module.getFunction(name);
+  if (f)
+    return f;
+
+  f = llvm::Function::Create(logicalFunctionType,
+                             llvm::Function::ExternalLinkage, name, module);
+
+  auto bb = llvm::BasicBlock::Create(context, "", f);
+  builder.SetInsertPoint(bb);
+
+  auto alloca = builder.CreateAlloca(plsmType);
+  builder.CreateStore(f->getArg(0), alloca);
+
+  auto valuePtrEP = builder.CreateStructGEP(alloca, 1);
+  auto valuePtr = (llvm::Value *)builder.CreateLoad(pointerType, valuePtrEP);
+
+  valuePtr = builder.CreatePointerCast(valuePtr, intType->getPointerTo());
+  auto intValue = builder.CreateLoad(intType, valuePtr);
+
+  auto result = builder.CreateICmpNE(intValue, getInt(0));
+  builder.CreateRet(result);
+
+  return f;
+}
+
+llvm::Function *PlsmContext::getFloatLogical() {
+  auto name = "float_logical";
+
+  llvm::Function *f = module.getFunction(name);
+  if (f)
+    return f;
+
+  f = llvm::Function::Create(logicalFunctionType,
+                             llvm::Function::ExternalLinkage, name, module);
+
+  auto bb = llvm::BasicBlock::Create(context, "", f);
+  builder.SetInsertPoint(bb);
+
+  auto alloca = builder.CreateAlloca(plsmType);
+  builder.CreateStore(f->getArg(0), alloca);
+
+  auto valuePtrEP = builder.CreateStructGEP(alloca, 1);
+  auto valuePtr = (llvm::Value *)builder.CreateLoad(pointerType, valuePtrEP);
+
+  valuePtr = builder.CreatePointerCast(valuePtr, floatingPointType->getPointerTo());
+  auto floatValue = builder.CreateLoad(floatingPointType, valuePtr);
+
+  auto result = builder.CreateFCmpUNE(floatValue, getFloat(0));
+  builder.CreateRet(result);
+
+  return f;
+}
+
+llvm::Function *PlsmContext::getStringLogical() { return nullptr; }
 
 llvm::Constant *PlsmContext::getI64(int64_t value) {
   return llvm::ConstantInt::get(i64Type, value);
@@ -111,6 +175,20 @@ llvm::Value *PlsmContext::getPlsmString(const std::u32string &string) {
   builder.CreateStore(str, ptr);
 
   return getPlsmValue(TYPE_STRING, ptr);
+}
+
+llvm::Value *PlsmContext::getPlsmLogicalValue(llvm::Value *value) {
+  auto alloca = builder.CreateAlloca(plsmType);
+  builder.CreateStore(value, alloca);
+  auto typeEP = builder.CreateStructGEP(alloca, 0);
+  auto logicalIdx = builder.CreateLoad(typeType, typeEP);
+
+  auto logicalFuncEP = builder.CreateGEP(logicalFuncs, {getI64(0), logicalIdx});
+  auto tmpFunc =
+      builder.CreateLoad(logicalFunctionType->getPointerTo(), logicalFuncEP);
+
+  auto func = llvm::FunctionCallee(logicalFunctionType, tmpFunc);
+  return builder.CreateCall(func, {value});
 }
 
 llvm::Function *PlsmContext::getMain() {
@@ -198,6 +276,7 @@ llvm::Value *PlsmContext::createPlsmCall(const std::string &id,
 llvm::Value *PlsmContext::createPlsmIf(Expr *condExpr, Expr *trueExpr,
                                        Expr *falseExpr) {
   auto condV = condExpr->genCode(*this);
+  condV = getPlsmLogicalValue(condV);
 
   auto f = builder.GetInsertBlock()->getParent();
 
@@ -209,11 +288,12 @@ llvm::Value *PlsmContext::createPlsmIf(Expr *condExpr, Expr *trueExpr,
 
   builder.SetInsertPoint(trueBB);
   auto trueV = trueExpr->genCode(*this);
+  builder.CreateBr(mergeBB);
 
   builder.SetInsertPoint(falseBB);
   auto falseV = falseExpr->genCode(*this);
-
   builder.CreateBr(mergeBB);
+
   falseBB = builder.GetInsertBlock();
 
   builder.SetInsertPoint(mergeBB);

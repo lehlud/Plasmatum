@@ -41,6 +41,10 @@ llvm::Value *DivBinExpr::genCode(PlsmContext &context) {
   return nullptr;
 }
 
+llvm::Value *IfExpr::genCode(PlsmContext &context) {
+  return context.createPlsmIf(cond, trueExpr, falseExpr);
+}
+
 llvm::Value *CallExpr::genCode(PlsmContext &context) {
   return context.createPlsmCall(callee, args);
 }

@@ -83,6 +83,17 @@ public:
   llvm::Value *genCode(PlsmContext &context) override;
 };
 
+class IfExpr : public Expr {
+private:
+  Expr *cond, *trueExpr, *falseExpr;
+
+public:
+  IfExpr(Expr *cond, Expr *trueExpr, Expr *falseExpr)
+      : cond(cond), trueExpr(trueExpr), falseExpr(falseExpr) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
 class CallExpr : public Expr {
 private:
   std::string callee;
@@ -90,7 +101,7 @@ private:
 
 public:
   CallExpr(const std::string &callee, const std::vector<Expr *> &args)
-    : callee(callee), args(args) {}
+      : callee(callee), args(args) {}
 
   llvm::Value *genCode(PlsmContext &context) override;
 };
@@ -108,6 +119,7 @@ public:
 class ReturnStmt : public Stmt {
 private:
   Expr *value;
+
 public:
   ReturnStmt(Expr *value) : value(value) {}
 

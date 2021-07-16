@@ -33,6 +33,7 @@ private:
   llvm::StructType *plsmType;
 
   llvm::FunctionType *functionType;
+  llvm::FunctionType *logicalFunctionType;
 
   llvm::GlobalVariable *logicalFuncs;
 
@@ -45,6 +46,11 @@ private:
   void init() {}
 
   void initLogicals();
+  
+  llvm::Function *getNullLogical();
+  llvm::Function *getIntLogical();
+  llvm::Function *getFloatLogical();
+  llvm::Function *getStringLogical();
 
 public:
   PlsmContext()
@@ -60,6 +66,7 @@ public:
                                           "plsm_val")),
         functionType(llvm::FunctionType::get(
             plsmType, {intType, plsmType->getPointerTo()}, false)),
+        logicalFunctionType(llvm::FunctionType::get(i1Type, {plsmType}, false)),
         functions(), variableScopes(), mainFunction(nullptr) {
     module.setDataLayout(dataLayout);
 
@@ -75,7 +82,7 @@ public:
       functions[function] = tmp;
     }
 
-    // initLogicals();
+    initLogicals();
   }
 
   llvm::LLVMContext &getContext() { return context; }
@@ -101,6 +108,8 @@ public:
   llvm::Value *getPlsmInt(int64_t value);
   llvm::Value *getPlsmFloat(double value);
   llvm::Value *getPlsmString(const std::u32string &string);
+
+  llvm::Value *getPlsmLogicalValue(llvm::Value *value);
 
   llvm::Function *getMain();
 

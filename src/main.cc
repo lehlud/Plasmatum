@@ -37,7 +37,8 @@ int main(int argc, char **argv) {
 
   initLLVM();
 
-  auto call = new CallExpr("println", {new StringExpr(U"Hallo Welt!")});
+  auto arg = new IfExpr(new IntExpr(0), new StringExpr(U"Hallo Welt!"), new IntExpr(42));
+  auto call = new CallExpr("println", {arg});
   std::vector<Stmt *> body = {new ReturnStmt(call)};
   auto f = new FunctionStmt("main", body, {});
 
