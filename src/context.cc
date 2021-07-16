@@ -195,10 +195,34 @@ llvm::Value *PlsmContext::createPlsmCall(const std::string &id,
   return builder.CreateCall(f, callArgs);
 }
 
-llvm::Value *PlsmContext::createPlsmIf(llvm::Value *cond, llvm::Value *trueV,
-                                       llvm::Value *falseV) {
-  // asdf
-  return nullptr;
+llvm::Value *PlsmContext::createPlsmIf(Expr *condExpr, Expr *trueExpr,
+                                       Expr *falseExpr) {
+  auto condV = condExpr->genCode(*this);
+
+  auto f = builder.GetInsertBlock()->getParent();
+
+  auto trueBB = llvm::BasicBlock::Create(context, "", f);
+  auto falseBB = llvm::BasicBlock::Create(context, "", f);
+  auto mergeBB = llvm::BasicBlock::Create(context, "", f);
+
+  builder.CreateCondBr(condV, trueBB, falseBB);
+
+  builder.SetInsertPoint(trueBB);
+  auto trueV = trueExpr->genCode(*this);
+
+  builder.SetInsertPoint(falseBB);
+  auto falseV = falseExpr->genCode(*this);
+
+  builder.CreateBr(mergeBB);
+  falseBB = builder.GetInsertBlock();
+
+  builder.SetInsertPoint(mergeBB);
+
+  auto phiNode = builder.CreatePHI(plsmType, 2);
+  phiNode->addIncoming(trueV, trueBB);
+  phiNode->addIncoming(falseV, falseBB);
+
+  return phiNode;
 }
 
 llvm::ExecutionEngine &PlsmContext::getExecutionEngine() {

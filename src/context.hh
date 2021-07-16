@@ -111,8 +111,7 @@ public:
 
   llvm::Value *createPlsmCall(const std::string &id, std::vector<Expr *> args);
 
-  llvm::Value *createPlsmIf(llvm::Value *cond, llvm::Value *trueV,
-                            llvm::Value *falseV);
+  llvm::Value *createPlsmIf(Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
 
   llvm::ExecutionEngine &getExecutionEngine();
 

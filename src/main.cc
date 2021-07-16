@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
   initLLVM();
 
-  auto call = new CallExpr("println", {new IntExpr(42)});
+  auto call = new CallExpr("println", {new StringExpr(U"Hallo Welt!")});
   std::vector<Stmt *> body = {new ReturnStmt(call)};
   auto f = new FunctionStmt("main", body, {});
 
@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
   auto mainFunc = context.getMain();
 
   context.printLLVMIR();
+  std::cout << "---------------" << std::endl;
 
   std::string errString;
   llvm::raw_string_ostream str(errString);
