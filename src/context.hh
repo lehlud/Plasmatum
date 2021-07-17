@@ -56,12 +56,6 @@ private:
   size_t disposalDepth = 0;
   std::vector<std::map<std::string, llvm::Value *>> variableScopes;
 
-  llvm::ModuleAnalysisManager mam;
-  llvm::CGSCCAnalysisManager gam;
-  llvm::FunctionAnalysisManager fam;
-  llvm::LoopAnalysisManager lam;
-  llvm::ModulePassManager mpm;
-
   void initAllocs();
   void initLogicals();
   void initGetArgFunction();
@@ -97,7 +91,6 @@ private:
 
 public:
   PlsmContext();
-  ~PlsmContext();
 
   llvm::LLVMContext &getContext() { return context; }
   llvm::Module &getModule() { return module; }
@@ -147,8 +140,5 @@ public:
 
   llvm::ExecutionEngine &getExecutionEngine();
 
-  void optimize();
   void printLLVMIR();
-
-  void disposeOptimizations();
 };

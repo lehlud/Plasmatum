@@ -21,11 +21,9 @@ PlsmContext::PlsmContext()
       logicalFunctionType(llvm::FunctionType::get(i1Type, {plsmType}, false)),
       binExprFunctionType(
           llvm::FunctionType::get(plsmType, {plsmType, plsmType}, false)),
-      binExprMatrixType(llvm::ArrayType::get(
-          llvm::ArrayType::get(binExprFunctionType->getPointerTo(), 3), 3)),
-      addFuncs(nullptr), subFuncs(nullptr), mulFuncs(nullptr),
-      divFuncs(nullptr), logicalFuncs(nullptr), functions(), variableScopes(),
-      mainFunction(nullptr), getArgFunction(nullptr) {
+      binExprMatrixType(nullptr), addFuncs(nullptr), subFuncs(nullptr),
+      mulFuncs(nullptr), divFuncs(nullptr), logicalFuncs(nullptr), functions(),
+      variableScopes(), mainFunction(nullptr), getArgFunction(nullptr) {
   module.setDataLayout(dataLayout);
 
   std::vector<std::string> builtIns = {
@@ -38,25 +36,14 @@ PlsmContext::PlsmContext()
     functions[function] = tmp;
   }
 
+  binExprMatrixType = llvm::ArrayType::get(
+      llvm::ArrayType::get(binExprFunctionType->getPointerTo(), 3), 3);
+
   initAllocs();
   initLogicals();
   initBinExprs();
   initGetArgFunction();
-
-  llvm::PassBuilder passBuilder;
-
-  passBuilder.registerModuleAnalyses(mam);
-  passBuilder.registerCGSCCAnalyses(gam);
-  passBuilder.registerFunctionAnalyses(fam);
-  passBuilder.registerLoopAnalyses(lam);
-
-  passBuilder.crossRegisterProxies(lam, fam, gam, mam);
-
-  mpm = passBuilder.buildModuleOptimizationPipeline(
-      llvm::PassBuilder::OptimizationLevel::O3, false);
 }
-
-PlsmContext::~PlsmContext() { disposeOptimizations(); }
 
 void PlsmContext::initAllocs() {
   auto freeFunctionType = llvm::FunctionType::get(
@@ -81,7 +68,7 @@ void PlsmContext::initLogicals() {
   auto arr = llvm::ConstantArray::get(arrT, funcs);
 
   logicalFuncs = new llvm::GlobalVariable(
-      module, arrT, true, llvm::GlobalVariable::ExternalLinkage, arr);
+      module, arrT, true, llvm::GlobalVariable::PrivateLinkage, arr);
 }
 
 void PlsmContext::initGetArgFunction() {
@@ -91,7 +78,7 @@ void PlsmContext::initGetArgFunction() {
   auto ft = llvm::FunctionType::get(
       plsmType, {intType, plsmType->getPointerTo(), intType}, false);
 
-  getArgFunction = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
+  getArgFunction = llvm::Function::Create(ft, llvm::Function::PrivateLinkage,
                                           "getarg", module);
 
   auto count = getArgFunction->getArg(0);
@@ -420,7 +407,7 @@ llvm::Function *PlsmContext::getNullLogical() {
     return f;
 
   f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::ExternalLinkage, name, module);
+                             llvm::Function::PrivateLinkage, name, module);
 
   auto bb = llvm::BasicBlock::Create(context, "", f);
   builder.SetInsertPoint(bb);
@@ -439,7 +426,7 @@ llvm::Function *PlsmContext::getIntLogical() {
     return f;
 
   f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::ExternalLinkage, name, module);
+                             llvm::Function::PrivateLinkage, name, module);
 
   auto bb = llvm::BasicBlock::Create(context, "", f);
   builder.SetInsertPoint(bb);
@@ -467,7 +454,7 @@ llvm::Function *PlsmContext::getFloatLogical() {
     return f;
 
   f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::ExternalLinkage, name, module);
+                             llvm::Function::PrivateLinkage, name, module);
 
   auto bb = llvm::BasicBlock::Create(context, "", f);
   builder.SetInsertPoint(bb);
@@ -776,13 +763,4 @@ llvm::ExecutionEngine &PlsmContext::getExecutionEngine() {
   return result;
 }
 
-void PlsmContext::optimize() { mpm.run(module, mam); }
-
 void PlsmContext::printLLVMIR() { module.print(llvm::errs(), nullptr); }
-
-void PlsmContext::disposeOptimizations() {
-  mam.clear();
-  gam.clear();
-  fam.clear();
-  lam.clear();
-}
