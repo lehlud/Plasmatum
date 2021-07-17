@@ -31,28 +31,38 @@ int main(int argc, char **argv) {
     // error here
   }
 
-  // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0};
-  // plsm_val args[] = {(plsm_val){TYPE_STRING, (int8_t *)plsm_str}};
+  // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100,
+  // 33, 0}; plsm_val args[] = {(plsm_val){TYPE_STRING, (int8_t *)plsm_str}};
   // println(1, args);
 
   initLLVM();
 
-  auto arg = new IfExpr(new IntExpr(0), new StringExpr(U"Hallo Welt!"), new IntExpr(42));
-  auto call = new CallExpr("println", {arg});
-  std::vector<Stmt *> body = {new ReturnStmt(call)};
+  std::vector<Stmt *> fibBody = {new ReturnStmt(new IfExpr(
+      new LTBinExpr(new VarExpr("x"), new IntExpr(2)), new VarExpr("x"),
+      new AddBinExpr(new CallExpr("fib", {new SubBinExpr(new VarExpr("x"),
+                                                         new IntExpr(1))}),
+                     new CallExpr("fib", {new SubBinExpr(new VarExpr("x"),
+                                                         new IntExpr(2))}))))};
+  auto testFunc = new FunctionStmt("fib", fibBody, {"x"});
+
+  std::vector<Stmt *> body = {
+      new ExprStmt(
+          new CallExpr("println", {new StringExpr(U"This is unicode! Σίγμα")})),
+      new ReturnStmt(new CallExpr(
+          "println", {new CallExpr("fib", {new VarExpr("argc")})})),
+  };
   auto f = new FunctionStmt("main", body, {"argc"});
 
   PlsmContext context;
 
+  testFunc->genCode(context);
   auto func = (llvm::Function *)f->genCode(context);
 
   auto mainFunc = context.getMain();
 
-  // context.printLLVMIR();
-  // context.optimize();
-  // std::cout << "-------------------------" << std::endl;
+  context.optimize();
   context.printLLVMIR();
-  std::cout << "-------------------------" << std::endl;
+  std::cout << "------------------------------------------------" << std::endl;
 
   std::string errString;
   llvm::raw_string_ostream str(errString);
@@ -62,7 +72,9 @@ int main(int argc, char **argv) {
 
   auto &engine = context.getExecutionEngine();
 
-  engine.runFunctionAsMain(mainFunc, {}, nullptr);
+  auto address = engine.getFunctionAddress("main");
+  auto finalFunc = (int8_t(*)(int))address;
+  finalFunc(35);
 
   return 0;
 }

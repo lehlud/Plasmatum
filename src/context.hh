@@ -34,60 +34,38 @@ private:
   llvm::PointerType *pointerType;
   llvm::StructType *plsmType;
 
-  llvm::Type *binExprMatrixType;
-
   llvm::FunctionType *functionType;
-  llvm::FunctionType *logicalFunctionType;
   llvm::FunctionType *binExprFunctionType;
 
-  llvm::GlobalVariable *addFuncs;
-  llvm::GlobalVariable *subFuncs;
-  llvm::GlobalVariable *mulFuncs;
-  llvm::GlobalVariable *divFuncs;
-  llvm::GlobalVariable *logicalFuncs;
+  llvm::Function *mainFunction;
 
   llvm::Function *freeFunction;
   llvm::Function *mallocFunction;
   llvm::Function *getArgFunction;
-  llvm::Function *mainFunction;
+  llvm::Function *logicalFunction;
+
+  llvm::Function *addFunction;
+  llvm::Function *subFunction;
+  llvm::Function *mulFunction;
+  llvm::Function *divFunction;
+  llvm::Function *modFunction;
+  llvm::Function *eqFunction;
+  llvm::Function *neFunction;
+  llvm::Function *gtFunction;
+  llvm::Function *ltFunction;
+  llvm::Function *geFunction;
+  llvm::Function *leFunction;
 
   std::map<std::string, llvm::Function *> functions;
 
   size_t disposalDepth = 0;
   std::vector<std::map<std::string, llvm::Value *>> variableScopes;
 
-  void initAllocs();
-  void initLogicals();
-  void initGetArgFunction();
-
-  void initBinExprs();
-  void initAdds();
-  void initSubs();
-  void initMuls();
-  void initDivs();
-
-  llvm::Function *getNullBinExpr();
-
-  llvm::Function *getIntAdd();
-  llvm::Function *getIntSub();
-  llvm::Function *getIntMul();
-  llvm::Function *getIntDiv();
-
-  llvm::Function *getFloatAdd();
-  llvm::Function *getFloatSub();
-  llvm::Function *getFloatMul();
-  llvm::Function *getFloatDiv();
-
   void initNewScope();
   void disposeLastScope();
   void disposeMarkedScopes();
   void setVariable(const std::string &id, llvm::Value *value);
   llvm::Value *getVariable(const std::string &id);
-
-  llvm::Function *getNullLogical();
-  llvm::Function *getIntLogical();
-  llvm::Function *getFloatLogical();
-  llvm::Function *getStringLogical();
 
 public:
   PlsmContext();
@@ -116,9 +94,8 @@ public:
   llvm::Value *getPlsmFloat(double value);
   llvm::Value *getPlsmString(const std::u32string &string);
 
-  llvm::Value *getIntFromPlsm(llvm::Value *plsmValue);
-  llvm::Value *getFloatFromPlsm(llvm::Value *plsmValue);
-  llvm::Value *getStringFromPlsm(llvm::Value *plsmValue);
+  llvm::Value *getTypeFromPlsm(llvm::Value *plsmValue);
+  llvm::Value *getValueFromPlsm(llvm::Value *value, llvm::Type *type);
 
   llvm::Value *getPlsmLogicalValue(llvm::Value *value);
 
@@ -127,6 +104,19 @@ public:
   llvm::Value *createFree(llvm::Value *pointer);
   llvm::Value *createMalloc(llvm::Type *resultType, int64_t numElements = 1);
 
+  llvm::Value *createAdd(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createSub(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createMul(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createDiv(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createMod(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createEq(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createNE(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createGT(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createLT(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createGE(llvm::Value *left, llvm::Value *right);
+  llvm::Value *createLE(llvm::Value *left, llvm::Value *right);
+
+  llvm::Value *createVariableLoad(const std::string &id);
 
   llvm::Value *createRet(llvm::Value *value);
   llvm::Value *createPlsmFunction(const std::string &id,
@@ -141,4 +131,6 @@ public:
   llvm::ExecutionEngine &getExecutionEngine();
 
   void printLLVMIR();
+
+  void optimize();
 };

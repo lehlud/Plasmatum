@@ -5,10 +5,11 @@
 #include <iostream>
 #include <llvm/IR/Verifier.h>
 
+#include <llvm/Support/TargetRegistry.h>
+
 PlsmContext::PlsmContext()
     : dataLayout(llvm::EngineBuilder().selectTarget()->createDataLayout()),
       context(), module("", context), builder(context),
-      i1Type(llvm::Type::getInt1Ty(context)),
       i32Type(llvm::Type::getInt32Ty(context)),
       i64Type(llvm::Type::getInt64Ty(context)), intType(i64Type),
       charType(i32Type), floatingPointType(llvm::Type::getDoubleTy(context)),
@@ -18,13 +19,49 @@ PlsmContext::PlsmContext()
                                         "plsm_val")),
       functionType(llvm::FunctionType::get(
           plsmType, {intType, plsmType->getPointerTo()}, false)),
-      logicalFunctionType(llvm::FunctionType::get(i1Type, {plsmType}, false)),
+      mainFunction(nullptr),
+      freeFunction(llvm::Function::Create(
+          llvm::FunctionType::get(llvm::Type::getVoidTy(context), {pointerType},
+                                  false),
+          llvm::Function::ExternalLinkage, "free", module)),
+      mallocFunction(llvm::Function::Create(
+          llvm::FunctionType::get(pointerType, {i64Type}, false),
+          llvm::Function::ExternalLinkage, "malloc", module)),
+      getArgFunction(llvm::Function::Create(
+          llvm::FunctionType::get(
+              plsmType, {intType, plsmType->getPointerTo(), i64Type}, false),
+          llvm::Function::ExternalLinkage, "getarg", module)),
+      logicalFunction(llvm::Function::Create(
+          llvm::FunctionType::get(i64Type, {plsmType}, false),
+          llvm::Function::ExternalLinkage, "logical", module)),
       binExprFunctionType(
           llvm::FunctionType::get(plsmType, {plsmType, plsmType}, false)),
-      binExprMatrixType(nullptr), addFuncs(nullptr), subFuncs(nullptr),
-      mulFuncs(nullptr), divFuncs(nullptr), logicalFuncs(nullptr), functions(),
-      variableScopes(), mainFunction(nullptr), getArgFunction(nullptr) {
+      addFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "add", module)),
+      subFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "sub", module)),
+      mulFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "mul", module)),
+      divFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "div", module)),
+      modFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "mod", module)),
+      eqFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "eq", module)),
+      neFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "ne", module)),
+      gtFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "gt", module)),
+      ltFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "lt", module)),
+      geFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "ge", module)),
+      leFunction(llvm::Function::Create(
+          binExprFunctionType, llvm::Function::ExternalLinkage, "le", module)),
+      functions(), variableScopes() {
   module.setDataLayout(dataLayout);
+  auto targetTriple = llvm::EngineBuilder().selectTarget()->getTargetTriple();
+  module.setTargetTriple(targetTriple.str());
 
   std::vector<std::string> builtIns = {
       "print",
@@ -35,315 +72,6 @@ PlsmContext::PlsmContext()
         functionType, llvm::Function::ExternalLinkage, function, module);
     functions[function] = tmp;
   }
-
-  binExprMatrixType = llvm::ArrayType::get(
-      llvm::ArrayType::get(binExprFunctionType->getPointerTo(), 3), 3);
-
-  initAllocs();
-  initLogicals();
-  initBinExprs();
-  initGetArgFunction();
-}
-
-void PlsmContext::initAllocs() {
-  auto freeFunctionType = llvm::FunctionType::get(
-      llvm::Type::getVoidTy(context), {pointerType}, false);
-  freeFunction = llvm::Function::Create(
-      freeFunctionType, llvm::Function::ExternalLinkage, "free", module);
-
-  auto mallocFunctionType =
-      llvm::FunctionType::get(pointerType, {i64Type}, false);
-  mallocFunction = llvm::Function::Create(
-      mallocFunctionType, llvm::Function::ExternalLinkage, "malloc", module);
-}
-
-void PlsmContext::initLogicals() {
-  auto nullLogical = getNullLogical();
-  auto intLogical = getIntLogical();
-  auto floatLogical = getFloatLogical();
-
-  std::vector<llvm::Constant *> funcs = {nullLogical, intLogical, floatLogical};
-  auto arrT =
-      llvm::ArrayType::get(logicalFunctionType->getPointerTo(), funcs.size());
-  auto arr = llvm::ConstantArray::get(arrT, funcs);
-
-  logicalFuncs = new llvm::GlobalVariable(
-      module, arrT, true, llvm::GlobalVariable::PrivateLinkage, arr);
-}
-
-void PlsmContext::initGetArgFunction() {
-  if (getArgFunction)
-    return;
-
-  auto ft = llvm::FunctionType::get(
-      plsmType, {intType, plsmType->getPointerTo(), intType}, false);
-
-  getArgFunction = llvm::Function::Create(ft, llvm::Function::PrivateLinkage,
-                                          "getarg", module);
-
-  auto count = getArgFunction->getArg(0);
-  auto args = getArgFunction->getArg(1);
-  auto index = getArgFunction->getArg(2);
-
-  auto bb = llvm::BasicBlock::Create(context, "", getArgFunction);
-
-  builder.SetInsertPoint(bb);
-
-  auto condition = builder.CreateICmpUGE(index, count);
-
-  auto ifBB = llvm::BasicBlock::Create(context, "", getArgFunction);
-  auto elseBB = llvm::BasicBlock::Create(context, "", getArgFunction);
-
-  builder.CreateCondBr(condition, ifBB, elseBB);
-
-  builder.SetInsertPoint(ifBB);
-  builder.CreateRet(getPlsmNull());
-
-  builder.SetInsertPoint(elseBB);
-
-  auto resultEP = builder.CreateGEP(args, index);
-  auto result = builder.CreateLoad(plsmType, resultEP);
-  builder.CreateRet(result);
-}
-
-void PlsmContext::initBinExprs() {
-  initAdds();
-  initSubs();
-  initMuls();
-  initDivs();
-}
-
-void PlsmContext::initAdds() {
-  auto nullf = getNullBinExpr();
-  auto intf = getIntAdd();
-  auto floatf = getFloatAdd();
-
-  addFuncs =
-      new llvm::GlobalVariable(module, binExprMatrixType, true,
-                               llvm::GlobalValue::PrivateLinkage, nullptr);
-}
-
-void PlsmContext::initSubs() {}
-
-void PlsmContext::initMuls() {}
-
-void PlsmContext::initDivs() {}
-
-llvm::Function *PlsmContext::getNullBinExpr() {
-  auto name = "null_binexpr";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  auto nullAdd = llvm::Function::Create(
-      binExprFunctionType, llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", nullAdd);
-  builder.SetInsertPoint(bb);
-
-  builder.CreateRet(getPlsmNull());
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getIntAdd() {
-  auto name = "int_add";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getIntFromPlsm(f->getArg(0));
-  auto right = getIntFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateAdd(left, right);
-
-  auto resultPtr = createMalloc(intType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getIntSub() {
-  auto name = "int_sub";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getIntFromPlsm(f->getArg(0));
-  auto right = getIntFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateSub(left, right);
-
-  auto resultPtr = createMalloc(intType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getIntMul() {
-  auto name = "int_mul";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getIntFromPlsm(f->getArg(0));
-  auto right = getIntFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateMul(left, right);
-
-  auto resultPtr = createMalloc(intType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getIntDiv() {
-  auto name = "int_div";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getIntFromPlsm(f->getArg(0));
-  auto right = getIntFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateSDiv(left, right);
-
-  auto resultPtr = createMalloc(intType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getFloatAdd() {
-  auto name = "float_add";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getFloatFromPlsm(f->getArg(0));
-  auto right = getFloatFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateFAdd(left, right);
-
-  auto resultPtr = createMalloc(floatingPointType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getFloatSub() {
-  auto name = "float_sub";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getFloatFromPlsm(f->getArg(0));
-  auto right = getFloatFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateFSub(left, right);
-
-  auto resultPtr = createMalloc(floatingPointType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getFloatMul() {
-  auto name = "float_mul";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getFloatFromPlsm(f->getArg(0));
-  auto right = getFloatFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateFMul(left, right);
-
-  auto resultPtr = createMalloc(floatingPointType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getFloatDiv() {
-  auto name = "float_div";
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(binExprFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto left = getFloatFromPlsm(f->getArg(0));
-  auto right = getFloatFromPlsm(f->getArg(1));
-
-  auto result = builder.CreateFDiv(left, right);
-
-  auto resultPtr = createMalloc(floatingPointType);
-  builder.CreateStore(result, resultPtr);
-
-  builder.CreateRet(getPlsmValue(TYPE_INT, resultPtr));
-
-  return f;
 }
 
 void PlsmContext::initNewScope() {
@@ -358,7 +86,7 @@ void PlsmContext::disposeLastScope() {
 
   for (auto &pair : variableScopes.back()) {
     auto ptr = builder.CreatePointerCast(pair.second, pointerType);
-    builder.CreateCall(freeFunction, {ptr});
+    createFree(ptr);
   }
 
   variableScopes.pop_back();
@@ -366,9 +94,7 @@ void PlsmContext::disposeLastScope() {
 }
 
 void PlsmContext::disposeMarkedScopes() {
-  std::cout << "disposing scopes" << std::endl;
   while (disposalDepth > 0 && variableScopes.size()) {
-    std::cout << "disposing" << std::endl;
     disposeLastScope();
   }
   disposalDepth = 0;
@@ -399,84 +125,6 @@ llvm::Value *PlsmContext::getVariable(const std::string &id) {
   return nullptr;
 }
 
-llvm::Function *PlsmContext::getNullLogical() {
-  auto name = "null_logical";
-
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto result = llvm::ConstantInt::get(i1Type, 0);
-  builder.CreateRet(result);
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getIntLogical() {
-  auto name = "int_logical";
-
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto alloca = builder.CreateAlloca(plsmType);
-  builder.CreateStore(f->getArg(0), alloca);
-
-  auto valuePtrEP = builder.CreateStructGEP(alloca, 1);
-  auto valuePtr = (llvm::Value *)builder.CreateLoad(pointerType, valuePtrEP);
-
-  valuePtr = builder.CreatePointerCast(valuePtr, intType->getPointerTo());
-  auto intValue = builder.CreateLoad(intType, valuePtr);
-
-  auto result = builder.CreateICmpNE(intValue, getInt(0));
-  builder.CreateRet(result);
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getFloatLogical() {
-  auto name = "float_logical";
-
-  llvm::Function *f = module.getFunction(name);
-  if (f)
-    return f;
-
-  f = llvm::Function::Create(logicalFunctionType,
-                             llvm::Function::PrivateLinkage, name, module);
-
-  auto bb = llvm::BasicBlock::Create(context, "", f);
-  builder.SetInsertPoint(bb);
-
-  auto alloca = builder.CreateAlloca(plsmType);
-  builder.CreateStore(f->getArg(0), alloca);
-
-  auto valuePtrEP = builder.CreateStructGEP(alloca, 1);
-  auto valuePtr = (llvm::Value *)builder.CreateLoad(pointerType, valuePtrEP);
-
-  valuePtr =
-      builder.CreatePointerCast(valuePtr, floatingPointType->getPointerTo());
-  auto floatValue = builder.CreateLoad(floatingPointType, valuePtr);
-
-  auto result = builder.CreateFCmpUNE(floatValue, getFloat(0));
-  builder.CreateRet(result);
-
-  return f;
-}
-
-llvm::Function *PlsmContext::getStringLogical() { return nullptr; }
-
 llvm::Constant *PlsmContext::getI64(int64_t value) {
   return llvm::ConstantInt::get(i64Type, value);
 }
@@ -494,17 +142,15 @@ int64_t PlsmContext::getTypeSize(llvm::Type *type) {
 }
 
 llvm::Value *PlsmContext::getPlsmValue(int8_t type, llvm::Value *valuePointer) {
-  auto alloca = builder.CreateAlloca(plsmType);
+  auto result = (llvm::Value *)llvm::UndefValue::get(plsmType);
 
-  auto typeEP = builder.CreateStructGEP(alloca, 0);
-  auto valuePointerEP = builder.CreateStructGEP(alloca, 1);
+  auto typeValue = llvm::ConstantInt::get(typeType, type);
+  result = builder.CreateInsertValue(result, typeValue, {0});
 
   valuePointer = builder.CreatePointerCast(valuePointer, pointerType);
+  result = builder.CreateInsertValue(result, valuePointer, {1});
 
-  builder.CreateStore(llvm::ConstantInt::get(typeType, type), typeEP);
-  builder.CreateStore(valuePointer, valuePointerEP);
-
-  return builder.CreateLoad(plsmType, alloca);
+  return result;
 }
 
 llvm::Value *PlsmContext::getPlsmNull() {
@@ -545,63 +191,29 @@ llvm::Value *PlsmContext::getPlsmString(const std::u32string &string) {
   return getPlsmValue(TYPE_STRING, ptr);
 }
 
-llvm::Value *PlsmContext::getIntFromPlsm(llvm::Value *plsmValue) {
+llvm::Value *PlsmContext::getTypeFromPlsm(llvm::Value *plsmValue) {
   auto alloca = createMalloc(plsmType);
   builder.CreateStore(plsmValue, alloca);
 
-  auto resultEP = builder.CreateStructGEP(alloca, 1);
-  resultEP = builder.CreatePointerCast(resultEP, intType->getPointerTo());
+  auto resultEP = builder.CreateStructGEP(alloca, 0);
+  resultEP = builder.CreatePointerCast(resultEP, typeType->getPointerTo());
 
-  auto result = builder.CreateLoad(intType, resultEP);
+  auto result = builder.CreateLoad(typeType, resultEP);
 
   createFree(alloca);
 
   return result;
 }
 
-llvm::Value *PlsmContext::getFloatFromPlsm(llvm::Value *plsmValue) {
-  auto alloca = createMalloc(plsmType);
-  builder.CreateStore(plsmValue, alloca);
-
-  auto resultEP = builder.CreateStructGEP(alloca, 1);
-  resultEP =
-      builder.CreatePointerCast(resultEP, floatingPointType->getPointerTo());
-
-  auto result = builder.CreateLoad(floatingPointType, resultEP);
-
-  createFree(alloca);
-
-  return result;
-}
-
-llvm::Value *PlsmContext::getStringFromPlsm(llvm::Value *plsmValue) {
-  auto alloca = createMalloc(plsmType);
-  builder.CreateStore(plsmValue, alloca);
-
-  auto resultEP = builder.CreateStructGEP(alloca, 1);
-  resultEP = builder.CreatePointerCast(
-      resultEP, charType->getPointerTo()->getPointerTo());
-
-  auto result = builder.CreateLoad(charType->getPointerTo(), resultEP);
-
-  createFree(alloca);
-
-  return result;
+llvm::Value *PlsmContext::getValueFromPlsm(llvm::Value *value,
+                                           llvm::Type *type) {
+  auto pointer = builder.CreateExtractValue(value, {1});
+  pointer = builder.CreatePointerCast(pointer, type->getPointerTo());
+  return builder.CreateLoad(type, pointer);
 }
 
 llvm::Value *PlsmContext::getPlsmLogicalValue(llvm::Value *value) {
-  auto alloca = builder.CreateAlloca(plsmType);
-  builder.CreateStore(value, alloca);
-  auto typeEP = builder.CreateStructGEP(alloca, 0);
-  llvm::Value *logicalIdx = builder.CreateLoad(typeType, typeEP);
-  logicalIdx = builder.CreateIntCast(logicalIdx, i64Type, false);
-
-  auto logicalFuncEP = builder.CreateGEP(logicalFuncs, {getI64(0), logicalIdx});
-  auto tmpFunc =
-      builder.CreateLoad(logicalFunctionType->getPointerTo(), logicalFuncEP);
-
-  auto func = llvm::FunctionCallee(logicalFunctionType, tmpFunc);
-  return builder.CreateCall(func, {value});
+  return builder.CreateCall(logicalFunction, {value});
 }
 
 llvm::Function *PlsmContext::getMain() {
@@ -611,23 +223,33 @@ llvm::Function *PlsmContext::getMain() {
     return nullptr;
 
   auto retT = llvm::IntegerType::getInt8Ty(context);
-  auto ft = llvm::FunctionType::get(retT, false);
+  auto ft = llvm::FunctionType::get(retT, {i32Type}, false);
   auto f = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "main",
                                   module);
 
   auto bb = llvm::BasicBlock::Create(context, "", f);
-
   builder.SetInsertPoint(bb);
 
-  auto callExpr = new CallExpr("main", {});
-  callExpr->genCode(*this);
+  auto tmp = builder.CreateIntCast(f->getArg(0), intType, false);
 
+  auto alloca = createMalloc(intType);
+  builder.CreateStore(tmp, alloca);
+  auto arg = getPlsmValue(TYPE_INT, alloca);
+
+  auto args = createMalloc(plsmType);
+  builder.CreateStore(arg, args);
+
+  auto callee = functions["main"];
+  auto call = builder.CreateCall(callee, {getInt(1), args});
+
+  createFree(args);
   builder.CreateRet(llvm::ConstantInt::get(retT, 42));
 
   return f;
 }
 
 llvm::Value *PlsmContext::createFree(llvm::Value *pointer) {
+  pointer = builder.CreatePointerCast(pointer, pointerType);
   return builder.CreateCall(freeFunction, {pointer});
 }
 
@@ -638,6 +260,55 @@ llvm::Value *PlsmContext::createMalloc(llvm::Type *resultType,
   auto result = (llvm::Value *)builder.CreateCall(mallocFunction, {arg});
 
   return builder.CreatePointerCast(result, resultType->getPointerTo());
+}
+
+llvm::Value *PlsmContext::createAdd(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(addFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createSub(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(subFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createMul(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(mulFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createDiv(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(divFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createMod(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(modFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createEq(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(eqFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createNE(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(neFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createGT(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(gtFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createLT(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(ltFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createGE(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(geFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createLE(llvm::Value *left, llvm::Value *right) {
+  return builder.CreateCall(leFunction, {left, right});
+}
+
+llvm::Value *PlsmContext::createVariableLoad(const std::string &id) {
+  auto result = getVariable(id);
+  return builder.CreateLoad(plsmType, result);
 }
 
 llvm::Value *PlsmContext::createRet(llvm::Value *value) {
@@ -651,6 +322,9 @@ llvm::Value *PlsmContext::createPlsmFunction(const std::string &id,
   auto f = llvm::Function::Create(functionType, llvm::Function::PrivateLinkage,
                                   "", module);
 
+  if (id.size() > 0)
+    functions[id] = f;
+
   auto count = f->getArg(0);
   auto callArgs = f->getArg(1);
 
@@ -660,7 +334,7 @@ llvm::Value *PlsmContext::createPlsmFunction(const std::string &id,
   initNewScope();
 
   for (size_t i = 0; i < args.size(); i++) {
-    auto arg = builder.CreateCall(getArgFunction, {count, callArgs, getInt(i)});
+    auto arg = builder.CreateCall(getArgFunction, {count, callArgs, getI64(i)});
     auto alloca = createMalloc(plsmType);
     builder.CreateStore(arg, alloca);
     setVariable(args[i], alloca);
@@ -677,9 +351,6 @@ llvm::Value *PlsmContext::createPlsmFunction(const std::string &id,
 
   // disposeLastScope();
 
-  if (id.size() > 0)
-    functions[id] = f;
-
   return f;
 }
 
@@ -693,11 +364,12 @@ llvm::Value *PlsmContext::createPlsmCall(const std::string &id,
   auto argCount = llvm::ConstantInt::get(intType, args.size());
   std::vector<llvm::Value *> callArgs = {argCount};
 
+  llvm::Value *array = nullptr;
+
   if (args.size() > 0) {
     auto indexType = llvm::Type::getInt64Ty(context);
 
-    auto arraySize = llvm::ConstantInt::get(indexType, args.size());
-    auto array = builder.CreateAlloca(plsmType, arraySize);
+    array = createMalloc(plsmType, args.size());
 
     for (size_t i = 0; i < args.size(); i++) {
       auto idx = llvm::ConstantInt::get(indexType, i);
@@ -707,13 +379,19 @@ llvm::Value *PlsmContext::createPlsmCall(const std::string &id,
 
       builder.CreateStore(value, ptr);
     }
+
     callArgs.push_back(array);
   } else {
-    callArgs.push_back(
-        llvm::ConstantPointerNull::get(plsmType->getPointerTo()));
+    auto tmp = llvm::ConstantPointerNull::get(plsmType->getPointerTo());
+    callArgs.push_back(tmp);
   }
 
-  return builder.CreateCall(f, callArgs);
+  auto result = builder.CreateCall(f, callArgs);
+
+  if (array)
+    createFree(array);
+
+  return result;
 }
 
 llvm::Value *PlsmContext::createPlsmConditional(Expr *condExpr, Expr *trueExpr,
@@ -756,11 +434,56 @@ llvm::ExecutionEngine &PlsmContext::getExecutionEngine() {
   result.addGlobalMapping(freeFunction, (void *)&free);
   result.addGlobalMapping(mallocFunction, (void *)&malloc);
 
-  result.addGlobalMapping(functions["print"], (void *)&print);
-  result.addGlobalMapping(functions["println"], (void *)&println);
+  result.addGlobalMapping(getArgFunction, (void *)&plsm_getarg);
+  result.addGlobalMapping(logicalFunction, (void *)&plsm_logical);
+
+  result.addGlobalMapping(addFunction, (void *)&plsm_add);
+  result.addGlobalMapping(subFunction, (void *)&plsm_sub);
+  result.addGlobalMapping(mulFunction, (void *)&plsm_mul);
+  result.addGlobalMapping(divFunction, (void *)&plsm_div);
+  result.addGlobalMapping(modFunction, (void *)&plsm_mod);
+  result.addGlobalMapping(eqFunction, (void *)&plsm_eq);
+  result.addGlobalMapping(neFunction, (void *)&plsm_ne);
+  result.addGlobalMapping(gtFunction, (void *)&plsm_gt);
+  result.addGlobalMapping(ltFunction, (void *)&plsm_lt);
+  result.addGlobalMapping(geFunction, (void *)&plsm_ge);
+  result.addGlobalMapping(leFunction, (void *)&plsm_le);
+
+  result.addGlobalMapping(functions["print"], (void *)&plsm_print);
+  result.addGlobalMapping(functions["println"], (void *)&plsm_println);
 
   result.finalizeObject();
   return result;
 }
 
 void PlsmContext::printLLVMIR() { module.print(llvm::errs(), nullptr); }
+
+void PlsmContext::optimize() {
+  llvm::PassBuilder passBuilder;
+
+  llvm::ModuleAnalysisManager mam;
+  llvm::CGSCCAnalysisManager gam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::LoopAnalysisManager lam;
+
+  passBuilder.registerModuleAnalyses(mam);
+  passBuilder.registerCGSCCAnalyses(gam);
+  passBuilder.registerFunctionAnalyses(fam);
+  passBuilder.registerLoopAnalyses(lam);
+
+  passBuilder.crossRegisterProxies(lam, fam, gam, mam);
+
+  auto fpm = passBuilder.buildFunctionSimplificationPipeline(
+      llvm::PassBuilder::OptimizationLevel::O3, llvm::ThinOrFullLTOPhase::None);
+
+  for (auto &f : module.functions()) {
+    if (!f.getBasicBlockList().size())
+      continue;
+    fpm.run(f, fam);
+  }
+
+  mam.clear();
+  gam.clear();
+  fam.clear();
+  lam.clear();
+}

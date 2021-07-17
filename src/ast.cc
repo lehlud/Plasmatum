@@ -13,32 +13,52 @@ llvm::Value *StringExpr::genCode(PlsmContext &context) {
   return context.getPlsmString(value);
 }
 
-llvm::Value *AddBinExpr::genCode(PlsmContext &context) {
-  auto leftV = left->genCode(context);
-  auto rightV = right->genCode(context);
+llvm::Value *VarExpr::genCode(PlsmContext &context) {
+  return context.createVariableLoad(id);
+}
 
-  return nullptr;
+llvm::Value *AddBinExpr::genCode(PlsmContext &context) {
+  return context.createAdd(left->genCode(context), right->genCode(context));
 }
 
 llvm::Value *SubBinExpr::genCode(PlsmContext &context) {
-  auto leftV = left->genCode(context);
-  auto rightV = right->genCode(context);
-
-  return nullptr;
+  return context.createSub(left->genCode(context), right->genCode(context));
 }
 
 llvm::Value *MulBinExpr::genCode(PlsmContext &context) {
-  auto leftV = left->genCode(context);
-  auto rightV = right->genCode(context);
-
-  return nullptr;
+  return context.createMul(left->genCode(context), right->genCode(context));
 }
 
 llvm::Value *DivBinExpr::genCode(PlsmContext &context) {
-  auto leftV = left->genCode(context);
-  auto rightV = right->genCode(context);
+  return context.createDiv(left->genCode(context), right->genCode(context));
+}
 
-  return nullptr;
+llvm::Value *ModBinExpr::genCode(PlsmContext &context) {
+  return context.createMod(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *EqBinExpr::genCode(PlsmContext &context) {
+  return context.createEq(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *NEBinExpr::genCode(PlsmContext &context) {
+  return context.createNE(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *GTBinExpr::genCode(PlsmContext &context) {
+  return context.createGT(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *LTBinExpr::genCode(PlsmContext &context) {
+  return context.createLT(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *GEBinExpr::genCode(PlsmContext &context) {
+  return context.createGE(left->genCode(context), right->genCode(context));
+}
+
+llvm::Value *LEBinExpr::genCode(PlsmContext &context) {
+  return context.createLE(left->genCode(context), right->genCode(context));
 }
 
 llvm::Value *IfExpr::genCode(PlsmContext &context) {

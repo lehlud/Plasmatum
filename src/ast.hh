@@ -49,6 +49,16 @@ public:
   llvm::Value *genCode(PlsmContext &context) override;
 };
 
+class VarExpr : public Expr {
+private:
+  std::string id;
+
+public:
+  VarExpr(const std::string &id) : id(id) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
 class BinExpr : public Expr {
 protected:
   Expr *left, *right;
@@ -81,6 +91,55 @@ public:
 class DivBinExpr : public BinExpr {
 public:
   DivBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class ModBinExpr : public BinExpr {
+public:
+  ModBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class EqBinExpr : public BinExpr {
+public:
+  EqBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class NEBinExpr : public BinExpr {
+public:
+  NEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class GTBinExpr : public BinExpr {
+public:
+  GTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class LTBinExpr : public BinExpr {
+public:
+  LTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class GEBinExpr : public BinExpr {
+public:
+  GEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+
+  llvm::Value *genCode(PlsmContext &context) override;
+};
+
+class LEBinExpr : public BinExpr {
+public:
+  LEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
   llvm::Value *genCode(PlsmContext &context) override;
 };
@@ -126,7 +185,7 @@ public:
   ReturnStmt(Expr *value) : value(value) {}
 
   llvm::Value *genCode(PlsmContext &context) override;
-  
+
   bool isReturnStmt() override { return true; }
 };
 
