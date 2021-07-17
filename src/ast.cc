@@ -42,7 +42,7 @@ llvm::Value *DivBinExpr::genCode(PlsmContext &context) {
 }
 
 llvm::Value *IfExpr::genCode(PlsmContext &context) {
-  return context.createPlsmIf(cond, trueExpr, falseExpr);
+  return context.createPlsmConditional(cond, trueExpr, falseExpr);
 }
 
 llvm::Value *CallExpr::genCode(PlsmContext &context) {
@@ -58,5 +58,5 @@ llvm::Value *ReturnStmt::genCode(PlsmContext &context) {
 }
 
 llvm::Value *FunctionStmt::genCode(PlsmContext &context) {
-  return context.createPlsmFunction(id, body);
+  return context.createPlsmFunction(id, args, body);
 }

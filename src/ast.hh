@@ -17,6 +17,8 @@ public:
 class Stmt {
 public:
   virtual llvm::Value *genCode(PlsmContext &context) = 0;
+
+  virtual bool isReturnStmt() { return false; }
 };
 
 class IntExpr : public Expr {
@@ -124,6 +126,8 @@ public:
   ReturnStmt(Expr *value) : value(value) {}
 
   llvm::Value *genCode(PlsmContext &context) override;
+  
+  bool isReturnStmt() override { return true; }
 };
 
 class FunctionStmt : public Stmt {

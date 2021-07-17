@@ -6,6 +6,8 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 
+#include <llvm/Passes/PassBuilder.h>
+
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 
 #include <cstdlib>
@@ -32,58 +34,70 @@ private:
   llvm::PointerType *pointerType;
   llvm::StructType *plsmType;
 
+  llvm::Type *binExprMatrixType;
+
   llvm::FunctionType *functionType;
   llvm::FunctionType *logicalFunctionType;
+  llvm::FunctionType *binExprFunctionType;
 
+  llvm::GlobalVariable *addFuncs;
+  llvm::GlobalVariable *subFuncs;
+  llvm::GlobalVariable *mulFuncs;
+  llvm::GlobalVariable *divFuncs;
   llvm::GlobalVariable *logicalFuncs;
 
+  llvm::Function *freeFunction;
   llvm::Function *mallocFunction;
+  llvm::Function *getArgFunction;
   llvm::Function *mainFunction;
 
   std::map<std::string, llvm::Function *> functions;
+
+  size_t disposalDepth = 0;
   std::vector<std::map<std::string, llvm::Value *>> variableScopes;
 
-  void init() {}
+  llvm::ModuleAnalysisManager mam;
+  llvm::CGSCCAnalysisManager gam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::LoopAnalysisManager lam;
+  llvm::ModulePassManager mpm;
 
+  void initAllocs();
   void initLogicals();
-  
+  void initGetArgFunction();
+
+  void initBinExprs();
+  void initAdds();
+  void initSubs();
+  void initMuls();
+  void initDivs();
+
+  llvm::Function *getNullBinExpr();
+
+  llvm::Function *getIntAdd();
+  llvm::Function *getIntSub();
+  llvm::Function *getIntMul();
+  llvm::Function *getIntDiv();
+
+  llvm::Function *getFloatAdd();
+  llvm::Function *getFloatSub();
+  llvm::Function *getFloatMul();
+  llvm::Function *getFloatDiv();
+
+  void initNewScope();
+  void disposeLastScope();
+  void disposeMarkedScopes();
+  void setVariable(const std::string &id, llvm::Value *value);
+  llvm::Value *getVariable(const std::string &id);
+
   llvm::Function *getNullLogical();
   llvm::Function *getIntLogical();
   llvm::Function *getFloatLogical();
   llvm::Function *getStringLogical();
 
 public:
-  PlsmContext()
-      : dataLayout(llvm::EngineBuilder().selectTarget()->createDataLayout()),
-        context(), module("", context), builder(context),
-        i1Type(llvm::Type::getInt1Ty(context)),
-        i32Type(llvm::Type::getInt32Ty(context)),
-        i64Type(llvm::Type::getInt64Ty(context)), intType(i64Type),
-        charType(i32Type), floatingPointType(llvm::Type::getDoubleTy(context)),
-        typeType(llvm::Type::getInt8Ty(context)),
-        pointerType(llvm::Type::getInt8PtrTy(context)),
-        plsmType(llvm::StructType::create(context, {typeType, pointerType},
-                                          "plsm_val")),
-        functionType(llvm::FunctionType::get(
-            plsmType, {intType, plsmType->getPointerTo()}, false)),
-        logicalFunctionType(llvm::FunctionType::get(i1Type, {plsmType}, false)),
-        functions(), variableScopes(), mainFunction(nullptr) {
-    module.setDataLayout(dataLayout);
-
-    auto mallocFunctionType =
-        llvm::FunctionType::get(pointerType, {i64Type}, false);
-    mallocFunction = llvm::Function::Create(
-        mallocFunctionType, llvm::Function::ExternalLinkage, "malloc", module);
-
-    std::vector<std::string> builtIns = {"print", "println"};
-    for (auto &function : builtIns) {
-      auto tmp = llvm::Function::Create(
-          functionType, llvm::Function::ExternalLinkage, function, module);
-      functions[function] = tmp;
-    }
-
-    initLogicals();
-  }
+  PlsmContext();
+  ~PlsmContext();
 
   llvm::LLVMContext &getContext() { return context; }
   llvm::Module &getModule() { return module; }
@@ -109,20 +123,32 @@ public:
   llvm::Value *getPlsmFloat(double value);
   llvm::Value *getPlsmString(const std::u32string &string);
 
+  llvm::Value *getIntFromPlsm(llvm::Value *plsmValue);
+  llvm::Value *getFloatFromPlsm(llvm::Value *plsmValue);
+  llvm::Value *getStringFromPlsm(llvm::Value *plsmValue);
+
   llvm::Value *getPlsmLogicalValue(llvm::Value *value);
 
   llvm::Function *getMain();
 
+  llvm::Value *createFree(llvm::Value *pointer);
   llvm::Value *createMalloc(llvm::Type *resultType, int64_t numElements = 1);
+
+
   llvm::Value *createRet(llvm::Value *value);
   llvm::Value *createPlsmFunction(const std::string &id,
-                                  std::vector<Stmt *> body);
+                                  std::vector<std::string> &args,
+                                  std::vector<Stmt *> &body);
 
   llvm::Value *createPlsmCall(const std::string &id, std::vector<Expr *> args);
 
-  llvm::Value *createPlsmIf(Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
+  llvm::Value *createPlsmConditional(Expr *condExpr, Expr *trueExpr,
+                                     Expr *falseExpr);
 
   llvm::ExecutionEngine &getExecutionEngine();
 
+  void optimize();
   void printLLVMIR();
+
+  void disposeOptimizations();
 };

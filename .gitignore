@@ -1,6 +1,7 @@
 .vscode
 *.out
-
 *.o
+*tmp*
 
 bin
+

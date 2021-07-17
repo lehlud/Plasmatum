@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   auto arg = new IfExpr(new IntExpr(0), new StringExpr(U"Hallo Welt!"), new IntExpr(42));
   auto call = new CallExpr("println", {arg});
   std::vector<Stmt *> body = {new ReturnStmt(call)};
-  auto f = new FunctionStmt("main", body, {});
+  auto f = new FunctionStmt("main", body, {"argc"});
 
   PlsmContext context;
 
@@ -48,8 +48,11 @@ int main(int argc, char **argv) {
 
   auto mainFunc = context.getMain();
 
+  // context.printLLVMIR();
+  // context.optimize();
+  // std::cout << "-------------------------" << std::endl;
   context.printLLVMIR();
-  std::cout << "---------------" << std::endl;
+  std::cout << "-------------------------" << std::endl;
 
   std::string errString;
   llvm::raw_string_ostream str(errString);
