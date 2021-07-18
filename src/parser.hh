@@ -12,10 +12,18 @@ private:
 public:
   Parser(const std::u32string &text) : text(text) {}
 
+  void skipSpaces();
+
   Expr *parseExpr();
+
+
+  std::string parseIdentifier();
+
+  Expr *parseCallExpr(const std::string &id);
+  Expr *parseVarExpr();
   Expr *parseNumber();
   Expr *parseString();
-  Expr *parseIdentifier();
+  Expr *parseDefine();
 
   Stmt *parseStmt();
 

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     // error here
   }
 
-  Parser parser(U"'asdfjkl;' 4 4.666 asdf");
+  Parser parser(U"'asdfjkl;' 4 4.666 asdf(44)");
   Expr *expr = nullptr;
   while ((expr = parser.parseExpr()))
     std::cout << to_str(expr->to_string()) << std::endl;
