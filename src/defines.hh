@@ -5,8 +5,6 @@
 
 #include <stdint.h>
 
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-
 typedef struct _plsm_val {
     int8_t type;
     int8_t *value;

@@ -1,6 +1,7 @@
 #include "ast.hh"
 #include "context.hh"
 #include "lib.hh"
+#include "parser.hh"
 
 #include <llvm/ADT/APInt.h>
 #include <llvm/IR/Function.h>
@@ -30,6 +31,11 @@ int main(int argc, char **argv) {
   if (argc <= 1) {
     // error here
   }
+
+  Parser parser(U"'asdfjkl;' 4 4.666 asdf");
+  Expr *expr = nullptr;
+  while ((expr = parser.parseExpr()))
+    std::cout << to_str(expr->to_string()) << std::endl;
 
   // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100,
   // 33, 0}; plsm_val args[] = {(plsm_val){TYPE_STRING, (int8_t *)plsm_str}};
@@ -61,7 +67,7 @@ int main(int argc, char **argv) {
   auto mainFunc = context.getMain();
 
   context.optimize();
-  context.printLLVMIR();
+  // context.printLLVMIR();
   std::cout << "------------------------------------------------" << std::endl;
 
   std::string errString;
@@ -74,7 +80,7 @@ int main(int argc, char **argv) {
 
   auto address = engine.getFunctionAddress("main");
   auto finalFunc = (int8_t(*)(int))address;
-  finalFunc(35);
+  finalFunc(30);
 
   return 0;
 }

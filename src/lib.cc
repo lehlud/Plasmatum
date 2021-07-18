@@ -3,11 +3,22 @@
 
 #include <codecvt>
 #include <cstdlib>
+#include <cmath>
 #include <iostream>
+#include <cstring>
 #include <locale>
 #include <string>
 
 inline double fmod(double a, double b) { return a - b * trunc(a / b); }
+
+inline size_t strsize(uint32_t *str) {
+  uint32_t c;
+  size_t result = 0;
+  while ((c = *str++) != 0) {
+    result += 1;
+  }
+  return result;
+}
 
 inline plsm_val null_plsm_val() { return (plsm_val){TYPE_NULL, nullptr}; }
 
@@ -305,51 +316,51 @@ binexpr_func le_funcs[3][3] = {{nullbinexpr, nullbinexpr, nullbinexpr},
                                {nullbinexpr, iile, ifle},
                                {nullbinexpr, file, ffle}};
 
-extern "C" plsm_val plsm_add(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_add(plsm_val a, plsm_val b) {
   return add_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_sub(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_sub(plsm_val a, plsm_val b) {
   return sub_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_mul(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_mul(plsm_val a, plsm_val b) {
   return mul_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_div(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_div(plsm_val a, plsm_val b) {
   return div_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_mod(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_mod(plsm_val a, plsm_val b) {
   return mod_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_eq(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_eq(plsm_val a, plsm_val b) {
   return eq_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_ne(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_ne(plsm_val a, plsm_val b) {
   return ne_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_gt(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_gt(plsm_val a, plsm_val b) {
   return gt_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_lt(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_lt(plsm_val a, plsm_val b) {
   return lt_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_ge(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_ge(plsm_val a, plsm_val b) {
   return ge_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_le(plsm_val a, plsm_val b) {
+extern "C" plsm_val __plsm_le(plsm_val a, plsm_val b) {
   return le_funcs[a.type][b.type](a, b);
 }
 
-extern "C" plsm_val plsm_getarg(uint64_t count, plsm_val *args,
+extern "C" plsm_val __plsm_getarg(uint64_t count, plsm_val *args,
                                 uint64_t index) {
   if (index >= count)
     return null_plsm_val();
@@ -372,8 +383,63 @@ int64_t string_logical(plsm_val value) {
 logical_func logical_funcs[] = {null_logical, int_logical, float_logical,
                                 string_logical};
 
-extern "C" int64_t plsm_logical(plsm_val value) {
+extern "C" int64_t __plsm_logical(plsm_val value) {
   return logical_funcs[value.type](value);
+}
+
+typedef void (*free_func)(plsm_val value);
+
+void null_free(plsm_val value) { return; }
+
+void simple_free(plsm_val value) { std::free(value.value); }
+
+void string_free(plsm_val value) {
+  auto str_ptr = *((uint32_t **)value.value);
+  std::free(str_ptr);
+  std::free(value.value);
+}
+
+free_func free_funcs[] = {null_free, simple_free, simple_free, string_free};
+
+extern "C" void __plsm_free(plsm_val value) {
+  // std::cout << "free: " << (int64_t)value.value << std::endl;
+  return free_funcs[value.type](value);
+}
+
+typedef plsm_val (*memcpy_func)(plsm_val value);
+
+plsm_val null_memcpy(plsm_val value) { return value; }
+
+plsm_val int_memcpy(plsm_val value) {
+  void *ptr = std::malloc(sizeof(int64_t));
+  memcpy(ptr, value.value, sizeof(int64_t));
+  value.value = (int8_t *)ptr;
+  return value;
+}
+
+plsm_val float_memcpy(plsm_val value) {
+  void *ptr = std::malloc(sizeof(double));
+  memcpy(ptr, value.value, sizeof(double));
+  value.value = (int8_t *)ptr;
+  return value;
+}
+
+plsm_val string_memcpy(plsm_val value) {
+  uint32_t *string = *((uint32_t **)value.value);
+  size_t size = (strsize(string) * sizeof(uint32_t)) + 1;
+  void *strptr = std::malloc(size);
+  std::memcpy(strptr, string, size);
+
+  void **ptr = (void **)std::malloc(sizeof(uint32_t *));
+  *ptr = strptr;
+  value.value = (int8_t *)ptr;
+  return value;
+}
+
+memcpy_func memcpy_funcs[] = {null_memcpy, float_memcpy, string_memcpy};
+
+extern "C" plsm_val __plsm_memcpy(plsm_val value) {
+  return memcpy_funcs[value.type](value);
 }
 
 inline int64_t plsm_prints(const std::string &string) {
@@ -392,8 +458,8 @@ int64_t print_float(int8_t *value) {
 }
 
 int64_t print_string(int8_t *value) {
-  uint32_t *u32val = (uint32_t *)value;
-  std::u32string u32string((char32_t *)u32val);
+  uint32_t **u32val = (uint32_t **)value;
+  std::u32string u32string(*((char32_t **)u32val));
 
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
 
@@ -418,7 +484,7 @@ inline int64_t plsm_printv(plsm_val value) {
   }
 }
 
-extern "C" plsm_val plsm_print(int64_t count, plsm_val *args) {
+extern "C" plsm_val __plsm_print(int64_t count, plsm_val *args) {
   if (count == 0)
     return int_plsm_val(0);
 
@@ -431,8 +497,8 @@ extern "C" plsm_val plsm_print(int64_t count, plsm_val *args) {
   return int_plsm_val(result);
 }
 
-extern "C" plsm_val plsm_println(int64_t count, plsm_val *args) {
-  plsm_val result = plsm_print(count, args);
+extern "C" plsm_val __plsm_println(int64_t count, plsm_val *args) {
+  plsm_val result = __plsm_print(count, args);
   std::cout << std::endl;
   return result;
 }

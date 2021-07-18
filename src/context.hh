@@ -41,6 +41,9 @@ private:
 
   llvm::Function *freeFunction;
   llvm::Function *mallocFunction;
+  llvm::Function *memcpyFunction;
+  llvm::Function *plsmFreeFunction;
+
   llvm::Function *getArgFunction;
   llvm::Function *logicalFunction;
 
@@ -59,11 +62,17 @@ private:
   std::map<std::string, llvm::Function *> functions;
 
   size_t disposalDepth = 0;
-  std::vector<std::map<std::string, llvm::Value *>> variableScopes;
+  std::vector<std::pair<std::map<std::string, llvm::Value *>,
+                        std::vector<llvm::Value *>>>
+      variableScopes;
 
   void initNewScope();
   void disposeLastScope();
-  void disposeMarkedScopes();
+
+  void freeLastScope();
+  void freeScope(size_t index);
+  void freeMarkedScopes();
+
   void setVariable(const std::string &id, llvm::Value *value);
   llvm::Value *getVariable(const std::string &id);
 
@@ -88,6 +97,8 @@ public:
 
   int64_t getTypeSize(llvm::Type *type);
 
+  void addToPlsmPointers(llvm::Value *value);
+
   llvm::Value *getPlsmValue(int8_t type, llvm::Value *valuePointer);
   llvm::Value *getPlsmNull();
   llvm::Value *getPlsmInt(int64_t value);
@@ -102,7 +113,12 @@ public:
   llvm::Function *getMain();
 
   llvm::Value *createFree(llvm::Value *pointer);
+  llvm::Value *createPlsmFree(llvm::Value *value);
   llvm::Value *createMalloc(llvm::Type *resultType, int64_t numElements = 1);
+  llvm::Value *createMemCpy(llvm::Value *value, bool addToPlsmPointers = true);
+
+  llvm::Value *createBinExpr(llvm::Function *f, llvm::Value *left,
+                             llvm::Value *right);
 
   llvm::Value *createAdd(llvm::Value *left, llvm::Value *right);
   llvm::Value *createSub(llvm::Value *left, llvm::Value *right);

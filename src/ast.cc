@@ -1,6 +1,43 @@
 #include "ast.hh"
 #include "context.hh"
 
+Stmt *ExprStmt::optimize() {
+  if (!(expr->isConstantExpr()))
+    return this;
+  else
+    return nullptr;
+}
+
+Stmt *FunctionStmt::optimize() {
+  std::vector<Stmt *> newBody;
+
+  bool returned = false;
+  for (size_t i = 0; i < body.size(); i++) {
+    if (returned) {
+      delete body[i];
+    } else {
+      if (body[i]->isReturning())
+        returned = true;
+
+      Stmt *optimized = body[i]->optimize();
+      if (optimized)
+        newBody.push_back(optimized);
+    }
+  }
+
+  body.clear();
+  body = newBody;
+
+  if (!returned)
+    body.push_back(new ReturnStmt(new NullExpr()));
+
+  return this;
+}
+
+llvm::Value *NullExpr::genCode(PlsmContext &context) {
+  return context.getPlsmNull();
+}
+
 llvm::Value *IntExpr::genCode(PlsmContext &context) {
   return context.getPlsmInt(value);
 }
