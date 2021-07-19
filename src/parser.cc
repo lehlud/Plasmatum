@@ -169,8 +169,6 @@ Expr *Parser::parseIfExpr() {
     return nullptr;
   }
 
-  std::cout << "parsing ifexpr" << std::endl;
-
   skipSpaces();
 
   Expr *cond = parseExpr();
@@ -191,7 +189,6 @@ Expr *Parser::parseIfExpr() {
   skipSpaces();
 
   tmp = parseIdentifier();
-  std::cout << tmp << std::endl;
   if (tmp != "else") {
     std::cout << "error while parsing if expr" << std::endl;
     exit(1);

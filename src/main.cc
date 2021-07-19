@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
     // error here
   }
 
-  Parser parser(U"define fib(x) = if x < 2 x else fib(x - 1) + fib(x - 2)\ndefine main(argc) = "
+  Parser parser(U"define fib(x) = if x < 2 x else fib(x - 1) + fib(x - "
+                U"2)\ndefine main(argc) = "
                 U"println(fib(30))");
 
   std::vector<Stmt *> stmts;
