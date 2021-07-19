@@ -496,6 +496,7 @@ llvm::Value *PlsmContext::createPlsmConditional(Expr *condExpr, Expr *trueExpr,
 llvm::ExecutionEngine &PlsmContext::getExecutionEngine() {
   auto &result = *(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(&module))
                        .setEngineKind(llvm::EngineKind::JIT)
+                       .setOptLevel(llvm::CodeGenOpt::Aggressive)
                        .create());
 
   result.DisableSymbolSearching();

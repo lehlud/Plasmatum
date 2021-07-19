@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
-#include <cstring>
 #include <locale>
 #include <string>
 
@@ -411,26 +410,31 @@ typedef plsm_val (*memcpy_func)(plsm_val value);
 plsm_val null_memcpy(plsm_val value) { return value; }
 
 plsm_val int_memcpy(plsm_val value) {
-  void *ptr = std::malloc(sizeof(int64_t));
-  memcpy(ptr, value.value, sizeof(int64_t));
+  int64_t *ptr = (int64_t *)std::malloc(sizeof(int64_t));
+  *ptr = *((int64_t *)value.value);
   value.value = (int8_t *)ptr;
   return value;
 }
 
 plsm_val float_memcpy(plsm_val value) {
-  void *ptr = std::malloc(sizeof(double));
-  memcpy(ptr, value.value, sizeof(double));
+  double *ptr = (double *)std::malloc(sizeof(double));
+  *ptr = *((double *)value.value);
   value.value = (int8_t *)ptr;
   return value;
 }
 
 plsm_val string_memcpy(plsm_val value) {
   uint32_t *string = *((uint32_t **)value.value);
-  size_t size = (strsize(string) * sizeof(uint32_t)) + 1;
-  void *strptr = std::malloc(size);
-  std::memcpy(strptr, string, size);
+  
+  size_t size = strsize(string) + 1;
+  size_t alloc_size = (size * sizeof(uint32_t));
+  uint32_t *strptr = (uint32_t *)std::malloc(alloc_size);
 
-  void **ptr = (void **)std::malloc(sizeof(uint32_t *));
+  for (size_t i = 0; i < size; i++) {
+    strptr[i] = string[i];
+  }
+
+  uint32_t **ptr = (uint32_t **)std::malloc(sizeof(uint32_t *));
   *ptr = strptr;
   value.value = (int8_t *)ptr;
   return value;

@@ -66,7 +66,8 @@ int main(int argc, char **argv) {
 
   auto mainFunc = context.getMain();
 
-  context.optimize();
+  // std::cout << "------------------------------------------------" << std::endl;
+  // context.optimize();
   // context.printLLVMIR();
   std::cout << "------------------------------------------------" << std::endl;
 
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
 
   auto address = engine.getFunctionAddress("main");
   auto finalFunc = (int8_t(*)(int))address;
-  finalFunc(30);
+  finalFunc(20);
 
   return 0;
 }
