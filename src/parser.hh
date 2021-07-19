@@ -23,8 +23,10 @@ public:
   Expr *parseVarExpr();
   Expr *parseNumber();
   Expr *parseString();
-  Expr *parseDefine();
+  Expr *parseIfExpr();
+  Expr *parseOptionalBinExpr(Expr *expr);
 
   Stmt *parseStmt();
+  Stmt *parseDefine();
 
 };

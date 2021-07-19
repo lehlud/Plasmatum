@@ -33,7 +33,7 @@ public:
 
   virtual bool isReturning() { return false; }
 
-  // virtual std::u32string to_string() = 0;
+  virtual std::u32string to_string() = 0;
 
   virtual llvm::Value *genCode(PlsmContext &context) = 0;
 };
@@ -236,9 +236,7 @@ public:
     }
   }
 
-  std::u32string to_string() override {
-    return U"callexpr: '" + to_u32(callee) + U"'";
-  }
+  std::u32string to_string() override;
 
   bool isCallExpr() override { return true; }
 
@@ -254,6 +252,10 @@ public:
 
   ~ExprStmt() { delete expr; }
 
+  std::u32string to_string() override {
+    return U"ExprStmt: " + expr->to_string();
+  }
+
   Stmt *optimize() override;
 
   llvm::Value *genCode(PlsmContext &context) override;
@@ -267,6 +269,10 @@ public:
   ReturnStmt(Expr *value) : value(value) {}
 
   ~ReturnStmt() { delete value; }
+
+  std::u32string to_string() override {
+    return U"ReturnStmt: " + value->to_string();
+  }
 
   bool isReturning() override { return true; }
 
@@ -291,6 +297,8 @@ public:
       delete stmt;
     }
   }
+
+  std::u32string to_string() override;
 
   Stmt *optimize() override;
 

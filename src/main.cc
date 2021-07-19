@@ -32,10 +32,15 @@ int main(int argc, char **argv) {
     // error here
   }
 
-  Parser parser(U"'asdfjkl;' 4 4.666 asdf(44)");
-  Expr *expr = nullptr;
-  while ((expr = parser.parseExpr()))
-    std::cout << to_str(expr->to_string()) << std::endl;
+  Parser parser(U"define fib(x) = if x < 2 x else fib(x - 1) + fib(x - 2)\ndefine main(argc) = "
+                U"println(fib(30))");
+
+  std::vector<Stmt *> stmts;
+  Stmt *stmt = nullptr;
+  while ((stmt = parser.parseStmt())) {
+    stmts.push_back(stmt);
+    std::cout << to_str(stmt->to_string()) << std::endl;
+  }
 
   // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100,
   // 33, 0}; plsm_val args[] = {(plsm_val){TYPE_STRING, (int8_t *)plsm_str}};
@@ -43,39 +48,17 @@ int main(int argc, char **argv) {
 
   initLLVM();
 
-  std::vector<Stmt *> fibBody = {new ReturnStmt(new IfExpr(
-      new LTBinExpr(new VarExpr("x"), new IntExpr(2)), new VarExpr("x"),
-      new AddBinExpr(new CallExpr("fib", {new SubBinExpr(new VarExpr("x"),
-                                                         new IntExpr(1))}),
-                     new CallExpr("fib", {new SubBinExpr(new VarExpr("x"),
-                                                         new IntExpr(2))}))))};
-  auto testFunc = new FunctionStmt("fib", fibBody, {"x"});
-
-  std::vector<Stmt *> body = {
-      new ExprStmt(
-          new CallExpr("println", {new StringExpr(U"This is unicode! Σίγμα")})),
-      new ReturnStmt(new CallExpr(
-          "println", {new CallExpr("fib", {new VarExpr("argc")})})),
-  };
-  auto f = new FunctionStmt("main", body, {"argc"});
-
   PlsmContext context;
-
-  testFunc->genCode(context);
-  auto func = (llvm::Function *)f->genCode(context);
+  for (auto &tl_stmt : stmts) {
+    tl_stmt->genCode(context);
+  }
 
   auto mainFunc = context.getMain();
 
-  // std::cout << "------------------------------------------------" << std::endl;
-  // context.optimize();
-  // context.printLLVMIR();
   std::cout << "------------------------------------------------" << std::endl;
-
-  std::string errString;
-  llvm::raw_string_ostream str(errString);
-  if (llvm::verifyFunction(*func, &str)) {
-    std::cout << "error: " << errString << std::endl;
-  }
+  context.optimize();
+  context.printLLVMIR();
+  std::cout << "------------------------------------------------" << std::endl;
 
   auto &engine = context.getExecutionEngine();
 

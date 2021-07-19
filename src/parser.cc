@@ -35,11 +35,13 @@ Expr *Parser::parseExpr() {
   Expr *result = nullptr;
 
   if ((result = parseNumber()))
-    return result;
+    return parseOptionalBinExpr(result);
   else if ((result = parseString()))
-    return result;
+    return parseOptionalBinExpr(result);
+  else if ((result = parseIfExpr()))
+    return parseOptionalBinExpr(result);
   else if ((result = parseVarExpr()))
-    return result;
+    return parseOptionalBinExpr(result);
 
   return nullptr;
 }
@@ -62,6 +64,8 @@ Expr *Parser::parseCallExpr(const std::string &id) {
 
     skipSpaces();
   }
+
+  index += 1;
 
   return new CallExpr(id, args);
 }
@@ -138,12 +142,6 @@ Expr *Parser::parseString() {
   return new StringExpr(tmp);
 }
 
-Expr *Parser::parseDefine() {
-  skipSpaces();
-
-  return nullptr;
-}
-
 Expr *Parser::parseVarExpr() {
   size_t origIdx = index;
   std::string tmp = parseIdentifier();
@@ -162,4 +160,163 @@ Expr *Parser::parseVarExpr() {
   return new VarExpr(tmp);
 }
 
-Stmt *Parser::parseStmt() { return nullptr; }
+Expr *Parser::parseIfExpr() {
+  size_t origIdx = index;
+  std::string tmp = parseIdentifier();
+
+  if (tmp != "if") {
+    index = origIdx;
+    return nullptr;
+  }
+
+  std::cout << "parsing ifexpr" << std::endl;
+
+  skipSpaces();
+
+  Expr *cond = parseExpr();
+  if (!cond) {
+    index = origIdx;
+    return nullptr;
+  }
+
+  skipSpaces();
+
+  Expr *trueExpr = parseExpr();
+  if (!trueExpr) {
+    std::cout << "error while parsing if expr" << std::endl;
+    exit(1);
+    return nullptr;
+  }
+
+  skipSpaces();
+
+  tmp = parseIdentifier();
+  std::cout << tmp << std::endl;
+  if (tmp != "else") {
+    std::cout << "error while parsing if expr" << std::endl;
+    exit(1);
+    return nullptr;
+  }
+
+  skipSpaces();
+
+  Expr *falseExpr = parseExpr();
+  if (!falseExpr) {
+    std::cout << "error while parsing if expr" << std::endl;
+    exit(1);
+    return nullptr;
+  }
+
+
+  return new IfExpr(cond, trueExpr, falseExpr);
+}
+
+Expr *Parser::parseOptionalBinExpr(Expr *expr) {
+  skipSpaces();
+
+  char32_t op;
+  if (!isBinOp((op = charAt(text, index)))) {
+    return expr;
+  }
+
+  size_t origIdx = index;
+
+  index += 1;
+  skipSpaces();
+
+  Expr *right = parseExpr();
+  if (!right) {
+    index = origIdx;
+    return nullptr;
+  }
+
+  switch (op) {
+  case '+':
+    return new AddBinExpr(expr, right);
+  case '-':
+    return new SubBinExpr(expr, right);
+  case '*':
+    return new MulBinExpr(expr, right);
+  case '/':
+    return new DivBinExpr(expr, right);
+  case '%':
+    return new ModBinExpr(expr, right);
+  case '<':
+    return new LTBinExpr(expr, right);
+  }
+
+  index = origIdx;
+  return expr;
+}
+
+Stmt *Parser::parseStmt() {
+  skipSpaces();
+
+  Stmt *result = nullptr;
+
+  if ((result = parseDefine()))
+    return result;
+
+  return nullptr;
+
+}
+
+Stmt *Parser::parseDefine() {
+  size_t origIdx = index;
+
+  std::string id = parseIdentifier();
+  if (id != "define") {
+    index = origIdx;
+    return nullptr;
+  }
+
+  skipSpaces();
+
+  id = parseIdentifier();
+
+  if (!id.size()) {
+    index = origIdx;
+    return nullptr;
+  }
+
+  skipSpaces();
+
+  if (charAt(text, index) != '(') {
+    index = origIdx;
+    return nullptr;
+  }
+
+  index += 1;
+  skipSpaces();
+
+  std::vector<std::string> args;
+  while (charAt(text, index) != ')' && charAt(text, index) > 0) {
+    std::string tmp = parseIdentifier();
+    if (!tmp.size()) {
+      index = origIdx;
+      return nullptr;
+    }
+    args.push_back(tmp);
+
+    skipSpaces();
+  }
+
+  index += 1;
+  skipSpaces();
+
+  if (charAt(text, index) != '=') {
+    index = origIdx;
+    return nullptr;
+  }
+
+  index += 1;
+  skipSpaces();
+
+  Expr *result = parseExpr();
+  if (!result) {
+    index = origIdx;
+    return nullptr;
+  }
+
+  return new FunctionStmt(id, {new ReturnStmt(result)}, args);
+}
