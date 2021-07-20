@@ -113,7 +113,7 @@ llvm::Value *ModBinExpr::genCode(PlsmContext &context) {
   return context.createMod(left->genCode(context), right->genCode(context));
 }
 
-llvm::Value *EqBinExpr::genCode(PlsmContext &context) {
+llvm::Value *EQBinExpr::genCode(PlsmContext &context) {
   return context.createEq(left->genCode(context), right->genCode(context));
 }
 

@@ -22,25 +22,27 @@ void initLLVM() {
   llvm::InitializeAllAsmPrinters();
 }
 
-extern "C" int64_t foo() {
-  std::cout << "Hello World!" << std::endl;
-  return 1;
+void printUsage(char *arg0) {
+  std::cout << "usage: " << arg0 << " <file>" << std::endl;
 }
 
 int main(int argc, char **argv) {
-  if (argc <= 1) {
-    // error here
+  if (argc <= 0) {
+    return 1;
+  } else if (argc <= 1) {
+    printUsage(argv[0]);
+    return 1;
   }
 
-  Parser parser(U"define fib(x) = if x < 2 x else fib(x - 1) + fib(x - "
-                U"2)\ndefine main(argc) = "
-                U"println(fib(30))");
+  std::u32string text = readFile(argv[1]);
+
+  Parser parser(text);
 
   std::vector<Stmt *> stmts;
   Stmt *stmt = nullptr;
   while ((stmt = parser.parseStmt())) {
     stmts.push_back(stmt);
-    std::cout << to_str(stmt->to_string()) << std::endl;
+    // std::cout << to_str(stmt->to_string()) << std::endl;
   }
 
   // int32_t plsm_str[] = {72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100,
@@ -56,10 +58,10 @@ int main(int argc, char **argv) {
 
   auto mainFunc = context.getMain();
 
-  std::cout << "------------------------------------------------" << std::endl;
+  // std::cout << "------------------------------------------------" << std::endl;
   context.optimize();
-  context.printLLVMIR();
-  std::cout << "------------------------------------------------" << std::endl;
+  // context.printLLVMIR();
+  // std::cout << "------------------------------------------------" << std::endl;
 
   auto &engine = context.getExecutionEngine();
 

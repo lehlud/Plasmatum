@@ -28,5 +28,7 @@ public:
 
   Stmt *parseStmt();
   Stmt *parseDefine();
+  Stmt *parseReturn();
+  Stmt *parseExprStmt();
 
 };

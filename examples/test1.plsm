@@ -1,4 +1,8 @@
-Int f(x:Int) = x ** 2
-Float g(x:Float) = x / 2
+define add(x y) = x + y
+define double(x) = 2 * x
 
-
+define main() => (
+    println('This is unicode! Σίγμα')
+    println(double(21) add(40 2))
+    return 42
+)

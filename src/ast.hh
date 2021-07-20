@@ -156,9 +156,9 @@ public:
   llvm::Value *genCode(PlsmContext &context) override;
 };
 
-class EqBinExpr : public BinExpr {
+class EQBinExpr : public BinExpr {
 public:
-  EqBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
+  EQBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
 
   llvm::Value *genCode(PlsmContext &context) override;
 };

@@ -2,6 +2,8 @@
 
 #include <string>
 
+std::u32string readFile(const std::string &filename);
+
 char32_t charAt(const std::u32string &string, size_t index);
 
 bool isIdChar(char32_t c);

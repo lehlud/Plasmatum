@@ -204,7 +204,6 @@ Expr *Parser::parseIfExpr() {
     return nullptr;
   }
 
-
   return new IfExpr(cond, trueExpr, falseExpr);
 }
 
@@ -219,12 +218,19 @@ Expr *Parser::parseOptionalBinExpr(Expr *expr) {
   size_t origIdx = index;
 
   index += 1;
+
+  bool isEq = charAt(text, index) == '=';
+  if ((op == '=' || op == '!') && !isEq) {
+    index = origIdx;
+    return expr;
+  }
+
   skipSpaces();
 
   Expr *right = parseExpr();
   if (!right) {
     index = origIdx;
-    return nullptr;
+    return expr;
   }
 
   switch (op) {
@@ -239,7 +245,19 @@ Expr *Parser::parseOptionalBinExpr(Expr *expr) {
   case '%':
     return new ModBinExpr(expr, right);
   case '<':
-    return new LTBinExpr(expr, right);
+    if (isEq)
+      return new LEBinExpr(expr, right);
+    else
+      return new LTBinExpr(expr, right);
+  case '>':
+    if (isEq)
+      return new GEBinExpr(expr, right);
+    else
+      return new GTBinExpr(expr, right);
+  case '=':
+    return new EQBinExpr(expr, right);
+  case '!':
+    return new NEBinExpr(expr, right);
   }
 
   index = origIdx;
@@ -253,9 +271,13 @@ Stmt *Parser::parseStmt() {
 
   if ((result = parseDefine()))
     return result;
+  else if ((result = parseReturn()))
+    return result;
+  else if ((result = parseExprStmt()))
+    return result;
+
 
   return nullptr;
-
 }
 
 Stmt *Parser::parseDefine() {
@@ -307,6 +329,56 @@ Stmt *Parser::parseDefine() {
   }
 
   index += 1;
+
+  std::vector<Stmt *> body;
+
+  if (charAt(text, index) == '>') {
+    index += 1;
+    skipSpaces();
+
+    if (charAt(text, index) != '(') {
+      index = origIdx;
+      return nullptr;
+    }
+
+    index += 1;
+    skipSpaces();
+
+    while (charAt(text, index) != ')' && charAt(text, index) > 0) {
+      Stmt *stmt = parseStmt();
+
+      if (!stmt) {
+        index = origIdx;
+        return nullptr;
+      }
+
+      body.push_back(stmt);
+    }
+
+  } else {
+    skipSpaces();
+
+    Expr *result = parseExpr();
+    if (!result) {
+      index = origIdx;
+      return nullptr;
+    }
+
+    body = {new ReturnStmt(result)};
+  }
+
+  return new FunctionStmt(id, body, args);
+}
+
+Stmt *Parser::parseReturn() {
+  size_t origIdx = index;
+  std::string tmp = parseIdentifier();
+
+  if (tmp != "return") {
+    index = origIdx;
+    return nullptr;
+  }
+
   skipSpaces();
 
   Expr *result = parseExpr();
@@ -314,6 +386,17 @@ Stmt *Parser::parseDefine() {
     index = origIdx;
     return nullptr;
   }
+  return new ReturnStmt(result);
+}
 
-  return new FunctionStmt(id, {new ReturnStmt(result)}, args);
+Stmt *Parser::parseExprStmt() {
+  size_t origIdx = index;
+  Expr *result = parseExpr();
+
+  if (!result) {
+    index = origIdx;
+    return nullptr;
+  }
+
+  return new ExprStmt(result);
 }
