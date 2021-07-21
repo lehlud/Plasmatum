@@ -40,6 +40,8 @@ Expr *Parser::parseExpr() {
     return parseOptionalBinExpr(result);
   else if ((result = parseIfExpr()))
     return parseOptionalBinExpr(result);
+  else if ((result = parseParenExpr()))
+    return parseOptionalBinExpr(result);
   else if ((result = parseVarExpr()))
     return parseOptionalBinExpr(result);
 
@@ -207,6 +209,29 @@ Expr *Parser::parseIfExpr() {
   return new IfExpr(cond, trueExpr, falseExpr);
 }
 
+Expr *Parser::parseParenExpr() {
+  if (charAt(text, index) != '(') {
+    return nullptr;
+  }
+
+  size_t origIdx = index;
+
+  index += 1;
+
+  Expr *expr = parseExpr();
+
+  skipSpaces();
+
+  if (!expr || charAt(text, index) != ')') {
+    index = origIdx;
+    return nullptr;
+  }
+
+  index += 1;
+
+  return expr;
+}
+
 Expr *Parser::parseOptionalBinExpr(Expr *expr) {
   skipSpaces();
 
@@ -219,8 +244,11 @@ Expr *Parser::parseOptionalBinExpr(Expr *expr) {
 
   index += 1;
 
-  bool isEq = charAt(text, index) == '=';
-  if ((op == '=' || op == '!') && !isEq) {
+  bool isEq = false;
+  if (charAt(text, index) == '=') {
+    isEq = true;
+    index += 1;
+  } else if (op == '=' || op == '!') {
     index = origIdx;
     return expr;
   }

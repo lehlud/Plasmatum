@@ -24,6 +24,7 @@ public:
   Expr *parseNumber();
   Expr *parseString();
   Expr *parseIfExpr();
+  Expr *parseParenExpr();
   Expr *parseOptionalBinExpr(Expr *expr);
 
   Stmt *parseStmt();
