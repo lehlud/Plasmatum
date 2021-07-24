@@ -13,23 +13,13 @@ public:
   Parser(const std::u32string &text) : text(text) {}
 
   void skipSpaces();
-
-  Expr *parseExpr();
-
+  void forward();
 
   std::string parseIdentifier();
 
-  Expr *parseCallExpr(const std::string &id);
-  Expr *parseVarExpr();
-  Expr *parseNumber();
-  Expr *parseString();
-  Expr *parseIfExpr();
-  Expr *parseParenExpr();
-  Expr *parseOptionalBinExpr(Expr *expr);
+  Expr *parseExpr();
+  Expr *parseOptionalBinExpr(Expr *expr, uint8_t prec = 0);
 
   Stmt *parseStmt();
-  Stmt *parseDefine();
-  Stmt *parseReturn();
-  Stmt *parseExprStmt();
 
 };
