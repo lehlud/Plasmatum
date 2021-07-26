@@ -304,7 +304,7 @@ Stmt *Parser::parseStmt() {
   return nullptr;
 }
 
-Expr *Parser::parseOptionalBinExpr(Expr *expr, uint8_t prec) {
+Expr *Parser::parseOptionalBinExpr(Expr *expr) {
   skipSpaces();
 
   char32_t op;
@@ -333,32 +333,58 @@ Expr *Parser::parseOptionalBinExpr(Expr *expr, uint8_t prec) {
     return expr;
   }
 
+  skipSpaces();
+
+  char32_t tmpOp;
+  if (isBinOp((tmpOp = charAt(text, index)))) {
+    if (binOpPrec(tmpOp) > binOpPrec(op)) {
+      right = parseOptionalBinExpr(right);
+    }
+  }
+
+  Expr *result = nullptr;
+
   switch (op) {
   case '+':
-    return new AddBinExpr(expr, right);
+    result = new AddBinExpr(expr, right);
+    break;
   case '-':
-    return new SubBinExpr(expr, right);
+    result = new SubBinExpr(expr, right);
+    break;
   case '*':
-    return new MulBinExpr(expr, right);
+    result = new MulBinExpr(expr, right);
+    break;
   case '/':
-    return new DivBinExpr(expr, right);
+    result = new DivBinExpr(expr, right);
+    break;
   case '%':
-    return new ModBinExpr(expr, right);
+    result = new ModBinExpr(expr, right);
+    break;
   case '<':
     if (isEq)
-      return new LEBinExpr(expr, right);
+      result = new LEBinExpr(expr, right);
     else
-      return new LTBinExpr(expr, right);
+      result = new LTBinExpr(expr, right);
+    break;
   case '>':
     if (isEq)
-      return new GEBinExpr(expr, right);
+      result = new GEBinExpr(expr, right);
     else
-      return new GTBinExpr(expr, right);
+      result = new GTBinExpr(expr, right);
+    break;
   case '=':
-    return new EQBinExpr(expr, right);
+    result = new EQBinExpr(expr, right);
+    break;
   case '!':
-    return new NEBinExpr(expr, right);
+    result = new NEBinExpr(expr, right);
+    break;
   }
+
+  if (result) {
+    return parseOptionalBinExpr(result);
+  }
+
+
 
   index = origIdx;
   return expr;

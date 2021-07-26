@@ -18,7 +18,7 @@ public:
   std::string parseIdentifier();
 
   Expr *parseExpr();
-  Expr *parseOptionalBinExpr(Expr *expr, uint8_t prec = 0);
+  Expr *parseOptionalBinExpr(Expr *expr);
 
   Stmt *parseStmt();
 

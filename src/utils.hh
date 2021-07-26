@@ -13,5 +13,7 @@ bool isSpecial(char32_t c);
 bool isSeparator(char32_t c);
 bool isStmtSeparator(char32_t c);
 
+uint8_t binOpPrec(char32_t op);
+
 std::string to_str(const std::u32string &str);
 std::u32string to_u32(const std::string &str);

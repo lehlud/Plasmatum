@@ -42,6 +42,27 @@ bool isSeparator(char32_t c) {
 
 bool isStmtSeparator(char32_t c) { return c == ';'; }
 
+uint8_t binOpPrec(char32_t op) {
+  switch (op) {
+  case '=':
+  case '!':
+  case '<':
+  case '>':
+    return 5;
+  case '+':
+  case '-':
+    return 10;
+  case '%':
+    return 15;
+  case '*':
+    return 16;
+  case '/':
+    return 17;
+  }
+
+  return 0;
+}
+
 std::string to_str(const std::u32string &str) {
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
   return conv.to_bytes(str);
