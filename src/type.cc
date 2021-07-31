@@ -1,7 +1,10 @@
 #include "type.hh"
 
-#include "value.hh"
+#include <cmath>
+
 #include "engine.hh"
+#include "instruction.hh"
+#include "value.hh"
 
 void Type::cast(Engine *engine, Type *type) {
   FunctionValue *castFunction = castFunctions[type];
@@ -50,5 +53,163 @@ std::map<std::string, Type *> Type::getStandardTypes() {
   Type *floatT = getFloatType();
   Type *boolT = getBooleanType();
 
+  setupFloatType(intT, floatT, boolT);
+  setupIntegerType(intT, floatT, boolT);
+  setupBooleanType(intT, floatT, boolT);
+
+  std::vector<Instruction *> tmpInstructions;
+  intT->registerAdd(intT, new FunctionValue(2, tmpInstructions));
+
+  tmpInstructions.clear();
+
+  tmpInstructions.push_back(new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() +
+                                     ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  }));
+  tmpInstructions.push_back(new ReturnInstruction());
+  intT->registerAdd(intT, new FunctionValue(2, tmpInstructions));
+
   return result;
 }
+
+void Type::setupFloatType(Type *intType, Type *floatType, Type *boolType) {}
+
+void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
+  Instruction *tmpInst = nullptr;
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() +
+                                     ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerAdd(
+      intType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new FloatValue(((IntegerValue *)left)->getValue() +
+                                   ((FloatValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerAdd(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() -
+                                     ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerSub(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new FloatValue(((IntegerValue *)left)->getValue() -
+                                   ((FloatValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerSub(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() *
+                                     ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerMul(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new FloatValue(((IntegerValue *)left)->getValue() *
+                                   ((FloatValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerMul(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new FloatValue(((IntegerValue *)left)->getValue() /
+                                   ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerDiv(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new FloatValue(((IntegerValue *)left)->getValue() /
+                                   ((FloatValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerDiv(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() %
+                                     ((IntegerValue *)right)->getValue());
+    engine->stack_push(result);
+    return 1;
+  });
+
+  intType->registerMod(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+
+  tmpInst = new CustomInstruction([](Engine *engine) {
+    Value *right = engine->stack_pop();
+    Value *left = engine->stack_pop();
+
+    plsm_float_t result = fmod(((IntegerValue *)left)->getValue(), ((FloatValue *)right)->getValue());
+    engine->stack_push(new FloatValue(result));
+    return 1;
+  });
+
+  intType->registerMod(
+      floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
+}
+
+void Type::setupBooleanType(Type *intType, Type *floatType, Type *boolType) {}

@@ -38,46 +38,50 @@ public:
 
 class IntegerValue : public Constant {
 private:
-  int_t value;
+  plsm_int_t value;
 
 public:
-  IntegerValue(int_t value) : Constant(nullptr), value(value) {}
+  IntegerValue(plsm_int_t value) : Constant(nullptr), value(value) {}
+
+  inline plsm_int_t getValue() { return value; }
 
   inline bool isTruthy() override { return value != 0; }
 };
 
 class FloatValue : public Constant {
 private:
-  float_t value;
+  plsm_float_t value;
 
 public:
-  FloatValue(float_t value) : Constant(nullptr), value(value) {}
+  FloatValue(plsm_float_t value) : Constant(nullptr), value(value) {}
+
+  inline plsm_float_t getValue() { return value; }
 
   inline bool isTruthy() override { return value != 0.0; }
 };
 
 class BooleanValue : public Constant {
 private:
-  bool_t value;
+  plsm_bool_t value;
 
 public:
-  BooleanValue(bool_t value) : Constant(nullptr), value(value) {}
+  BooleanValue(plsm_bool_t value) : Constant(nullptr), value(value) {}
 
   inline bool isTruthy() override { return value == true; }
 };
 
 class FunctionValue : public Constant {
 private:
-  fast_size_t argc;
+  plsm_size_t argc;
   std::vector<Instruction *> instructions;
 
 public:
-  FunctionValue(fast_size_t argc, const std::vector<Instruction *> &instructions)
+  FunctionValue(plsm_size_t argc, const std::vector<Instruction *> &instructions)
       : Constant(nullptr), argc(argc), instructions(instructions) {}
 
-  inline fast_size_t getArgc() { return argc; }
+  inline plsm_size_t getArgc() { return argc; }
 
-  inline Instruction *getInstruction(fast_size_t index) {
+  inline Instruction *getInstruction(plsm_size_t index) {
     return index >= instructions.size() ? nullptr : instructions[index];
   }
 

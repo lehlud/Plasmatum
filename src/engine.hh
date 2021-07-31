@@ -12,7 +12,7 @@ class Instruction;
 
 class Engine {
 private:
-  fast_size_t index = 0;
+  plsm_size_t index = 0;
   Instruction *ip = nullptr;
 
   std::vector<Type *> types;
@@ -37,7 +37,7 @@ public:
   }
 
   inline Value *stack_peek() { return stack.back(); }
-  inline Value *stack_peek(fast_size_t back) {
+  inline Value *stack_peek(plsm_size_t back) {
     return stack[stack.size() - 1 - back];
   }
 
@@ -47,7 +47,7 @@ public:
 
   inline void jump(size_t index) { ip = getInstruction((this->index = index)); }
 
-  inline Instruction *getInstruction(fast_size_t index) {
+  inline Instruction *getInstruction(plsm_size_t index) {
     return index >= instructions.size() ? nullptr : instructions[index];
   }
 

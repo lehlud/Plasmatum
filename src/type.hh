@@ -82,4 +82,8 @@ public:
 
   static std::map<std::string, Type *> getStandardTypes();
 
+private:
+  static void setupFloatType(Type *intType, Type *floatType, Type *boolType);
+  static void setupIntegerType(Type *intType, Type *floatType, Type *boolType);
+  static void setupBooleanType(Type *intType, Type *floatType, Type *boolType);
 };
