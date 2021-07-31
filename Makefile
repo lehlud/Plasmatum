@@ -2,8 +2,8 @@ FILES = $(wildcard src/*.cc)
 OBJ_FILES = $(FILES:.cc=.o)
 COMPILER = clang++
 
-CXXFLAGS = `llvm-config --cxxflags` -O3
-LDFLAGS = `llvm-config --ldflags --system-libs --libs all` -flto -lLLVM
+CXXFLAGS = -O3 -Wall -Wextra
+LDFLAGS = -flto
 
 all: bin/plsm
 

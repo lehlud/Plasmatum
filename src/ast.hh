@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <llvm/IR/Value.h>
-
 #include "utils.hh"
 
 class PlsmContext;
@@ -21,8 +19,6 @@ public:
   virtual bool isConstantExpr() { return false; }
 
   virtual std::u32string to_string() = 0;
-
-  virtual llvm::Value *genCode(PlsmContext &context) = 0;
 };
 
 class Stmt {
@@ -34,8 +30,6 @@ public:
   virtual bool isReturning() { return false; }
 
   virtual std::u32string to_string() = 0;
-
-  virtual llvm::Value *genCode(PlsmContext &context) = 0;
 };
 
 class NullExpr : public Expr {
@@ -43,8 +37,6 @@ public:
   bool isConstantExpr() override { return true; }
 
   std::u32string to_string() override { return U"None"; }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class IntExpr : public Expr {
@@ -56,21 +48,17 @@ public:
   bool isConstantExpr() override { return true; }
 
   std::u32string to_string() override { return to_u32(std::to_string(value)); }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class FloatExpr : public Expr {
 public:
-  const double_t value;
+  const double value;
 
-  FloatExpr(double_t value) : value(value) {}
+  FloatExpr(double value) : value(value) {}
 
   bool isConstantExpr() override { return true; }
 
   std::u32string to_string() override { return to_u32(std::to_string(value)); }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class StringExpr : public Expr {
@@ -83,8 +71,6 @@ public:
   bool isConstantExpr() override { return true; }
 
   std::u32string to_string() override { return U"'" + value + U"'"; }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class VarExpr : public Expr {
@@ -95,8 +81,6 @@ public:
   VarExpr(const std::string &id) : id(id) {}
 
   std::u32string to_string() override { return U"var: '" + to_u32(id) + U"'"; }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class BinExpr : public Expr {
@@ -124,78 +108,56 @@ public:
 class AddBinExpr : public BinExpr {
 public:
   AddBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class SubBinExpr : public BinExpr {
 public:
   SubBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class MulBinExpr : public BinExpr {
 public:
   MulBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class DivBinExpr : public BinExpr {
 public:
   DivBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class ModBinExpr : public BinExpr {
 public:
   ModBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class EQBinExpr : public BinExpr {
 public:
   EQBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class NEBinExpr : public BinExpr {
 public:
   NEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class GTBinExpr : public BinExpr {
 public:
   GTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class LTBinExpr : public BinExpr {
 public:
   LTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class GEBinExpr : public BinExpr {
 public:
   GEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class LEBinExpr : public BinExpr {
 public:
   LEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class IfExpr : public Expr {
@@ -217,8 +179,6 @@ public:
            trueExpr->to_string() + U", false: " + falseExpr->to_string() +
            U" }";
   }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class CallExpr : public Expr {
@@ -239,8 +199,6 @@ public:
   std::u32string to_string() override;
 
   bool isCallExpr() override { return true; }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class ExprStmt : public Stmt {
@@ -257,8 +215,6 @@ public:
   }
 
   Stmt *optimize() override;
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class ReturnStmt : public Stmt {
@@ -275,8 +231,6 @@ public:
   }
 
   bool isReturning() override { return true; }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
 
 class FunctionStmt : public Stmt {
@@ -309,6 +263,4 @@ public:
     }
     return false;
   }
-
-  llvm::Value *genCode(PlsmContext &context) override;
 };
