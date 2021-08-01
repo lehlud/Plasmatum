@@ -5,7 +5,11 @@ A minimal functional programming language.
 Plasmatum works by using a stack machine. Here's an example with pseudo stack machine code:
 ```
 FUNC_START      1
+---------------------------
 -- some c++ implementation
+-- to print out something
+-- to the console
+---------------------------
 LOAD_CONST      Undefined
 RETURN
 FUNC_FINISH
