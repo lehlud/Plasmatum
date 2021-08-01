@@ -1,0 +1,13 @@
+FUNC_START      2
+ADD
+RETURN
+FUNC_FINISH
+DEF_GLOBAL      add
+
+LOAD_CONST      40
+LOAD_CONST      2
+LOAD_GLOBAL     add
+CALL            2
+
+LOAD_GLOBAL     print
+CALL            1

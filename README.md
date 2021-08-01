@@ -26,10 +26,10 @@ DEF_GLOBAL      add
 LOAD_CONST      40
 LOAD_CONST      2
 LOAD_GLOBAL     add
-CALL
+CALL            2
 
 LOAD_GLOBAL     print
-CALL
+CALL            1
 ```
 
 output:

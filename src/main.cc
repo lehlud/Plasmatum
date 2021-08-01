@@ -1,8 +1,8 @@
 #include "ast.hh"
-#include "parser.hh"
 #include "engine.hh"
-#include "type.hh"
 #include "instruction.hh"
+#include "parser.hh"
+#include "type.hh"
 #include "value.hh"
 
 #include <iostream>
@@ -31,27 +31,12 @@ int main(int argc, char **argv) {
 
   std::u32string text = readFile(argv[1]);
 
-  Parser parser(text);
-
-  std::vector<Stmt *> stmts;
-  Stmt *stmt = nullptr;
-  while ((stmt = parser.parseStmt())) {
-    stmts.push_back(stmt);
-    // std::cout << to_str(stmt->to_string()) << std::endl;
-  }
+  std::vector<Instruction *> insts = (new LLParser(text))->parse();
 
   auto types = Type::getStandardTypes();
 
-  Engine *engine = new Engine({types["Int"], types["Float"]}, {});
+  Engine *engine = new Engine({}, insts);
+  engine->defineGlobal("print", printFunc());
 
-  engine->stackPush(new FloatValue(0.1));
-  engine->stackPush(new FloatValue(0.2));
-
-  (new AddInstruction())->execute(engine);
-
-  engine->stackPush(printFunc());
-
-  engine->call(1);
-
-  return (long)engine;
+  return engine->execute({});
 }

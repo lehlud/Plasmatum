@@ -2,8 +2,8 @@
 
 #include "types.hh"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "type.hh"
 
@@ -20,8 +20,17 @@ public:
 
   virtual inline std::string toString() = 0;
 
+  plsm_float_t asFloat();
+  plsm_int_t asInteger();
+  plsm_bool_t asBoolean();
+
   virtual inline bool isTruthy() = 0;
   virtual inline bool isConstant() { return false; };
+
+  virtual inline bool isFloat() { return false; }
+  virtual inline bool isInteger() { return false; }
+  virtual inline bool isBoolean() { return false; }
+  virtual inline bool isFunction() { return false; }
 };
 
 class Constant : public Value {
@@ -55,6 +64,7 @@ public:
   inline std::string toString() override { return std::to_string(value); }
 
   inline bool isTruthy() override { return value != 0; }
+  inline bool isInteger() override { return true; }
 };
 
 class FloatValue : public Constant {
@@ -70,6 +80,7 @@ public:
   inline std::string toString() override { return std::to_string(value); }
 
   inline bool isTruthy() override { return value != 0.0; }
+  inline bool isFloat() override { return true; }
 };
 
 class BooleanValue : public Constant {
@@ -85,6 +96,7 @@ public:
   inline std::string toString() override { return value ? "True" : "False"; }
 
   inline bool isTruthy() override { return value == true; }
+  inline bool isBoolean() override { return true; }
 };
 
 class FunctionValue : public Constant {
@@ -95,7 +107,8 @@ private:
 public:
   FunctionValue(plsm_size_t argc,
                 const std::vector<Instruction *> &instructions)
-      : Constant(Type::getFunctionType()), argc(argc), instructions(instructions) {}
+      : Constant(Type::getFunctionType()), argc(argc),
+        instructions(instructions) {}
 
   inline plsm_size_t getArgc() { return argc; }
 
@@ -108,4 +121,6 @@ public:
   inline std::string toString() override { return "Function Value"; }
 
   inline bool isTruthy() override { return true; }
+
+  inline bool isFunction() override { return true; }
 };

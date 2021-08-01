@@ -61,10 +61,6 @@ public:
     return stack[stack.size() - 1 - back];
   }
 
-  inline void stackPushGlobal(const std::string &id) {
-    stack.push_back(globals[id]);
-  }
-
   inline void jump(size_t index) { ip = getInstruction((this->index = index)); }
 
   inline void defineGlobal(const std::string &id, Value *value) {
@@ -77,6 +73,8 @@ public:
 
   inline plsm_size_t getIndex() { return index; }
   inline void setIndex(plsm_size_t index) { this->index = index; }
+
+  void stackPushGlobal(const std::string &id);
 
   void call(size_t argc);
 

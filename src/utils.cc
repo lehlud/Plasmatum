@@ -25,8 +25,6 @@ char32_t charAt(const std::u32string &string, size_t index) {
     return string[index];
 }
 
-bool isIdChar(char32_t c) { return (c >= 'A' && c <= 'z') || c == '_'; }
-
 bool isBinOp(char32_t c) {
   return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '<' ||
          c == '>' || c == '!';

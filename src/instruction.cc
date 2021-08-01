@@ -61,7 +61,7 @@ plsm_size_t CallInstruction::execute(Engine *engine) {
 plsm_size_t FunctionStartInstruction::execute(Engine *engine) {
   std::vector<Instruction *> body;
 
-  plsm_size_t index = engine->getIndex();
+  plsm_size_t index = engine->getIndex() + 1;
 
   Instruction *ip;
   while (!(ip = engine->getInstruction(index++))->isFunctionFinish()) {
@@ -70,7 +70,7 @@ plsm_size_t FunctionStartInstruction::execute(Engine *engine) {
 
   engine->stackPush(new FunctionValue(argc, body));
 
-  return 1;
+  return 1 + body.size();
 }
 
 plsm_size_t DefineGlobalInstruction::execute(Engine *engine) {

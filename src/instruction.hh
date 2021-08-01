@@ -2,8 +2,8 @@
 
 #include "types.hh"
 
-#include <string>
 #include <functional>
+#include <string>
 
 class Type;
 class Engine;
@@ -14,6 +14,8 @@ public:
   virtual ~Instruction() = default;
   virtual plsm_size_t execute(Engine *engine) = 0;
 
+  virtual inline std::string toString() = 0;
+
   virtual bool isReturn() { return false; }
   virtual bool isFunctionFinish() { return false; }
 };
@@ -21,6 +23,8 @@ public:
 class ReturnInstruction : public Instruction {
 public:
   plsm_size_t execute(Engine *) override { return 1; }
+
+  virtual inline std::string toString() override { return "RETURN"; }
 
   bool isReturn() override { return true; }
 };
@@ -34,6 +38,8 @@ public:
 
   plsm_size_t execute(Engine *engine) override;
 
+  virtual inline std::string toString() override { return "JUMP"; }
+
   plsm_size_t getDestination() { return destination; };
 };
 
@@ -43,6 +49,8 @@ private:
 
 public:
   LoadConstInstruction(Constant *value) : value(value) {}
+
+  virtual inline std::string toString() override { return "LOAD_CONST"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -54,6 +62,8 @@ private:
 public:
   LoadGlobalInstruction(const std::string &id) : id(id) {}
 
+  virtual inline std::string toString() override { return "LOAD_GLOBAL"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
@@ -63,6 +73,8 @@ private:
 
 public:
   CastInstruction(Type *type) : type(type) {}
+
+  virtual inline std::string toString() override { return "CAST"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -75,31 +87,43 @@ public:
   CustomInstruction(const std::function<plsm_size_t(Engine *)> &executeFunction)
       : executeFunction(executeFunction) {}
 
+  virtual inline std::string toString() override { return "CUSTOM"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class AddInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "ADD"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class SubInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "SUB"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class MulInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "MUL"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class DivInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "DIV"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class ModInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "MOD"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
@@ -109,6 +133,8 @@ private:
 
 public:
   CallInstruction(plsm_size_t argc) : argc(argc) {}
+
+  virtual inline std::string toString() override { return "CALL"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -120,11 +146,15 @@ private:
 public:
   FunctionStartInstruction(plsm_size_t argc) : argc(argc) {}
 
+  virtual inline std::string toString() override { return "FUNC_START"; }
+
   plsm_size_t execute(Engine *engine) override;
 };
 
 class FunctionFinishInstruction : public Instruction {
 public:
+  virtual inline std::string toString() override { return "FUNC_FINISH"; }
+
   plsm_size_t execute(Engine *) override { return 1; }
 
   bool isFunctionFinish() override { return true; }
@@ -136,6 +166,8 @@ private:
 
 public:
   DefineGlobalInstruction(const std::string &id) : id(id) {}
+
+  virtual inline std::string toString() override { return "DEF_GLOBAL"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
