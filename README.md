@@ -6,6 +6,8 @@ Plasmatum works by using a stack machine. Here's an example with pseudo stack ma
 ```
 FUNC_START      1
 -- some c++ implementation
+LOAD_CONST      Undefined
+RETURN
 FUNC_FINISH
 DEF_GLOBAL      print
 
