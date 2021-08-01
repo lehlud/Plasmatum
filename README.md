@@ -44,8 +44,8 @@ g(x) = 2 * f(x);
 u(x) = x as Float;
 
 -- because Plasmatum does not throw exceptions
--- converting any object to a Float just
--- produces an Undefined value
+-- converting anything that cannot be converted
+-- to a Float creates an Undefined value
 
 ```
 
