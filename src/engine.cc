@@ -5,15 +5,15 @@
 #include "instruction.hh"
 
 void Engine::call(size_t argc) {
-  FunctionValue *callee = (FunctionValue *)stack_pop();
+  FunctionValue *callee = (FunctionValue *)stackPop();
 
   while (argc > callee->getArgc()) {
-    stack_pop();
+    stackPop();
     argc -= 1;
   }
 
   while (argc < callee->getArgc()) {
-    stack_push(new UndefinedValue());
+    stackPush(new UndefinedValue());
     argc += 1;
   }
 

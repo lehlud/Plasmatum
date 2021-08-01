@@ -10,11 +10,11 @@ void FunctionValue::call(Engine *engine) {
     index += ip->execute(engine);
   }
 
-  Value *result = engine->stack_pop();
+  // Value *result = engine->stackPop();
 
-  for (plsm_size_t i = 0; i < argc; i++) {
-    engine->stack_pop();
-  }
+  // for (plsm_size_t i = 0; i < argc; i++) {
+  //   engine->stackPop();
+  // }
 
-  engine->stack_push(result);
+  // engine->stackPush(result);
 }

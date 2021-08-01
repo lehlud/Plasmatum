@@ -8,42 +8,24 @@
 
 void Type::cast(Engine *engine, Type *type) {
   FunctionValue *castFunction = castFunctions[type];
-  castFunction->call(engine);
+  if (castFunction) {
+    castFunction->call(engine);
+  } else {
+    engine->stackPopVoid();
+    engine->stackPush(new UndefinedValue());
+  }
 }
 
-void Type::add(Engine *engine) {
-  Type *type = engine->stack_peek()->type;
+void Type::binexpr(Engine *engine, std::map<Type *, FunctionValue *> &functions) {
+  Type *type = engine->stackPeek()->type;
 
-  FunctionValue *addFunction = addFunctions[type];
-  addFunction->call(engine);
-}
-
-void Type::sub(Engine *engine) {
-  Type *type = engine->stack_peek()->type;
-
-  FunctionValue *subFunction = subFunctions[type];
-  subFunction->call(engine);
-}
-
-void Type::mul(Engine *engine) {
-  Type *type = engine->stack_peek()->type;
-
-  FunctionValue *mulFunction = mulFunctions[type];
-  mulFunction->call(engine);
-}
-
-void Type::div(Engine *engine) {
-  Type *type = engine->stack_peek()->type;
-
-  FunctionValue *divFunction = divFunctions[type];
-  divFunction->call(engine);
-}
-
-void Type::mod(Engine *engine) {
-  Type *type = engine->stack_peek()->type;
-
-  FunctionValue *modFunction = modFunctions[type];
-  modFunction->call(engine);
+  FunctionValue *function = functions[type];
+  if (function) {
+    function->call(engine);
+  } else {
+    engine->stackPopVoid(2);
+    engine->stackPush(new UndefinedValue());
+  }
 }
 
 std::map<std::string, Type *> Type::getStandardTypes() {
@@ -57,38 +39,33 @@ std::map<std::string, Type *> Type::getStandardTypes() {
   setupIntegerType(intT, floatT, boolT);
   setupBooleanType(intT, floatT, boolT);
 
-  std::vector<Instruction *> tmpInstructions;
-  intT->registerAdd(intT, new FunctionValue(2, tmpInstructions));
-
-  tmpInstructions.clear();
-
-  tmpInstructions.push_back(new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
-
-    Value *result = new IntegerValue(((IntegerValue *)left)->getValue() +
-                                     ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
-    return 1;
-  }));
-  tmpInstructions.push_back(new ReturnInstruction());
-  intT->registerAdd(intT, new FunctionValue(2, tmpInstructions));
+  result[intT->getName()] = intT;
+  result[floatT->getName()] = floatT;
+  result[boolT->getName()] = boolT;
 
   return result;
 }
 
-void Type::setupFloatType(Type *intType, Type *floatType, Type *boolType) {}
+void Type::setupFloatType(Type *intType, Type *floatType, Type *boolType) {
+  if (floatType->hasRegisteredFunctions())
+    return;
+}
 
 void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
+  if (intType->hasRegisteredFunctions())
+    return;
+
   Instruction *tmpInst = nullptr;
 
+  // * Integer Add Instructions
+
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new IntegerValue(((IntegerValue *)left)->getValue() +
                                      ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -96,12 +73,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       intType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new FloatValue(((IntegerValue *)left)->getValue() +
                                    ((FloatValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -109,12 +86,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new IntegerValue(((IntegerValue *)left)->getValue() -
                                      ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -122,12 +99,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new FloatValue(((IntegerValue *)left)->getValue() -
                                    ((FloatValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -135,12 +112,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new IntegerValue(((IntegerValue *)left)->getValue() *
                                      ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -148,12 +125,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new FloatValue(((IntegerValue *)left)->getValue() *
                                    ((FloatValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -161,12 +138,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new FloatValue(((IntegerValue *)left)->getValue() /
                                    ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -174,12 +151,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new FloatValue(((IntegerValue *)left)->getValue() /
                                    ((FloatValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -187,12 +164,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
     Value *result = new IntegerValue(((IntegerValue *)left)->getValue() %
                                      ((IntegerValue *)right)->getValue());
-    engine->stack_push(result);
+    engine->stackPush(result);
     return 1;
   });
 
@@ -200,11 +177,12 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 
   tmpInst = new CustomInstruction([](Engine *engine) {
-    Value *right = engine->stack_pop();
-    Value *left = engine->stack_pop();
+    Value *right = engine->stackPop();
+    Value *left = engine->stackPop();
 
-    plsm_float_t result = fmod(((IntegerValue *)left)->getValue(), ((FloatValue *)right)->getValue());
-    engine->stack_push(new FloatValue(result));
+    plsm_float_t result = fmod(((IntegerValue *)left)->getValue(),
+                               ((FloatValue *)right)->getValue());
+    engine->stackPush(new FloatValue(result));
     return 1;
   });
 
@@ -212,4 +190,7 @@ void Type::setupIntegerType(Type *intType, Type *floatType, Type *boolType) {
       floatType, new FunctionValue(2, {tmpInst, new ReturnInstruction()}));
 }
 
-void Type::setupBooleanType(Type *intType, Type *floatType, Type *boolType) {}
+void Type::setupBooleanType(Type *intType, Type *floatType, Type *boolType) {
+  if (boolType->hasRegisteredFunctions())
+    return;
+}

@@ -1,10 +1,12 @@
 #pragma once
 
-#include <vector>
-
 #include "types.hh"
 
-class Type;
+#include <vector>
+#include <string>
+
+#include "type.hh"
+
 class Engine;
 class Instruction;
 
@@ -15,6 +17,8 @@ public:
   Value(Type *type) : type(type) {}
 
   virtual ~Value() = default;
+
+  virtual inline std::string toString() = 0;
 
   virtual inline bool isTruthy() = 0;
   virtual inline bool isConstant() { return false; };
@@ -31,7 +35,9 @@ public:
 
 class UndefinedValue : public Constant {
 public:
-  UndefinedValue() : Constant(nullptr) {}
+  UndefinedValue() : Constant(Type::getUndefinedType()) {}
+
+  inline std::string toString() override { return "Undefined"; }
 
   inline bool isTruthy() override { return false; }
 };
@@ -41,9 +47,12 @@ private:
   plsm_int_t value;
 
 public:
-  IntegerValue(plsm_int_t value) : Constant(nullptr), value(value) {}
+  IntegerValue(plsm_int_t value)
+      : Constant(Type::getIntegerType()), value(value) {}
 
   inline plsm_int_t getValue() { return value; }
+
+  inline std::string toString() override { return std::to_string(value); }
 
   inline bool isTruthy() override { return value != 0; }
 };
@@ -53,9 +62,12 @@ private:
   plsm_float_t value;
 
 public:
-  FloatValue(plsm_float_t value) : Constant(nullptr), value(value) {}
+  FloatValue(plsm_float_t value)
+      : Constant(Type::getFloatType()), value(value) {}
 
   inline plsm_float_t getValue() { return value; }
+
+  inline std::string toString() override { return std::to_string(value); }
 
   inline bool isTruthy() override { return value != 0.0; }
 };
@@ -65,7 +77,12 @@ private:
   plsm_bool_t value;
 
 public:
-  BooleanValue(plsm_bool_t value) : Constant(nullptr), value(value) {}
+  BooleanValue(plsm_bool_t value)
+      : Constant(Type::getBooleanType()), value(value) {}
+
+  inline plsm_bool_t getValue() { return value; }
+
+  inline std::string toString() override { return value ? "True" : "False"; }
 
   inline bool isTruthy() override { return value == true; }
 };
@@ -76,8 +93,9 @@ private:
   std::vector<Instruction *> instructions;
 
 public:
-  FunctionValue(plsm_size_t argc, const std::vector<Instruction *> &instructions)
-      : Constant(nullptr), argc(argc), instructions(instructions) {}
+  FunctionValue(plsm_size_t argc,
+                const std::vector<Instruction *> &instructions)
+      : Constant(Type::getFunctionType()), argc(argc), instructions(instructions) {}
 
   inline plsm_size_t getArgc() { return argc; }
 
@@ -85,7 +103,9 @@ public:
     return index >= instructions.size() ? nullptr : instructions[index];
   }
 
-  inline bool isTruthy() override { return true; }
-
   void call(Engine *engine);
+
+  inline std::string toString() override { return "Function Value"; }
+
+  inline bool isTruthy() override { return true; }
 };

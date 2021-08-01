@@ -43,41 +43,75 @@ public:
   inline void registerAdd(Type *type, FunctionValue *function) {
     addFunctions[type] = function;
   }
-  
+
   inline void registerSub(Type *type, FunctionValue *function) {
     subFunctions[type] = function;
   }
-  
+
   inline void registerMul(Type *type, FunctionValue *function) {
     mulFunctions[type] = function;
   }
-  
+
   inline void registerDiv(Type *type, FunctionValue *function) {
     divFunctions[type] = function;
   }
-  
+
   inline void registerMod(Type *type, FunctionValue *function) {
     modFunctions[type] = function;
   }
 
+  inline bool hasRegisteredFunctions() {
+    return addFunctions.size() || subFunctions.size() || mulFunctions.size() ||
+           divFunctions.size() || modFunctions.size();
+  }
+
   void cast(Engine *engine, Type *type);
 
-  void add(Engine *engine);
-  void sub(Engine *engine);
-  void mul(Engine *engine);
-  void div(Engine *engine);
-  void mod(Engine *engine);
+  void binexpr(Engine *engine, std::map<Type *, FunctionValue *> &functions);
+ 
+  inline void add(Engine *engine) {
+    binexpr(engine, addFunctions);
+  }
+
+  inline void sub(Engine *engine) {
+    binexpr(engine, subFunctions);
+  }
+
+  inline void mul(Engine *engine) {
+    binexpr(engine, mulFunctions);
+  }
+
+  inline void div(Engine *engine) {
+    binexpr(engine, divFunctions);
+  }
+
+  inline void mod(Engine *engine) {
+    binexpr(engine, modFunctions);
+  }
+
+  static inline Type *getUndefinedType() {
+    static Type *undefinedType;
+    return undefinedType ? undefinedType : (undefinedType = new Type("Undefined"));
+  }
 
   static inline Type *getFloatType() {
-    return new Type("Float");
+    static Type *floatType;
+    return floatType ? floatType : (floatType = new Type("Float"));
   }
 
   static inline Type *getIntegerType() {
-    return new Type("Int");
+    static Type *integerType;
+    return integerType ? integerType : (integerType = new Type("Int"));
   }
 
   static inline Type *getBooleanType() {
-    return new Type("Bool");
+    static Type *boolType;
+    return boolType ? boolType : (boolType = new Type("Bool"));
+  }
+
+  static inline Type *getFunctionType() {
+    static Type *functionType;
+    return functionType ? functionType : (functionType = new Type("Function"));
   }
 
   static std::map<std::string, Type *> getStandardTypes();

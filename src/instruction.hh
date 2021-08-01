@@ -15,11 +15,12 @@ public:
   virtual plsm_size_t execute(Engine *engine) = 0;
 
   virtual bool isReturn() { return false; }
+  virtual bool isFunctionFinish() { return false; }
 };
 
 class ReturnInstruction : public Instruction {
 public:
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(Engine *) override { return 1; }
 
   bool isReturn() override { return true; }
 };
@@ -99,5 +100,42 @@ public:
 
 class ModInstruction : public Instruction {
 public:
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class CallInstruction : public Instruction {
+private:
+  plsm_size_t argc;
+
+public:
+  CallInstruction(plsm_size_t argc) : argc(argc) {}
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class FunctionStartInstruction : public Instruction {
+private:
+  plsm_size_t argc;
+
+public:
+  FunctionStartInstruction(plsm_size_t argc) : argc(argc) {}
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class FunctionFinishInstruction : public Instruction {
+public:
+  plsm_size_t execute(Engine *) override { return 1; }
+
+  bool isFunctionFinish() override { return true; }
+};
+
+class DefineGlobalInstruction : public Instruction {
+private:
+  std::string id;
+
+public:
+  DefineGlobalInstruction(const std::string &id) : id(id) {}
+
   plsm_size_t execute(Engine *engine) override;
 };
