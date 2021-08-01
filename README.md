@@ -39,6 +39,14 @@ f(x) = x ** 2;
 
 -- quadratic function with a higher slope
 g(x) = 2 * f(x);
+
+-- a function that converts anything to a float
+u(x) = x as Float;
+
+-- because Plasmatum does not throw exceptions
+-- converting any object to a Float just
+-- produces an Undefined value
+
 ```
 
 ### variables
