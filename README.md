@@ -6,12 +6,20 @@ Plasmatum works by using a stack machine. Here's an example with pseudo stack ma
 ```
 FUNC_START      1
 -- some c++ implementation
-FUNC_END
+FUNC_FINISH
 DEF_GLOBAL      print
+
+-- the '2' specifies the argument count (argc)
+FUNC_START      2
+ADD
+RETURN
+FUNC_END
+DEF_GLOBAL      add
 
 LOAD_CONST      40
 LOAD_CONST      2
-ADD
+LOAD_GLOBAL     add
+CALL
 
 LOAD_GLOBAL     print
 CALL
