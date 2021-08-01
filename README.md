@@ -48,7 +48,6 @@ u(x) = x as Float;
 -- everything that should be converted to a
 -- 'Float' but cannot be converted to a 'Float'
 -- becomes 'Undefined'.
-
 ```
 
 ### variables
