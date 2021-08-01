@@ -9,7 +9,8 @@ FUNC_START      1
 FUNC_FINISH
 DEF_GLOBAL      print
 
--- the '2' specifies the argument count (argc)
+-- the '2' specifies the
+-- argument count (argc)
 FUNC_START      2
 ADD
 RETURN
