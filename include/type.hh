@@ -20,19 +20,15 @@ private:
   std::map<Type *, FunctionValue *> divFunctions;
   std::map<Type *, FunctionValue *> modFunctions;
 
+  std::map<Type *, FunctionValue *> eqFunctions;
+  std::map<Type *, FunctionValue *> neFunctions;
+  std::map<Type *, FunctionValue *> gtFunctions;
+  std::map<Type *, FunctionValue *> geFunctions;
+  std::map<Type *, FunctionValue *> ltFunctions;
+  std::map<Type *, FunctionValue *> leFunctions;
+
 public:
   Type(const std::string &name) : name(name) {}
-
-  Type(const std::string &name,
-       const std::map<Type *, FunctionValue *> &castFunctions,
-       const std::map<Type *, FunctionValue *> &addFunctions,
-       const std::map<Type *, FunctionValue *> &subFunctions,
-       const std::map<Type *, FunctionValue *> &mulFunctions,
-       const std::map<Type *, FunctionValue *> &divFunctions,
-       const std::map<Type *, FunctionValue *> &modFunctions)
-      : name(name), castFunctions(castFunctions), addFunctions(addFunctions),
-        subFunctions(subFunctions), mulFunctions(mulFunctions),
-        divFunctions(divFunctions), modFunctions(modFunctions) {}
 
   inline std::string &getName() { return name; }
 

@@ -161,6 +161,12 @@ Constant *LLParser::parseConstantValue() {
 
     return new IntegerValue(std::stol(tmp));
   } else {
+    if (!tmp.size()) {
+      tmp += '0';
+    }
+
+    tmp += '.';
+
     index += 1;
     while (std::isdigit((c = charAt(index)))) {
       tmp += c;

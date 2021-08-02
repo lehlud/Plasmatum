@@ -3,5 +3,5 @@
 *.o
 *tmp*
 
-bin
+build
 

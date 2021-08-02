@@ -6,8 +6,8 @@
 \\ 5 \\     DEF_GLOBAL      add
 
 -- print(add(40 2))
-\\ 6 \\     LOAD_CONST      40
-\\ 7 \\     LOAD_CONST      2
+\\ 6 \\     LOAD_CONST      0.1
+\\ 7 \\     LOAD_CONST      0.2
 \\ 8 \\     LOAD_GLOBAL     add
 \\ 9 \\     CALL            2
 \\ 10 \\    LOAD_GLOBAL     print
