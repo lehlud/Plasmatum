@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace plsm {
+
 inline bool isUpperAscii(char32_t c) {
   return (c >= 'A' && c <= 'Z') || (c == '_');
 }
@@ -24,3 +26,5 @@ uint8_t binOpPrec(char32_t op);
 
 std::string to_str(const std::u32string &str);
 std::u32string to_u32(const std::string &str);
+
+}

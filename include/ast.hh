@@ -7,6 +7,8 @@
 
 #include "utils.hh"
 
+namespace plsm {
+
 class PlsmContext;
 
 class Expr {
@@ -264,3 +266,5 @@ public:
     return false;
   }
 };
+
+}

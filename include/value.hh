@@ -7,6 +7,8 @@
 
 #include "type.hh"
 
+namespace plsm {
+
 class Engine;
 class Instruction;
 
@@ -124,3 +126,5 @@ public:
 
   inline bool isFunction() override { return true; }
 };
+
+}

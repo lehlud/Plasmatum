@@ -4,6 +4,8 @@
 #include "value.hh"
 #include "engine.hh"
 
+namespace plsm {
+
 plsm_size_t JumpInstruction::execute(Engine *engine) {
   engine->jump(destination);
   return 0;
@@ -76,4 +78,6 @@ plsm_size_t FunctionStartInstruction::execute(Engine *engine) {
 plsm_size_t DefineGlobalInstruction::execute(Engine *engine) {
   engine->defineGlobal(id, engine->stackPop());
   return 1;
+}
+
 }

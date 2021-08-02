@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+namespace plsm {
+
 class Constant;
 class Instruction;
 
@@ -77,3 +79,5 @@ class HLParser : public Parser {
 public:
   HLParser(const std::u32string &text) : Parser(text) {}
 };
+
+}

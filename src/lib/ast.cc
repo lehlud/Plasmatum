@@ -1,5 +1,7 @@
 #include "ast.hh"
 
+namespace plsm {
+
 std::u32string CallExpr::to_string() {
   std::u32string argsStr = U"{ ";
   if (args.size()) {
@@ -70,4 +72,6 @@ Stmt *FunctionStmt::optimize() {
     body.push_back(new ReturnStmt(new NullExpr()));
 
   return this;
+}
+
 }

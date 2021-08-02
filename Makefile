@@ -2,10 +2,10 @@ all:
 	mkdir -p build
 	cmake -Bbuild .
 	cmake --build build
-	strip build/plsm
+	strip build/plasmatum
 
 clean:
 	rm -rf build
 
 install: all
-	cp build/plsm /usr/local/bin/
+	cp build/plasmatum /usr/local/bin/

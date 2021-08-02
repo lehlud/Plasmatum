@@ -3,6 +3,8 @@
 #include <map>
 #include <string>
 
+namespace plsm {
+
 class Value;
 class Engine;
 class Constant;
@@ -117,3 +119,5 @@ private:
   static void setupIntegerType(Type *intType, Type *floatType, Type *boolType);
   static void setupBooleanType(Type *intType, Type *floatType, Type *boolType);
 };
+
+}

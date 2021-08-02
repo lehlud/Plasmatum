@@ -5,6 +5,8 @@
 #include <functional>
 #include <string>
 
+namespace plsm {
+
 class Type;
 class Engine;
 class Constant;
@@ -171,3 +173,5 @@ public:
 
   plsm_size_t execute(Engine *engine) override;
 };
+
+}

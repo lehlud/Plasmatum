@@ -7,6 +7,8 @@
 #include "instruction.hh"
 #include "value.hh"
 
+namespace plsm {
+
 void Type::cast(Engine *engine, Type *type) {
   FunctionValue *castFunction = castFunctions[type];
   if (castFunction) {
@@ -230,4 +232,6 @@ void Type::setupBooleanType(Type *intType, Type *floatType, Type *boolType) {
   });
 
   boolType->registerMul(floatType, getBinExprFunctionValue(tmpInst));
+}
+
 }

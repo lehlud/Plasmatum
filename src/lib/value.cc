@@ -3,6 +3,8 @@
 #include "engine.hh"
 #include "instruction.hh"
 
+namespace plsm {
+
 plsm_float_t Value::asFloat() { return ((FloatValue *)this)->getValue(); }
 plsm_int_t Value::asInteger() { return ((IntegerValue *)this)->getValue(); }
 plsm_bool_t Value::asBoolean() { return ((BooleanValue *)this)->getValue(); }
@@ -21,4 +23,6 @@ void FunctionValue::call(Engine *engine) {
   // }
 
   // engine->stackPush(result);
+}
+
 }

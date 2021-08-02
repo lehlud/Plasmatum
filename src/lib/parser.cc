@@ -6,6 +6,8 @@
 #include "utils.hh"
 #include "value.hh"
 
+namespace plsm {
+
 void Parser::skipSpaces() {
   while (isSpace()) {
     index += 1;
@@ -233,4 +235,6 @@ std::vector<Instruction *> LLParser::parse() {
   }
 
   return result;
+}
+
 }

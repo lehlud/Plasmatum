@@ -4,6 +4,8 @@
 #include "type.hh"
 #include "value.hh"
 
+namespace plsm {
+
 void Engine::stackPushGlobal(const std::string &id) {
   stack.push_back(globals.count(id) ? globals[id] : new UndefinedValue());
 }
@@ -39,4 +41,6 @@ int Engine::execute(const std::vector<std::string> &args) {
   }
 
   return args.size();
+}
+
 }

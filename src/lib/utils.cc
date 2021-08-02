@@ -6,6 +6,8 @@
 #include <locale>
 #include <sstream>
 
+namespace plsm {
+
 std::u32string readFile(const std::string &filename) {
   std::ifstream ifstream(filename);
   if (ifstream.bad()) {
@@ -69,4 +71,6 @@ std::string to_str(const std::u32string &str) {
 std::u32string to_u32(const std::string &str) {
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
   return conv.from_bytes(str);
+}
+
 }

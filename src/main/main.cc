@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace plsm;
+
 FunctionValue *printFunc() {
   Instruction *tmpInst = new CustomInstruction([](Engine *engine) {
     std::cout << engine->stackPop()->toString() << std::endl;

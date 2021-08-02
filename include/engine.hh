@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+namespace plsm {
+
 class Type;
 class Value;
 class Instruction;
@@ -80,3 +82,5 @@ public:
 
   int execute(const std::vector<std::string> &args);
 };
+
+}
