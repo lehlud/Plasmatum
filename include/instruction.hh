@@ -31,7 +31,7 @@ public:
     return std::make_shared<ReturnInstruction>();
   }
 
-  virtual inline std::string toString() override { return "RETURN"; }
+  inline std::string toString() override { return "RETURN"; }
 
   bool isReturn() override { return true; }
 };
@@ -47,11 +47,34 @@ public:
     return std::make_shared<JumpInstruction>(destination);
   }
 
-  plsm_size_t execute(Engine *engine) override;
-
-  virtual inline std::string toString() override { return "JUMP"; }
+  inline std::string toString() override {
+    return "JUMP " + std::to_string(destination);
+  }
 
   plsm_size_t getDestination() { return destination; };
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class JumpCondInstruction : public Instruction {
+private:
+  plsm_size_t destination;
+
+public:
+  JumpCondInstruction(plsm_size_t destination) : destination(destination) {}
+
+  static inline std::shared_ptr<JumpCondInstruction>
+  get(plsm_size_t destination) {
+    return std::make_shared<JumpCondInstruction>(destination);
+  }
+
+  inline std::string toString() override {
+    return "JUMP_COND " + std::to_string(destination);
+  }
+
+  inline plsm_size_t getDestination() { return destination; }
+
+  plsm_size_t execute(Engine *engine) override;
 };
 
 class LoadConstInstruction : public Instruction {
@@ -66,7 +89,23 @@ public:
     return std::make_shared<LoadConstInstruction>(value);
   }
 
-  virtual inline std::string toString() override { return "LOAD_CONST"; }
+  inline std::string toString() override { return "LOAD_CONST"; }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class LoadArgInstruction : public Instruction {
+private:
+  plsm_size_t back;
+
+public:
+  LoadArgInstruction(plsm_size_t back) : back(back) {}
+
+  static inline std::shared_ptr<LoadArgInstruction> get(plsm_size_t back) {
+    return std::make_shared<LoadArgInstruction>(back);
+  }
+
+  inline std::string toString() override { return "LOAD_ARG"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -83,7 +122,7 @@ public:
     return std::make_shared<LoadGlobalInstruction>(id);
   }
 
-  virtual inline std::string toString() override { return "LOAD_GLOBAL"; }
+  inline std::string toString() override { return "LOAD_GLOBAL"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -100,7 +139,7 @@ public:
     return std::make_shared<CastInstruction>(type);
   }
 
-  virtual inline std::string toString() override { return "CAST"; }
+  inline std::string toString() override { return "CAST"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -118,14 +157,14 @@ public:
     return std::make_shared<CustomInstruction>(executeFunction);
   }
 
-  virtual inline std::string toString() override { return "CUSTOM"; }
+  inline std::string toString() override { return "CUSTOM"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
 
 class AddInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "ADD"; }
+  inline std::string toString() override { return "ADD"; }
 
   static inline std::shared_ptr<AddInstruction> get() {
     return std::make_shared<AddInstruction>();
@@ -136,7 +175,7 @@ public:
 
 class SubInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "SUB"; }
+  inline std::string toString() override { return "SUB"; }
 
   static inline std::shared_ptr<SubInstruction> get() {
     return std::make_shared<SubInstruction>();
@@ -147,7 +186,7 @@ public:
 
 class MulInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "MUL"; }
+  inline std::string toString() override { return "MUL"; }
 
   static inline std::shared_ptr<MulInstruction> get() {
     return std::make_shared<MulInstruction>();
@@ -158,7 +197,7 @@ public:
 
 class DivInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "DIV"; }
+  inline std::string toString() override { return "DIV"; }
 
   static inline std::shared_ptr<DivInstruction> get() {
     return std::make_shared<DivInstruction>();
@@ -169,10 +208,76 @@ public:
 
 class ModInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "MOD"; }
+  inline std::string toString() override { return "MOD"; }
 
   static inline std::shared_ptr<ModInstruction> get() {
     return std::make_shared<ModInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class EQInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "EQ"; }
+
+  static inline std::shared_ptr<EQInstruction> get() {
+    return std::make_shared<EQInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class NEInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "NE"; }
+
+  static inline std::shared_ptr<NEInstruction> get() {
+    return std::make_shared<NEInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class GTInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "GT"; }
+
+  static inline std::shared_ptr<GTInstruction> get() {
+    return std::make_shared<GTInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class GEInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "GE"; }
+
+  static inline std::shared_ptr<GEInstruction> get() {
+    return std::make_shared<GEInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class LTInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "LT"; }
+
+  static inline std::shared_ptr<LTInstruction> get() {
+    return std::make_shared<LTInstruction>();
+  }
+
+  plsm_size_t execute(Engine *engine) override;
+};
+
+class LEInstruction : public Instruction {
+public:
+  inline std::string toString() override { return "LE"; }
+
+  static inline std::shared_ptr<LEInstruction> get() {
+    return std::make_shared<LEInstruction>();
   }
 
   plsm_size_t execute(Engine *engine) override;
@@ -189,7 +294,7 @@ public:
     return std::make_shared<CallInstruction>(argc);
   }
 
-  virtual inline std::string toString() override { return "CALL"; }
+  inline std::string toString() override { return "CALL"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
@@ -206,14 +311,14 @@ public:
     return std::make_shared<FunctionStartInstruction>(argc);
   }
 
-  virtual inline std::string toString() override { return "FUNC_START"; }
+  inline std::string toString() override { return "FUNC_START"; }
 
   plsm_size_t execute(Engine *engine) override;
 };
 
 class FunctionFinishInstruction : public Instruction {
 public:
-  virtual inline std::string toString() override { return "FUNC_FINISH"; }
+  inline std::string toString() override { return "FUNC_FINISH"; }
 
   static inline std::shared_ptr<FunctionFinishInstruction> get() {
     return std::make_shared<FunctionFinishInstruction>();
@@ -236,7 +341,7 @@ public:
     return std::make_shared<DefineGlobalInstruction>(id);
   }
 
-  virtual inline std::string toString() override { return "DEF_GLOBAL"; }
+  inline std::string toString() override { return "DEF_GLOBAL"; }
 
   plsm_size_t execute(Engine *engine) override;
 };

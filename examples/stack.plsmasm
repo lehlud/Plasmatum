@@ -1,14 +1,28 @@
--- add(x y) = x + y
-\\ 1 \\     FUNC_START      2
-\\ 2 \\     ADD
-\\ 3 \\     RETURN
-\\ 4 \\     FUNC_FINISH
-\\ 5 \\     DEF_GLOBAL      add
+FUNC_START      1
+LOAD_ARG        0 -- 0
+LOAD_CONST      1 -- 1
+GT                -- 2
+JUMP_COND       6 -- 3
+LOAD_ARG        0 -- 4
+RETURN            -- 5
+LOAD_ARG        0 -- 6
+LOAD_CONST      1
+SUB
+LOAD_GLOBAL     fib
+CALL            1
+LOAD_ARG        0
+LOAD_CONST      2
+SUB
+LOAD_GLOBAL     fib
+CALL            1
+ADD
+RETURN
+FUNC_FINISH
+DEF_GLOBAL      fib
 
 -- print(add(40 2))
-\\ 6 \\     LOAD_CONST      0.1
-\\ 7 \\     LOAD_CONST      0.2
-\\ 8 \\     LOAD_GLOBAL     add
-\\ 9 \\     CALL            2
-\\ 10 \\    LOAD_GLOBAL     print
-\\ 11 \\    CALL            1
+LOAD_CONST      30
+LOAD_GLOBAL     fib
+CALL            1
+LOAD_GLOBAL     print
+CALL            1

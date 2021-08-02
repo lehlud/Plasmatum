@@ -59,7 +59,7 @@ std::string Parser::getPosition(plsm_size_t index) {
 
 void Parser::errorExpected(const std::string &exp) {
   if (fname.size()) {
-    std::cout << fname << ": ";
+    std::cout << fname << ":";
   }
   std::cout << getPosition() << " : expected " << exp << std::endl;
   std::exit(1);
@@ -194,6 +194,12 @@ std::shared_ptr<Instruction> LLParser::parseNext() {
   if (label == "CALL") {
     skipSpaces();
     return CallInstruction::get(parseInteger());
+  } else if (label == "JUMP") {
+    skipSpaces();
+    return JumpInstruction::get(parseInteger());
+  } else if (label == "JUMP_COND") {
+    skipSpaces();
+    return JumpCondInstruction::get(parseInteger());
   } else if (label == "FUNC_START") {
     skipSpaces();
     return FunctionStartInstruction::get(parseInteger());
@@ -202,6 +208,9 @@ std::shared_ptr<Instruction> LLParser::parseNext() {
   } else if (label == "LOAD_CONST") {
     skipSpaces();
     return LoadConstInstruction::get(parseConstantValue());
+  } else if (label == "LOAD_ARG") {
+    skipSpaces();
+    return LoadArgInstruction::get(parseInteger());
   } else if (label == "LOAD_GLOBAL") {
     skipSpaces();
     return LoadGlobalInstruction::get(parseIdentifer());
@@ -218,6 +227,18 @@ std::shared_ptr<Instruction> LLParser::parseNext() {
     return DivInstruction::get();
   } else if (label == "MOD") {
     return ModInstruction::get();
+  } else if (label == "EQ") {
+    return EQInstruction::get();
+  } else if (label == "NE") {
+    return NEInstruction::get();
+  } else if (label == "GT") {
+    return GTInstruction::get();
+  } else if (label == "GE") {
+    return GEInstruction::get();
+  } else if (label == "LT") {
+    return LTInstruction::get();
+  } else if (label == "LE") {
+    return LEInstruction::get();
   } else if (label == "RETURN") {
     return ReturnInstruction::get();
   } else {

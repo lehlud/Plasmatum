@@ -1,5 +1,7 @@
 #include "instruction.hh"
 
+#include <string>
+
 #include "type.hh"
 #include "value.hh"
 #include "engine.hh"
@@ -11,8 +13,24 @@ plsm_size_t JumpInstruction::execute(Engine *engine) {
   return 0;
 }
 
+plsm_size_t JumpCondInstruction::execute(Engine *engine) {
+  plsm_size_t result = 1;
+  if (engine->stackPeek()->isTruthy()) {
+    engine->jump(destination);
+    result = 0;
+  }
+
+  engine->stackPop();
+  return result;
+}
+
 plsm_size_t LoadConstInstruction::execute(Engine *engine) {
   engine->stackPush(value);
+  return 1;
+}
+
+plsm_size_t LoadArgInstruction::execute(Engine *engine) {
+  engine->stackPush(engine->argumentPeek(back));
   return 1;
 }
 
@@ -55,6 +73,36 @@ plsm_size_t ModInstruction::execute(Engine *engine) {
   return 1;
 }
 
+plsm_size_t EQInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->eq(engine);
+  return 1;
+}
+
+plsm_size_t NEInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->ne(engine);
+  return 1;
+}
+
+plsm_size_t GTInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->gt(engine);
+  return 1;
+}
+
+plsm_size_t GEInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->ge(engine);
+  return 1;
+}
+
+plsm_size_t LTInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->lt(engine);
+  return 1;
+}
+
+plsm_size_t LEInstruction::execute(Engine *engine) {
+  engine->stackPeek(1)->type->le(engine);
+  return 1;
+}
+
 plsm_size_t CallInstruction::execute(Engine *engine) {
   engine->call(argc);
   return 1;
@@ -76,7 +124,8 @@ plsm_size_t FunctionStartInstruction::execute(Engine *engine) {
 }
 
 plsm_size_t DefineGlobalInstruction::execute(Engine *engine) {
-  engine->defineGlobal(id, engine->stackPop());
+  engine->defineGlobal(id, engine->stackPeek());
+  engine->stackPop();
   return 1;
 }
 

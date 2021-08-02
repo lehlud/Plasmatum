@@ -69,6 +69,36 @@ public:
     modFunctions[type] = function;
   }
 
+  inline void registerEQ(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    eqFunctions[type] = function;
+  }
+
+  inline void registerNE(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    neFunctions[type] = function;
+  }
+
+  inline void registerGT(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    gtFunctions[type] = function;
+  }
+
+  inline void registerGE(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    geFunctions[type] = function;
+  }
+
+  inline void registerLT(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    ltFunctions[type] = function;
+  }
+
+  inline void registerLE(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
+    leFunctions[type] = function;
+  }
+
   inline bool hasRegisteredFunctions() {
     return addFunctions.size() || subFunctions.size() || mulFunctions.size() ||
            divFunctions.size() || modFunctions.size();
@@ -89,6 +119,18 @@ public:
   inline void div(Engine *engine) { binexpr(engine, divFunctions); }
 
   inline void mod(Engine *engine) { binexpr(engine, modFunctions); }
+
+  inline void eq(Engine *engine) { binexpr(engine, eqFunctions); }
+
+  inline void ne(Engine *engine) { binexpr(engine, neFunctions); }
+
+  inline void gt(Engine *engine) { binexpr(engine, gtFunctions); }
+
+  inline void ge(Engine *engine) { binexpr(engine, geFunctions); }
+
+  inline void lt(Engine *engine) { binexpr(engine, ltFunctions); }
+
+  inline void le(Engine *engine) { binexpr(engine, leFunctions); }
 
   static inline std::shared_ptr<Type> getUndefinedType() {
     static std::shared_ptr<Type> undefinedType;

@@ -12,7 +12,7 @@ using namespace plsm;
 
 std::shared_ptr<FunctionValue> printFunc() {
   std::shared_ptr<Instruction> tmpInst = CustomInstruction::get([](Engine *engine) {
-    std::cout << engine->stackPop()->toString() << std::endl;
+    std::cout << engine->argumentPeek()->toString() << std::endl;
     engine->stackPush(UndefinedValue::get());
     return 1;
   });
@@ -31,9 +31,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::u32string text = readFile(argv[1]);
-
-  std::vector<std::shared_ptr<Instruction>> insts = (new LLParser(text))->parse();
+  std::vector<std::shared_ptr<Instruction>> insts = LLParser::fromFile(argv[1])->parse();
 
   auto types = Type::getStandardTypes();
 

@@ -7,7 +7,17 @@
 #include <string>
 #include <vector>
 
+#include "utils.hh"
+
 namespace plsm {
+
+inline bool isUpperAscii(char32_t c) {
+  return (c >= 'A' && c <= 'Z') || (c == '_');
+}
+
+inline bool isIdChar(char32_t c) {
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_');
+}
 
 class Constant;
 class Instruction;
@@ -64,7 +74,15 @@ public:
 
 class LLParser : public Parser {
 public:
-  LLParser(const std::u32string &text) : Parser(text) {}
+  LLParser(const std::u32string &text, const std::string &fname = "") : Parser(text, fname) {}
+
+  static inline std::shared_ptr<LLParser> get(const std::u32string &text) {
+    return std::make_shared<LLParser>(text);
+  }
+
+  static inline std::shared_ptr<LLParser> fromFile(const std::string &fname) {
+    return std::make_shared<LLParser>(readFile(fname), fname);
+  }
 
 private:
   std::string parseInstructionLabel();
@@ -77,7 +95,15 @@ public:
 
 class HLParser : public Parser {
 public:
-  HLParser(const std::u32string &text) : Parser(text) {}
+  HLParser(const std::u32string &text, const std::string &fname = "") : Parser(text, fname) {}
+
+  static inline std::shared_ptr<HLParser> get(const std::u32string &text) {
+    return std::make_shared<HLParser>(text);
+  }
+
+  static inline std::shared_ptr<HLParser> fromFile(const std::string &fname) {
+    return std::make_shared<HLParser>(readFile(fname), fname);
+  }
 };
 
 } // namespace plsm

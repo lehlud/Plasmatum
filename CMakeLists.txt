@@ -9,9 +9,8 @@ file(GLOB MAIN_SRC "src/main/*.cc")
 
 include_directories(include)
 
-add_library(plsm STATIC ${PLSM_LIB_SRC})
+#add_library(plsm SHARED ${PLSM_LIB_SRC})
 
-add_executable(plasmatum ${MAIN_SRC})
-target_link_libraries(plasmatum plsm)
-target_link_options(plasmatum PRIVATE -flto)
+add_executable(plasmatum ${MAIN_SRC} ${PLSM_LIB_SRC})
+#target_link_libraries(plasmatum plsm)
 target_compile_options(plasmatum PRIVATE -O3 -Wall -Wextra)
