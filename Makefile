@@ -6,3 +6,6 @@ all:
 
 clean:
 	rm -rf build
+
+install: all
+	cp build/plsm /usr/local/bin/
