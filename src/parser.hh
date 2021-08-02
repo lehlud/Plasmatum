@@ -1,6 +1,9 @@
 #pragma once
 
+#include "types.hh"
+
 #include <cwctype>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -9,16 +12,21 @@ class Instruction;
 
 class Parser {
 protected:
-  size_t index;
+  plsm_size_t index;
+  std::string fname;
   std::u32string text;
 
-  Parser(const std::u32string &text) : index(0), text(text) {}
-  Parser(size_t index, const std::u32string &text) : index(index), text(text) {}
+  Parser(const std::u32string &text, const std::string &fname = "")
+      : index(0), fname(fname), text(text) {}
+  Parser(plsm_size_t index, const std::u32string &text,
+         const std::string &fname = "")
+      : index(index), fname(fname), text(text) {}
 
   virtual inline bool isEOF() { return charAt(index) == 0; }
   virtual inline bool isSpace() { return std::iswspace(charAt(index)); }
+  virtual inline bool isSeparator() { return isSpace() || isEOF(); }
 
-  virtual inline char32_t charAt(size_t index) {
+  virtual inline char32_t charAt(plsm_size_t index) {
     return index >= text.size() ? 0 : text[index];
   }
 
@@ -33,12 +41,19 @@ protected:
            charAt(index + 3) == 'e';
   }
 
-  virtual inline void skipSpaces() {
-    while (isSpace()) {
-      index += 1;
+  virtual void skipSpaces();
+
+  virtual std::string getPosition(plsm_size_t index);
+  virtual inline std::string getPosition() { return getPosition(index); }
+
+  virtual void errorExpected(const std::string &exp);
+  virtual inline void maybeSeparatorError(const std::string &after) {
+    if (!isSeparator()) {
+      errorExpected("separator after " + after);
     }
   }
 
+  virtual plsm_int_t parseInteger();
   virtual std::string parseIdentifer();
 
 public:

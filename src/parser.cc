@@ -2,9 +2,95 @@
 
 #include <iostream>
 
-#include "value.hh"
-#include "utils.hh"
 #include "instruction.hh"
+#include "utils.hh"
+#include "value.hh"
+
+void Parser::skipSpaces() {
+  while (isSpace()) {
+    index += 1;
+  }
+  
+  if (charAt(index) == '-' && charAt(index + 1) == '-') {
+    index += 2;
+
+    char32_t c;
+    while ((c = charAt(index)) != 0 && c != '\n' && c != '\r') {
+      index += 1;
+    }
+
+    skipSpaces();
+  } else if (charAt(index) == '\\' && charAt(index + 1) == '\\') {
+    index += 2;
+
+    while (charAt(index) != 0 && (charAt(index) != '\\' || charAt(index + 1) != '\\')) {
+      index += 1;
+    }
+
+    if (charAt(index) == 0) {
+      errorExpected("comment delimiter before EOF");
+    } else {
+      index += 2;
+    }
+
+    skipSpaces();
+  }
+}
+
+std::string Parser::getPosition(plsm_size_t index) {
+  plsm_size_t lineno = 1, column = 1, tmpIndex = 0;
+
+  char32_t c;
+  while ((c = charAt(tmpIndex)) != 0 && tmpIndex <= index) {
+    if (c == '\n' || c == '\r') {
+      lineno += 1;
+      column = 1;
+    } else {
+      column += 1;
+    }
+    tmpIndex += 1;
+  }
+
+  return std::to_string(lineno) + ":" + std::to_string(column);
+}
+
+void Parser::errorExpected(const std::string &exp) {
+  if (fname.size()) {
+    std::cout << fname << ": ";
+  }
+  std::cout << getPosition() << " : expected " << exp << std::endl;
+  std::exit(1);
+}
+
+plsm_int_t Parser::parseInteger() {
+  std::string tmp;
+
+  char32_t c;
+  if ((c = charAt(index)) == '0' && (c = charAt(index)) == 'x') {
+    index += 2;
+    while (std::isxdigit((c = charAt(index)))) {
+      tmp += c;
+      index += 1;
+    }
+
+    if (!tmp.size()) {
+      errorExpected("at least 1 digit after '0x'");
+    }
+
+    return std::stol(tmp, nullptr, 16);
+  }
+
+  while (std::isdigit((c = charAt(index)))) {
+    tmp += c;
+    index += 1;
+  }
+
+  if (!tmp.size()) {
+    errorExpected("Int");
+  }
+
+  return std::stol(tmp);
+}
 
 std::string Parser::parseIdentifer() {
   std::string tmp;
@@ -15,10 +101,7 @@ std::string Parser::parseIdentifer() {
     index += 1;
   }
 
-  if (!isSpace()) {
-    std::cout << "expected whitespace after identifier" << std::endl;
-    std::exit(1);
-  }
+  maybeSeparatorError("identifier");
 
   return tmp;
 }
@@ -32,10 +115,7 @@ std::string LLParser::parseInstructionLabel() {
     index += 1;
   }
 
-  if (!isSpace()) {
-    std::cout << "expected whitespace after instruction label" << std::endl;
-    std::exit(1);
-  }
+  maybeSeparatorError("instruction label");
 
   return tmp;
 }
@@ -57,10 +137,7 @@ Constant *LLParser::parseConstantValue() {
       index += 1;
     }
 
-    if (!isSpace()) {
-      std::cout << "expected whitespace after hex number" << std::endl;
-      std::exit(1);
-    }
+    maybeSeparatorError("hex number");
 
     return new IntegerValue(std::stol(tmp, nullptr, 16));
   }
@@ -76,15 +153,11 @@ Constant *LLParser::parseConstantValue() {
   }
 
   if (!tmp.size()) {
-    std::cout << "expected value" << std::endl;
-    std::exit(1);
+    errorExpected("value");
   }
 
   if (charAt(index) != '.') {
-    if (!isSpace()) {
-      std::cout << "expected whitespace after integer" << std::endl;
-      std::exit(1);
-    }
+    maybeSeparatorError("Int");
 
     return new IntegerValue(std::stol(tmp));
   } else {
@@ -94,10 +167,7 @@ Constant *LLParser::parseConstantValue() {
       index += 1;
     }
 
-    if (!isSpace()) {
-      std::cout << "expected whitespace after float" << std::endl;
-      std::exit(1);
-    }
+    maybeSeparatorError("Float");
 
     return new FloatValue(std::stod(tmp));
   }
@@ -114,24 +184,10 @@ Instruction *LLParser::parseNext() {
 
   if (label == "CALL") {
     skipSpaces();
-    Constant *c = parseConstantValue();
-
-    if (!c->isInteger()) {
-      std::cout << "expected integer constant after 'CALL'" << std::endl;
-      std::exit(1);
-    }
-
-    return new CallInstruction(c->asInteger());
+    return new CallInstruction(parseInteger());
   } else if (label == "FUNC_START") {
     skipSpaces();
-    Constant *c = parseConstantValue();
-
-    if (!c->isInteger()) {
-      std::cout << "expected integer constant after 'FUNC_START'" << std::endl;
-      std::exit(1);
-    }
-
-    return new FunctionStartInstruction(c->asInteger());
+    return new FunctionStartInstruction(parseInteger());
   } else if (label == "FUNC_FINISH") {
     return new FunctionFinishInstruction();
   } else if (label == "LOAD_CONST") {
@@ -156,8 +212,7 @@ Instruction *LLParser::parseNext() {
   } else if (label == "RETURN") {
     return new ReturnInstruction();
   } else {
-    std::cout << "expected instruction" << std::endl;
-    std::exit(1);
+    errorExpected("instruction");
   }
 
   return nullptr;
