@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -16,24 +17,25 @@ class Instruction;
 class Engine {
 private:
   plsm_size_t index = 0;
-  Instruction *ip = nullptr;
+  std::shared_ptr<Instruction> ip = nullptr;
 
-  std::vector<Type *> types;
-  std::vector<Value *> stack;
-  std::vector<Instruction *> instructions;
+  std::vector<std::shared_ptr<Type>> types;
+  std::vector<std::shared_ptr<Value>> stack;
+  std::vector<std::shared_ptr<Instruction>> instructions;
 
-  std::map<std::string, Value *> globals;
+  std::map<std::string, std::shared_ptr<Value>> globals;
 
 public:
-  Engine(const std::vector<Type *> &types,
-         const std::vector<Instruction *> &instructions)
+  Engine(const std::vector<std::shared_ptr<Type>> &types,
+         const std::vector<std::shared_ptr<Instruction>> &instructions)
       : types(types), instructions(instructions) {}
 
-  Engine(const std::vector<Type *> &types, const std::vector<Value *> &stack,
-         const std::vector<Instruction *> &instructions)
+  Engine(const std::vector<std::shared_ptr<Type>> &types,
+         const std::vector<std::shared_ptr<Value>> &stack,
+         const std::vector<std::shared_ptr<Instruction>> &instructions)
       : types(types), stack(stack), instructions(instructions) {}
 
-  inline void stackPush(Value *value) { stack.push_back(value); }
+  inline void stackPush(std::shared_ptr<Value> value) { stack.push_back(value); }
 
   inline void stackPopVoid() { stack.pop_back(); }
 
@@ -43,14 +45,14 @@ public:
     }
   }
 
-  inline Value *stackPop() {
-    Value *result = stackPeek();
+  inline std::shared_ptr<Value> stackPop() {
+    std::shared_ptr<Value> result = stackPeek();
     stack.pop_back();
     return result;
   }
 
-  inline std::vector<Value *> stackPop(plsm_size_t count) {
-    std::vector<Value *> result;
+  inline std::vector<std::shared_ptr<Value>> stackPop(plsm_size_t count) {
+    std::vector<std::shared_ptr<Value> > result;
     for (plsm_size_t i = 0; i < count; i++) {
       result.push_back(stackPop());
     }
@@ -58,18 +60,18 @@ public:
     return result;
   }
 
-  inline Value *stackPeek() { return stack.back(); }
-  inline Value *stackPeek(plsm_size_t back) {
+  inline std::shared_ptr<Value> stackPeek() { return stack.back(); }
+  inline std::shared_ptr<Value> stackPeek(plsm_size_t back) {
     return stack[stack.size() - 1 - back];
   }
 
   inline void jump(size_t index) { ip = getInstruction((this->index = index)); }
 
-  inline void defineGlobal(const std::string &id, Value *value) {
+  inline void defineGlobal(const std::string &id, std::shared_ptr<Value> value) {
     globals[id] = value;
   }
 
-  inline Instruction *getInstruction(plsm_size_t index) {
+  inline std::shared_ptr<Instruction> getInstruction(plsm_size_t index) {
     return index >= instructions.size() ? nullptr : instructions[index];
   }
 
@@ -83,4 +85,4 @@ public:
   int execute(const std::vector<std::string> &args);
 };
 
-}
+} // namespace plsm

@@ -7,20 +7,20 @@
 namespace plsm {
 
 void Engine::stackPushGlobal(const std::string &id) {
-  stack.push_back(globals.count(id) ? globals[id] : new UndefinedValue());
+  stack.push_back(globals.count(id) ? globals[id] : UndefinedValue::get());
 }
 
 void Engine::call(size_t argc) {
-  Value *value = stackPop();
+  std::shared_ptr<Value> value = stackPop();
   if (!value->isFunction()) {
     while (argc > 0) {
       stackPop();
       argc -= 1;
     }
-    stackPush(new UndefinedValue());
+    stackPush(UndefinedValue::get());
   }
 
-  FunctionValue *callee = (FunctionValue *)value;
+  std::shared_ptr<FunctionValue> callee = std::static_pointer_cast<FunctionValue>(value);
 
   while (argc > callee->getArgc()) {
     stackPop();
@@ -28,7 +28,7 @@ void Engine::call(size_t argc) {
   }
 
   while (argc < callee->getArgc()) {
-    stackPush(new UndefinedValue());
+    stackPush(UndefinedValue::get());
     argc += 1;
   }
 

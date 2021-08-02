@@ -10,13 +10,13 @@
 
 using namespace plsm;
 
-FunctionValue *printFunc() {
-  Instruction *tmpInst = new CustomInstruction([](Engine *engine) {
+std::shared_ptr<FunctionValue> printFunc() {
+  std::shared_ptr<Instruction> tmpInst = CustomInstruction::get([](Engine *engine) {
     std::cout << engine->stackPop()->toString() << std::endl;
-    engine->stackPush(new UndefinedValue());
+    engine->stackPush(UndefinedValue::get());
     return 1;
   });
-  return new FunctionValue(1, {tmpInst, new ReturnInstruction()});
+  return FunctionValue::get(1, {tmpInst, ReturnInstruction::get()});
 }
 
 void printUsage(char *arg0) {
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
   std::u32string text = readFile(argv[1]);
 
-  std::vector<Instruction *> insts = (new LLParser(text))->parse();
+  std::vector<std::shared_ptr<Instruction>> insts = (new LLParser(text))->parse();
 
   auto types = Type::getStandardTypes();
 

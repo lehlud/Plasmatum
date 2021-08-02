@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 
 namespace plsm {
@@ -14,47 +15,57 @@ class Type {
 private:
   std::string name;
 
-  std::map<Type *, FunctionValue *> castFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> castFunctions;
 
-  std::map<Type *, FunctionValue *> addFunctions;
-  std::map<Type *, FunctionValue *> subFunctions;
-  std::map<Type *, FunctionValue *> mulFunctions;
-  std::map<Type *, FunctionValue *> divFunctions;
-  std::map<Type *, FunctionValue *> modFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> addFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> subFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> mulFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> divFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> modFunctions;
 
-  std::map<Type *, FunctionValue *> eqFunctions;
-  std::map<Type *, FunctionValue *> neFunctions;
-  std::map<Type *, FunctionValue *> gtFunctions;
-  std::map<Type *, FunctionValue *> geFunctions;
-  std::map<Type *, FunctionValue *> ltFunctions;
-  std::map<Type *, FunctionValue *> leFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> eqFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> neFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> gtFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> geFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> ltFunctions;
+  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> leFunctions;
 
 public:
   Type(const std::string &name) : name(name) {}
 
+  static inline std::shared_ptr<Type> get(const std::string &name) {
+    return std::make_shared<Type>(name);
+  }
+
   inline std::string &getName() { return name; }
 
-  inline void registerCast(Type *type, FunctionValue *function) {
+  inline void registerCast(std::shared_ptr<Type> type,
+                           std::shared_ptr<FunctionValue> function) {
     castFunctions[type] = function;
   }
 
-  inline void registerAdd(Type *type, FunctionValue *function) {
+  inline void registerAdd(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
     addFunctions[type] = function;
   }
 
-  inline void registerSub(Type *type, FunctionValue *function) {
+  inline void registerSub(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
     subFunctions[type] = function;
   }
 
-  inline void registerMul(Type *type, FunctionValue *function) {
+  inline void registerMul(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
     mulFunctions[type] = function;
   }
 
-  inline void registerDiv(Type *type, FunctionValue *function) {
+  inline void registerDiv(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
     divFunctions[type] = function;
   }
 
-  inline void registerMod(Type *type, FunctionValue *function) {
+  inline void registerMod(std::shared_ptr<Type> type,
+                          std::shared_ptr<FunctionValue> function) {
     modFunctions[type] = function;
   }
 
@@ -63,61 +74,60 @@ public:
            divFunctions.size() || modFunctions.size();
   }
 
-  void cast(Engine *engine, Type *type);
+  void cast(Engine *engine, std::shared_ptr<Type> type);
 
-  void binexpr(Engine *engine, std::map<Type *, FunctionValue *> &functions);
- 
-  inline void add(Engine *engine) {
-    binexpr(engine, addFunctions);
+  void binexpr(Engine *engine,
+               std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>>
+                   &functions);
+
+  inline void add(Engine *engine) { binexpr(engine, addFunctions); }
+
+  inline void sub(Engine *engine) { binexpr(engine, subFunctions); }
+
+  inline void mul(Engine *engine) { binexpr(engine, mulFunctions); }
+
+  inline void div(Engine *engine) { binexpr(engine, divFunctions); }
+
+  inline void mod(Engine *engine) { binexpr(engine, modFunctions); }
+
+  static inline std::shared_ptr<Type> getUndefinedType() {
+    static std::shared_ptr<Type> undefinedType;
+    return undefinedType ? undefinedType
+                         : (undefinedType = Type::get("Undefined"));
   }
 
-  inline void sub(Engine *engine) {
-    binexpr(engine, subFunctions);
+  static inline std::shared_ptr<Type> getFloatType() {
+    static std::shared_ptr<Type> floatType;
+    return floatType ? floatType : (floatType = Type::get("Float"));
   }
 
-  inline void mul(Engine *engine) {
-    binexpr(engine, mulFunctions);
+  static inline std::shared_ptr<Type> getIntegerType() {
+    static std::shared_ptr<Type> integerType;
+    return integerType ? integerType : (integerType = Type::get("Int"));
   }
 
-  inline void div(Engine *engine) {
-    binexpr(engine, divFunctions);
+  static inline std::shared_ptr<Type> getBooleanType() {
+    static std::shared_ptr<Type> boolType;
+    return boolType ? boolType : (boolType = Type::get("Bool"));
   }
 
-  inline void mod(Engine *engine) {
-    binexpr(engine, modFunctions);
+  static inline std::shared_ptr<Type> getFunctionType() {
+    static std::shared_ptr<Type> functionType;
+    return functionType ? functionType : (functionType = Type::get("Function"));
   }
 
-  static inline Type *getUndefinedType() {
-    static Type *undefinedType;
-    return undefinedType ? undefinedType : (undefinedType = new Type("Undefined"));
-  }
-
-  static inline Type *getFloatType() {
-    static Type *floatType;
-    return floatType ? floatType : (floatType = new Type("Float"));
-  }
-
-  static inline Type *getIntegerType() {
-    static Type *integerType;
-    return integerType ? integerType : (integerType = new Type("Int"));
-  }
-
-  static inline Type *getBooleanType() {
-    static Type *boolType;
-    return boolType ? boolType : (boolType = new Type("Bool"));
-  }
-
-  static inline Type *getFunctionType() {
-    static Type *functionType;
-    return functionType ? functionType : (functionType = new Type("Function"));
-  }
-
-  static std::map<std::string, Type *> getStandardTypes();
+  static std::map<std::string, std::shared_ptr<Type>> getStandardTypes();
 
 private:
-  static void setupFloatType(Type *intType, Type *floatType, Type *boolType);
-  static void setupIntegerType(Type *intType, Type *floatType, Type *boolType);
-  static void setupBooleanType(Type *intType, Type *floatType, Type *boolType);
+  static void setupFloatType(std::shared_ptr<Type> intType,
+                             std::shared_ptr<Type> floatType,
+                             std::shared_ptr<Type> boolType);
+  static void setupIntegerType(std::shared_ptr<Type> intType,
+                               std::shared_ptr<Type> floatType,
+                               std::shared_ptr<Type> boolType);
+  static void setupBooleanType(std::shared_ptr<Type> intType,
+                               std::shared_ptr<Type> floatType,
+                               std::shared_ptr<Type> boolType);
 };
 
-}
+} // namespace plsm

@@ -3,7 +3,7 @@
 #include "types.hh"
 
 #include <cwctype>
-#include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -68,11 +68,11 @@ public:
 
 private:
   std::string parseInstructionLabel();
-  Constant *parseConstantValue();
+  std::shared_ptr<Constant> parseConstantValue();
 
 public:
-  Instruction *parseNext();
-  std::vector<Instruction *> parse();
+  std::shared_ptr<Instruction> parseNext();
+  std::vector<std::shared_ptr<Instruction>> parse();
 };
 
 class HLParser : public Parser {
@@ -80,4 +80,4 @@ public:
   HLParser(const std::u32string &text) : Parser(text) {}
 };
 
-}
+} // namespace plsm

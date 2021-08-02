@@ -11,7 +11,7 @@ plsm_bool_t Value::asBoolean() { return ((BooleanValue *)this)->getValue(); }
 
 void FunctionValue::call(Engine *engine) {
   plsm_size_t index = 0;
-  Instruction *ip = nullptr;
+  std::shared_ptr<Instruction> ip = nullptr;
   while ((ip = getInstruction(index)) && !ip->isReturn()) {
     index += ip->execute(engine);
   }
