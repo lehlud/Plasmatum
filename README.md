@@ -4,17 +4,6 @@ A minimal functional programming language.
 ## Under the hood
 Plasmatum works by using a stack machine. Here's an example with pseudo stack machine code:
 ```
-FUNC_START      1
----------------------------
--- some c++ implementation
--- to print out something
--- to the console
----------------------------
-LOAD_CONST      Undefined
-RETURN
-FUNC_FINISH
-DEF_GLOBAL      print
-
 -- the '2' specifies the
 -- argument count (argc)
 FUNC_START      2
