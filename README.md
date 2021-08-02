@@ -4,19 +4,18 @@ A minimal functional programming language.
 ## Under the hood
 Plasmatum works by using a stack machine. Here's an example with pseudo stack machine code:
 ```
--- the '2' specifies the
--- argument count (argc)
+-- add (x y) = x + y
 FUNC_START      2
 ADD
 RETURN
 FUNC_FINISH
 DEF_GLOBAL      add
 
+-- print(add(40 2))
 LOAD_CONST      40
 LOAD_CONST      2
 LOAD_GLOBAL     add
 CALL            2
-
 LOAD_GLOBAL     print
 CALL            1
 ```
