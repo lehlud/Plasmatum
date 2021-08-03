@@ -9,6 +9,12 @@
 
 namespace plsm {
 
+execution_engine::~execution_engine() {
+  for (auto &function : functions) {
+    delete function;
+  }
+}
+
 void execution_engine::stackPushGlobal(const std::string &id) {
   stack.push_back(globals.count(id) ? globals[id]->copy() : new undefined());
 }

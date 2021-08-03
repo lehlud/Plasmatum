@@ -37,6 +37,8 @@ public:
                    const std::vector<std::shared_ptr<Type>> &types)
       : instructions(instructions), types(types) {}
   
+  ~execution_engine();
+
   inline void registerFunction(function *_function) {
     functions.push_back(_function);
   }
