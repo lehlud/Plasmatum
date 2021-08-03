@@ -40,6 +40,5 @@ int main(int argc, char **argv) {
   execution_engine *engine = new execution_engine(insts, {});
   engine->defineGlobal("print", printFunc());
 
-  std::cout << "executing" << std::endl;
   return engine->execute({});
 }
