@@ -1,8 +1,8 @@
 #include "instruction.hh"
 
+#include "engine.hh"
 #include "type.hh"
 #include "value.hh"
-#include "engine.hh"
 
 namespace plsm {
 
@@ -40,11 +40,9 @@ _DEF_EXECUTE_ARG(load_arg,
 _DEF_EXECUTE_ARG(load_const, engine->stackPush((constant *)arg))
 _DEF_EXECUTE_ARG(load_global, engine->stackPushGlobal(*((std::string *)arg)))
 
-_DEF_EXECUTE_ARG(
-    cast, ((Type *)arg)->cast(engine, std::shared_ptr<Type>((Type *)arg)))
+_DEF_EXECUTE_ARG(cast, ((Type *)arg)->cast(engine, (Type *)arg))
 
-_DEF_EXECUTE_ARG(
-    custom, (*((custom_inst_function *)arg))(engine))
+_DEF_EXECUTE_ARG(custom, (*((custom_inst_function *)arg))(engine))
 
 _DEF_EXECUTE_BINEXPR(add)
 _DEF_EXECUTE_BINEXPR(sub)

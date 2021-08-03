@@ -11,24 +11,23 @@ class execution_engine;
 class constant;
 class function;
 
+#define _DEF_TYPE_OP_MAP(name)                                                 \
+private:                                                                       \
+  std::map<Type *, function *> name##_functions;                               \
+                                                                               \
+public:                                                                        \
+  inline void register_##name(Type *type, function *function) {                \
+    name##_functions[type] = function;                                         \
+  }
+
+#define _FULL_DEF_TYPE_OP(name)                                                \
+  _DEF_TYPE_OP_MAP(name)                                                       \
+public:                                                                        \
+  void name(execution_engine *engine);
+
 class Type {
 private:
   std::string name;
-
-  std::map<std::shared_ptr<Type>, function *> castFunctions;
-
-  std::map<std::shared_ptr<Type>, function *> addFunctions;
-  std::map<std::shared_ptr<Type>, function *> subFunctions;
-  std::map<std::shared_ptr<Type>, function *> mulFunctions;
-  std::map<std::shared_ptr<Type>, function *> divFunctions;
-  std::map<std::shared_ptr<Type>, function *> modFunctions;
-
-  std::map<std::shared_ptr<Type>, function *> eqFunctions;
-  std::map<std::shared_ptr<Type>, function *> neFunctions;
-  std::map<std::shared_ptr<Type>, function *> gtFunctions;
-  std::map<std::shared_ptr<Type>, function *> geFunctions;
-  std::map<std::shared_ptr<Type>, function *> ltFunctions;
-  std::map<std::shared_ptr<Type>, function *> leFunctions;
 
 public:
   Type(const std::string &name) : name(name) {}
@@ -39,125 +38,58 @@ public:
 
   inline std::string &getName() { return name; }
 
-  inline void registerCast(std::shared_ptr<Type> type, function *function) {
-    castFunctions[type] = function;
-  }
+public:
+  void cast(execution_engine *engine, Type *type);
+  _DEF_TYPE_OP_MAP(cast);
 
-  inline void registerAdd(std::shared_ptr<Type> type, function *function) {
-    addFunctions[type] = function;
-  }
+  _FULL_DEF_TYPE_OP(add);
+  _FULL_DEF_TYPE_OP(sub);
+  _FULL_DEF_TYPE_OP(mul);
+  _FULL_DEF_TYPE_OP(div);
+  _FULL_DEF_TYPE_OP(mod);
 
-  inline void registerSub(std::shared_ptr<Type> type, function *function) {
-    subFunctions[type] = function;
-  }
+  _FULL_DEF_TYPE_OP(eq);
+  _FULL_DEF_TYPE_OP(ne);
+  _FULL_DEF_TYPE_OP(gt);
+  _FULL_DEF_TYPE_OP(ge);
+  _FULL_DEF_TYPE_OP(lt);
+  _FULL_DEF_TYPE_OP(le);
 
-  inline void registerMul(std::shared_ptr<Type> type, function *function) {
-    mulFunctions[type] = function;
-  }
+public:
+  inline bool hasRegisteredFunctions() { return false; }
 
-  inline void registerDiv(std::shared_ptr<Type> type, function *function) {
-    divFunctions[type] = function;
-  }
-
-  inline void registerMod(std::shared_ptr<Type> type, function *function) {
-    modFunctions[type] = function;
-  }
-
-  inline void registerEQ(std::shared_ptr<Type> type, function *function) {
-    eqFunctions[type] = function;
-  }
-
-  inline void registerNE(std::shared_ptr<Type> type, function *function) {
-    neFunctions[type] = function;
-  }
-
-  inline void registerGT(std::shared_ptr<Type> type, function *function) {
-    gtFunctions[type] = function;
-  }
-
-  inline void registerGE(std::shared_ptr<Type> type, function *function) {
-    geFunctions[type] = function;
-  }
-
-  inline void registerLT(std::shared_ptr<Type> type, function *function) {
-    ltFunctions[type] = function;
-  }
-
-  inline void registerLE(std::shared_ptr<Type> type, function *function) {
-    leFunctions[type] = function;
-  }
-
-  inline bool hasRegisteredFunctions() {
-    return addFunctions.size() || subFunctions.size() || mulFunctions.size() ||
-           divFunctions.size() || modFunctions.size();
-  }
-
-  void cast(execution_engine *engine, std::shared_ptr<Type> type);
-
-  void binexpr(
-      execution_engine *engine,
-      std::map<std::shared_ptr<Type>, function *> &functions);
-
-  inline void add(execution_engine *engine) { binexpr(engine, addFunctions); }
-
-  inline void sub(execution_engine *engine) { binexpr(engine, subFunctions); }
-
-  inline void mul(execution_engine *engine) { binexpr(engine, mulFunctions); }
-
-  inline void div(execution_engine *engine) { binexpr(engine, divFunctions); }
-
-  inline void mod(execution_engine *engine) { binexpr(engine, modFunctions); }
-
-  inline void eq(execution_engine *engine) { binexpr(engine, eqFunctions); }
-
-  inline void ne(execution_engine *engine) { binexpr(engine, neFunctions); }
-
-  inline void gt(execution_engine *engine) { binexpr(engine, gtFunctions); }
-
-  inline void ge(execution_engine *engine) { binexpr(engine, geFunctions); }
-
-  inline void lt(execution_engine *engine) { binexpr(engine, ltFunctions); }
-
-  inline void le(execution_engine *engine) { binexpr(engine, leFunctions); }
-
-  static inline std::shared_ptr<Type> getUndefinedType() {
-    static std::shared_ptr<Type> undefinedType;
+  static inline Type *getUndefinedType() {
+    static Type *undefinedType;
     return undefinedType ? undefinedType
-                         : (undefinedType = Type::get("Undefined"));
+                         : (undefinedType = new Type("Undefined"));
   }
 
-  static inline std::shared_ptr<Type> getFloatType() {
-    static std::shared_ptr<Type> floatType;
-    return floatType ? floatType : (floatType = Type::get("Float"));
+  static inline Type *getFloatType() {
+    static Type *floatType;
+    return floatType ? floatType : (floatType = new Type("Float"));
   }
 
-  static inline std::shared_ptr<Type> getIntegerType() {
-    static std::shared_ptr<Type> integerType;
-    return integerType ? integerType : (integerType = Type::get("Int"));
+  static inline Type *getIntegerType() {
+    static Type *integerType;
+    return integerType ? integerType : (integerType = new Type("Int"));
   }
 
-  static inline std::shared_ptr<Type> getBooleanType() {
-    static std::shared_ptr<Type> boolType;
-    return boolType ? boolType : (boolType = Type::get("Bool"));
+  static inline Type *getBooleanType() {
+    static Type *boolType;
+    return boolType ? boolType : (boolType = new Type("Bool"));
   }
 
-  static inline std::shared_ptr<Type> getFunctionType() {
-    static std::shared_ptr<Type> functionType;
-    return functionType ? functionType : (functionType = Type::get("Function"));
+  static inline Type *getFunctionType() {
+    static Type *functionType;
+    return functionType ? functionType : (functionType = new Type("Function"));
   }
 
-  static std::map<std::string, std::shared_ptr<Type>> getStandardTypes();
+  static std::map<std::string, Type *> getStandardTypes();
 
 private:
-  static void setupFloatType(std::shared_ptr<Type> intType,
-                             std::shared_ptr<Type> floatType,
-                             std::shared_ptr<Type> boolType);
-  static void setupIntegerType(std::shared_ptr<Type> intType,
-                               std::shared_ptr<Type> floatType,
-                               std::shared_ptr<Type> boolType);
-  static void setupBooleanType(std::shared_ptr<Type> intType,
-                               std::shared_ptr<Type> floatType,
-                               std::shared_ptr<Type> boolType);
+  static void setupFloatType(Type *intType, Type *floatType, Type *boolType);
+  static void setupIntegerType(Type *intType, Type *floatType, Type *boolType);
+  static void setupBooleanType(Type *intType, Type *floatType, Type *boolType);
 };
 
 } // namespace plsm

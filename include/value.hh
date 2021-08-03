@@ -2,10 +2,10 @@
 
 #include "types.hh"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include "type.hh"
 
@@ -16,9 +16,9 @@ class execution_engine;
 
 class value {
 public:
-  std::shared_ptr<Type> type;
+  Type *type;
 
-  value(std::shared_ptr<Type> type) : type(type) {}
+  value(Type *type) : type(type) {}
 
   virtual ~value() = default;
 
@@ -41,7 +41,7 @@ public:
 
 class constant : public value {
 public:
-  constant(std::shared_ptr<Type> type) : value(type) {}
+  constant(Type *type) : value(type) {}
   virtual ~constant() = default;
 
   virtual inline bool is_constant() { return true; }
@@ -63,8 +63,7 @@ private:
   plsm_int_t int_v;
 
 public:
-  integer(plsm_int_t int_v)
-      : constant(Type::getIntegerType()), int_v(int_v) {}
+  integer(plsm_int_t int_v) : constant(Type::getIntegerType()), int_v(int_v) {}
 
   integer *copy() override;
 
@@ -119,13 +118,14 @@ private:
 
 public:
   function(plsm_size_t argc, const std::vector<instruction *> &instructions)
-      : constant(Type::getFunctionType()), argc(argc), instructions(instructions) {}
+      : constant(Type::getFunctionType()), argc(argc),
+        instructions(instructions) {}
   ~function();
 
   function *copy() override;
 
   inline plsm_size_t get_argc() { return argc; }
-  inline instruction * get_instruction(plsm_size_t index) {
+  inline instruction *get_instruction(plsm_size_t index) {
     return instructions[index];
   }
 
