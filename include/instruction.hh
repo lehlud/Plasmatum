@@ -106,6 +106,14 @@ public:
   }
 };
 
+template<typename T> class value_inst<std::function<T>> : public instruction {
+  _VALUE_INST_BODY(std::function<T>)
+public:
+  value_inst<std::function<T>> *copy() override {
+    return new value_inst<std::function<T>>(code, new std::function<T>(*t_value));
+  }
+};
+
 template <> class value_inst<std::string> : public instruction {
   _VALUE_INST_BODY(std::string)
 public:

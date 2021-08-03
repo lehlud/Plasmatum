@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "type.hh"
+#include "function.hh"
 
 namespace plsm {
 
@@ -111,25 +112,23 @@ public:
   inline bool is_boolean() override { return true; }
 };
 
-class function : public constant {
+class function_pointer : public constant {
 private:
-  plsm_size_t argc;
-  std::vector<instruction *> instructions;
+  function *_function;
 
 public:
-  function(plsm_size_t argc, const std::vector<instruction *> &instructions)
-      : constant(Type::getFunctionType()), argc(argc),
-        instructions(instructions) {}
-  ~function();
+  function_pointer(function *_function)
+      : constant(Type::getFunctionType()), _function(_function) {}
 
-  function *copy() override;
-
-  inline plsm_size_t get_argc() { return argc; }
-  inline instruction *get_instruction(plsm_size_t index) {
-    return instructions[index];
+  function_pointer *copy() override {
+    return new function_pointer(_function);
   }
 
-  void call(execution_engine *engine);
+  inline function *get_function() { return _function; }
+
+  inline void call(execution_engine *engine) {
+    _function->call(engine);
+  }
 
   inline std::string to_string() override { return "function"; }
 

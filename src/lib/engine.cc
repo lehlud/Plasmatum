@@ -10,7 +10,7 @@
 namespace plsm {
 
 void execution_engine::stackPushGlobal(const std::string &id) {
-  stack.push_back(globals.count(id) ? globals[id] : new undefined());
+  stack.push_back(globals.count(id) ? globals[id]->copy() : new undefined());
 }
 
 void execution_engine::call(plsm_size_t argc) {
@@ -23,10 +23,11 @@ void execution_engine::call(plsm_size_t argc) {
       argc -= 1;
     }
     stackPush(new undefined());
+    delete stack_top;
     return;
   }
   
-  function *callee = (function *)stack_top;
+  function *callee = ((function_pointer *)stack_top)->get_function();
 
   plsm_size_t calleeArgc = callee->get_argc();
   if (calleeArgc > 0) {
@@ -53,6 +54,8 @@ void execution_engine::call(plsm_size_t argc) {
   for (plsm_size_t i = 0; i < calleeArgc; i++) {
     argumentPop();
   }
+
+  delete stack_top;
 }
 
 int execution_engine::execute(const std::vector<std::string> &args) {

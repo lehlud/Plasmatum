@@ -70,7 +70,10 @@ plsm_size_t execute_func_start(execution_engine *engine, void *argc) {
     body.push_back(ip);
   }
 
-  engine->stackPush(new function(*((plsm_size_t *)argc), body));
+  function *func = new function(*((plsm_size_t *)argc), body);
+
+  engine->registerFunction(func);
+  engine->stackPush(new function_pointer(func));
 
   return 1 + body.size();
 }

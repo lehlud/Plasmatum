@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   auto types = Type::getStandardTypes();
 
   execution_engine *engine = new execution_engine(insts, {});
-  engine->defineGlobal("print", printFunc());
+  engine->defineGlobal("print", new function_pointer(printFunc()));
 
   return engine->execute({});
 }

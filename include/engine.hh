@@ -26,6 +26,8 @@ private:
 
   std::vector<std::shared_ptr<Type>> types;
 
+  std::vector<function *> functions;
+
   std::vector<value *> stack;
   std::vector<value *> argumentStack;
   std::map<std::string, value *> globals;
@@ -34,6 +36,10 @@ public:
   execution_engine(const std::vector<instruction *> &instructions,
                    const std::vector<std::shared_ptr<Type>> &types)
       : instructions(instructions), types(types) {}
+  
+  inline void registerFunction(function *_function) {
+    functions.push_back(_function);
+  }
 
   inline void stackPush(value *value) {
     stack.push_back(value);
