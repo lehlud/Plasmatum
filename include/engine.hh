@@ -10,60 +10,73 @@
 #include <string>
 #include <vector>
 
+#include "value.hh"
+
 namespace plsm {
 
 class Type;
-class Value;
-class Instruction;
+class instruction;
 
-class Engine {
+class execution_engine {
 private:
   plsm_size_t index = 0, *jumpIndexPointer = &index;
-  std::shared_ptr<Instruction> ip = nullptr;
+  instruction *ip = nullptr;
+
+  std::vector<instruction *> instructions;
 
   std::vector<std::shared_ptr<Type>> types;
-  std::vector<std::shared_ptr<Value>> stack;
-  std::vector<std::shared_ptr<Value>> argumentStack;
-  std::vector<std::shared_ptr<Instruction>> instructions;
 
-  std::map<std::string, std::shared_ptr<Value>> globals;
+  std::vector<value *> stack;
+  std::vector<value *> argumentStack;
+  std::map<std::string, value *> globals;
 
 public:
-  Engine(const std::vector<std::shared_ptr<Type>> &types,
-         const std::vector<std::shared_ptr<Instruction>> &instructions)
-      : types(types), instructions(instructions) {}
+  execution_engine(const std::vector<instruction *> &instructions,
+                   const std::vector<std::shared_ptr<Type>> &types)
+      : instructions(instructions), types(types) {}
 
-  inline void stackPush(const std::shared_ptr<Value> &value) {
+  inline void stackPush(value *value) {
     stack.push_back(value);
   }
 
-  inline void stackPop() { stack.pop_back(); }
+  inline void stackPop(bool del = true) {
+    if (del) {
+      delete stack.back();
+    }
+    stack.pop_back();
+  }
 
-  inline std::shared_ptr<Value> stackPeek(plsm_size_t back = 0) {
+  inline value *stackPeek(plsm_size_t back = 0) {
     return stack[stack.size() - 1 - back];
   }
 
-  inline void argumentPush(const std::shared_ptr<Value> &arg,
-                           bool isMutable = false) {
-    argumentStack.push_back(isMutable ? arg : std::move(arg));
+  inline void agumentPushStack() {
+    argumentPush(stackPeek());
+    stackPop();
   }
 
-  inline std::shared_ptr<Value> argumentPeek(plsm_size_t back = 0) {
-    return argumentStack[argumentStack.size() - 1 - back];
+  inline void argumentPush(value *arg) {
+    argumentStack.push_back(arg->copy());
   }
 
-  inline void argumentPop() { argumentStack.pop_back(); }
+  inline value *argumentPeek(plsm_size_t back = 0) {
+    return argumentStack[argumentStack.size() - 1 - back]->copy();
+  }
+
+  inline void argumentPop() {
+    delete argumentStack.back();
+    argumentStack.pop_back();
+  }
 
   inline void jump(plsm_size_t index) { *jumpIndexPointer = index; }
 
   inline plsm_size_t getJumpIndex() { return *jumpIndexPointer; }
 
-  inline void defineGlobal(const std::string &id,
-                           std::shared_ptr<Value> value) {
+  inline void defineGlobal(const std::string &id, value *value) {
     globals[id] = value;
   }
 
-  inline std::shared_ptr<Instruction> getInstruction(plsm_size_t index) {
+  inline instruction *get_instruction(plsm_size_t index) {
     return index >= instructions.size() ? nullptr : instructions[index];
   }
 

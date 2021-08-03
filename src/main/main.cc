@@ -10,13 +10,15 @@
 
 using namespace plsm;
 
-std::shared_ptr<FunctionValue> printFunc() {
-  std::shared_ptr<Instruction> tmpInst = CustomInstruction::get([](Engine *engine) {
-    std::cout << engine->argumentPeek()->toString() << std::endl;
-    engine->stackPush(UndefinedValue::get());
-    return 1;
-  });
-  return FunctionValue::get(1, {tmpInst, ReturnInstruction::get()});
+function *printFunc() {
+  instruction *tmpInst = new value_inst<custom_inst_function>(
+      instruction::code_custom,
+      new custom_inst_function([](execution_engine *engine) {
+        std::cout << engine->argumentPeek()->to_string() << std::endl;
+        engine->stackPush(new undefined());
+        return 1;
+      }));
+  return new function(1, {tmpInst, new instruction(instruction::code_return)});
 }
 
 void printUsage(char *arg0) {
@@ -31,12 +33,13 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::vector<std::shared_ptr<Instruction>> insts = LLParser::fromFile(argv[1])->parse();
+  std::vector<instruction *> insts = LLParser::fromFile(argv[1])->parse();
 
   auto types = Type::getStandardTypes();
 
-  Engine *engine = new Engine({}, insts);
+  execution_engine *engine = new execution_engine(insts, {});
   engine->defineGlobal("print", printFunc());
 
+  std::cout << "executing" << std::endl;
   return engine->execute({});
 }

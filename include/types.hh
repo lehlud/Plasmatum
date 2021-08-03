@@ -5,6 +5,7 @@
 namespace plsm {
 
 typedef uint_fast64_t plsm_size_t;
+typedef uint_fast32_t plsm_inst_t;
 
 typedef int_fast64_t plsm_int_t;
 typedef double plsm_float_t;

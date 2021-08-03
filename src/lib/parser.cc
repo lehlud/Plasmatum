@@ -6,6 +6,10 @@
 #include "utils.hh"
 #include "value.hh"
 
+#define _PRIM_PTR_VAL(name, type, value)                                       \
+  type *name = new type;                                                       \
+  *name = value;
+
 namespace plsm {
 
 void Parser::skipSpaces() {
@@ -65,7 +69,7 @@ void Parser::errorExpected(const std::string &exp) {
   std::exit(1);
 }
 
-plsm_int_t Parser::parseInteger() {
+plsm_size_t *Parser::parseSize() {
   std::string tmp;
 
   char32_t c;
@@ -80,7 +84,8 @@ plsm_int_t Parser::parseInteger() {
       errorExpected("at least 1 digit after '0x'");
     }
 
-    return std::stol(tmp, nullptr, 16);
+    _PRIM_PTR_VAL(res, plsm_size_t, std::stol(tmp, nullptr, 16))
+    return res;
   }
 
   while (std::isdigit((c = charAt(index)))) {
@@ -92,10 +97,11 @@ plsm_int_t Parser::parseInteger() {
     errorExpected("Int");
   }
 
-  return std::stol(tmp);
+  _PRIM_PTR_VAL(res, plsm_size_t, std::stol(tmp))
+  return res;
 }
 
-std::string Parser::parseIdentifer() {
+std::string *Parser::parseIdentifer() {
   std::string tmp;
 
   char32_t c;
@@ -106,7 +112,7 @@ std::string Parser::parseIdentifer() {
 
   maybeSeparatorError("identifier");
 
-  return tmp;
+  return new std::string(tmp);
 }
 
 std::string LLParser::parseInstructionLabel() {
@@ -123,13 +129,13 @@ std::string LLParser::parseInstructionLabel() {
   return tmp;
 }
 
-std::shared_ptr<Constant> LLParser::parseConstantValue() {
+constant *LLParser::parseConstantValue() {
   std::string tmp;
 
   if (isTrue()) {
-    return BooleanValue::get(true);
+    return new boolean(true);
   } else if (isFalse()) {
-    return BooleanValue::get(false);
+    return new boolean(false);
   }
 
   char32_t c = charAt(index);
@@ -142,7 +148,7 @@ std::shared_ptr<Constant> LLParser::parseConstantValue() {
 
     maybeSeparatorError("hex number");
 
-    return IntegerValue::get(std::stol(tmp, nullptr, 16));
+    return new integer(std::stol(tmp, nullptr, 16));
   }
 
   if (c == '-') {
@@ -162,7 +168,7 @@ std::shared_ptr<Constant> LLParser::parseConstantValue() {
   if (charAt(index) != '.') {
     maybeSeparatorError("Int");
 
-    return IntegerValue::get(std::stol(tmp));
+    return new integer(std::stol(tmp));
   } else {
     if (!tmp.size()) {
       tmp += '0';
@@ -178,11 +184,11 @@ std::shared_ptr<Constant> LLParser::parseConstantValue() {
 
     maybeSeparatorError("Float");
 
-    return FloatValue::get(std::stod(tmp));
+    return new floating_point(std::stod(tmp));
   }
 }
 
-std::shared_ptr<Instruction> LLParser::parseNext() {
+instruction *LLParser::parseNext() {
   skipSpaces();
 
   if (isEOF()) {
@@ -193,54 +199,54 @@ std::shared_ptr<Instruction> LLParser::parseNext() {
 
   if (label == "CALL") {
     skipSpaces();
-    return CallInstruction::get(parseInteger());
+    return new value_inst<plsm_size_t>(instruction::code_call, parseSize());
   } else if (label == "JUMP") {
     skipSpaces();
-    return JumpInstruction::get(parseInteger());
+    return new value_inst<plsm_size_t>(instruction::code_jump, parseSize());
   } else if (label == "JUMP_COND") {
     skipSpaces();
-    return JumpCondInstruction::get(parseInteger());
+    return new value_inst<plsm_size_t>(instruction::code_jump_cond, parseSize());
   } else if (label == "FUNC_START") {
     skipSpaces();
-    return FunctionStartInstruction::get(parseInteger());
+    return new value_inst<plsm_size_t>(instruction::code_func_start, parseSize());
   } else if (label == "FUNC_FINISH") {
-    return FunctionFinishInstruction::get();
+    return new instruction(instruction::code_func_finish);
   } else if (label == "LOAD_CONST") {
     skipSpaces();
-    return LoadConstInstruction::get(parseConstantValue());
+    return new value_inst<value>(instruction::code_load_const, parseConstantValue());
   } else if (label == "LOAD_ARG") {
     skipSpaces();
-    return LoadArgInstruction::get(parseInteger());
+    return new value_inst<plsm_size_t>(instruction::code_load_arg, parseSize());
   } else if (label == "LOAD_GLOBAL") {
     skipSpaces();
-    return LoadGlobalInstruction::get(parseIdentifer());
+    return new value_inst<std::string>(instruction::code_load_global, parseIdentifer());
   } else if (label == "DEF_GLOBAL") {
     skipSpaces();
-    return DefineGlobalInstruction::get(parseIdentifer());
+    return new value_inst<std::string>(instruction::code_def_global, parseIdentifer());
   } else if (label == "ADD") {
-    return AddInstruction::get();
+    return new instruction(instruction::code_add);
   } else if (label == "SUB") {
-    return SubInstruction::get();
+    return new instruction(instruction::code_sub);
   } else if (label == "MUL") {
-    return MulInstruction::get();
+    return new instruction(instruction::code_mul);
   } else if (label == "DIV") {
-    return DivInstruction::get();
+    return new instruction(instruction::code_div);
   } else if (label == "MOD") {
-    return ModInstruction::get();
+    return new instruction(instruction::code_mod);
   } else if (label == "EQ") {
-    return EQInstruction::get();
+    return new instruction(instruction::code_eq);
   } else if (label == "NE") {
-    return NEInstruction::get();
+    return new instruction(instruction::code_ne);
   } else if (label == "GT") {
-    return GTInstruction::get();
+    return new instruction(instruction::code_gt);
   } else if (label == "GE") {
-    return GEInstruction::get();
+    return new instruction(instruction::code_ge);
   } else if (label == "LT") {
-    return LTInstruction::get();
+    return new instruction(instruction::code_lt);
   } else if (label == "LE") {
-    return LEInstruction::get();
+    return new instruction(instruction::code_le);
   } else if (label == "RETURN") {
-    return ReturnInstruction::get();
+    return new instruction(instruction::code_return);
   } else {
     errorExpected("instruction");
   }
@@ -248,10 +254,10 @@ std::shared_ptr<Instruction> LLParser::parseNext() {
   return nullptr;
 }
 
-std::vector<std::shared_ptr<Instruction>> LLParser::parse() {
-  std::vector<std::shared_ptr<Instruction>> result;
+std::vector<instruction *> LLParser::parse() {
+  std::vector<instruction *> result;
 
-  std::shared_ptr<Instruction> inst;
+  instruction *inst;
   while ((inst = parseNext())) {
     result.push_back(inst);
   }

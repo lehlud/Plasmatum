@@ -6,29 +6,29 @@
 
 namespace plsm {
 
-class Value;
-class Engine;
-class Constant;
-class FunctionValue;
+class value;
+class execution_engine;
+class constant;
+class function;
 
 class Type {
 private:
   std::string name;
 
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> castFunctions;
+  std::map<std::shared_ptr<Type>, function *> castFunctions;
 
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> addFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> subFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> mulFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> divFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> modFunctions;
+  std::map<std::shared_ptr<Type>, function *> addFunctions;
+  std::map<std::shared_ptr<Type>, function *> subFunctions;
+  std::map<std::shared_ptr<Type>, function *> mulFunctions;
+  std::map<std::shared_ptr<Type>, function *> divFunctions;
+  std::map<std::shared_ptr<Type>, function *> modFunctions;
 
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> eqFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> neFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> gtFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> geFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> ltFunctions;
-  std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>> leFunctions;
+  std::map<std::shared_ptr<Type>, function *> eqFunctions;
+  std::map<std::shared_ptr<Type>, function *> neFunctions;
+  std::map<std::shared_ptr<Type>, function *> gtFunctions;
+  std::map<std::shared_ptr<Type>, function *> geFunctions;
+  std::map<std::shared_ptr<Type>, function *> ltFunctions;
+  std::map<std::shared_ptr<Type>, function *> leFunctions;
 
 public:
   Type(const std::string &name) : name(name) {}
@@ -39,63 +39,51 @@ public:
 
   inline std::string &getName() { return name; }
 
-  inline void registerCast(std::shared_ptr<Type> type,
-                           std::shared_ptr<FunctionValue> function) {
+  inline void registerCast(std::shared_ptr<Type> type, function *function) {
     castFunctions[type] = function;
   }
 
-  inline void registerAdd(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerAdd(std::shared_ptr<Type> type, function *function) {
     addFunctions[type] = function;
   }
 
-  inline void registerSub(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerSub(std::shared_ptr<Type> type, function *function) {
     subFunctions[type] = function;
   }
 
-  inline void registerMul(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerMul(std::shared_ptr<Type> type, function *function) {
     mulFunctions[type] = function;
   }
 
-  inline void registerDiv(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerDiv(std::shared_ptr<Type> type, function *function) {
     divFunctions[type] = function;
   }
 
-  inline void registerMod(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerMod(std::shared_ptr<Type> type, function *function) {
     modFunctions[type] = function;
   }
 
-  inline void registerEQ(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerEQ(std::shared_ptr<Type> type, function *function) {
     eqFunctions[type] = function;
   }
 
-  inline void registerNE(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerNE(std::shared_ptr<Type> type, function *function) {
     neFunctions[type] = function;
   }
 
-  inline void registerGT(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerGT(std::shared_ptr<Type> type, function *function) {
     gtFunctions[type] = function;
   }
 
-  inline void registerGE(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerGE(std::shared_ptr<Type> type, function *function) {
     geFunctions[type] = function;
   }
 
-  inline void registerLT(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerLT(std::shared_ptr<Type> type, function *function) {
     ltFunctions[type] = function;
   }
 
-  inline void registerLE(std::shared_ptr<Type> type,
-                          std::shared_ptr<FunctionValue> function) {
+  inline void registerLE(std::shared_ptr<Type> type, function *function) {
     leFunctions[type] = function;
   }
 
@@ -104,33 +92,33 @@ public:
            divFunctions.size() || modFunctions.size();
   }
 
-  void cast(Engine *engine, std::shared_ptr<Type> type);
+  void cast(execution_engine *engine, std::shared_ptr<Type> type);
 
-  void binexpr(Engine *engine,
-               std::map<std::shared_ptr<Type>, std::shared_ptr<FunctionValue>>
-                   &functions);
+  void binexpr(
+      execution_engine *engine,
+      std::map<std::shared_ptr<Type>, function *> &functions);
 
-  inline void add(Engine *engine) { binexpr(engine, addFunctions); }
+  inline void add(execution_engine *engine) { binexpr(engine, addFunctions); }
 
-  inline void sub(Engine *engine) { binexpr(engine, subFunctions); }
+  inline void sub(execution_engine *engine) { binexpr(engine, subFunctions); }
 
-  inline void mul(Engine *engine) { binexpr(engine, mulFunctions); }
+  inline void mul(execution_engine *engine) { binexpr(engine, mulFunctions); }
 
-  inline void div(Engine *engine) { binexpr(engine, divFunctions); }
+  inline void div(execution_engine *engine) { binexpr(engine, divFunctions); }
 
-  inline void mod(Engine *engine) { binexpr(engine, modFunctions); }
+  inline void mod(execution_engine *engine) { binexpr(engine, modFunctions); }
 
-  inline void eq(Engine *engine) { binexpr(engine, eqFunctions); }
+  inline void eq(execution_engine *engine) { binexpr(engine, eqFunctions); }
 
-  inline void ne(Engine *engine) { binexpr(engine, neFunctions); }
+  inline void ne(execution_engine *engine) { binexpr(engine, neFunctions); }
 
-  inline void gt(Engine *engine) { binexpr(engine, gtFunctions); }
+  inline void gt(execution_engine *engine) { binexpr(engine, gtFunctions); }
 
-  inline void ge(Engine *engine) { binexpr(engine, geFunctions); }
+  inline void ge(execution_engine *engine) { binexpr(engine, geFunctions); }
 
-  inline void lt(Engine *engine) { binexpr(engine, ltFunctions); }
+  inline void lt(execution_engine *engine) { binexpr(engine, ltFunctions); }
 
-  inline void le(Engine *engine) { binexpr(engine, leFunctions); }
+  inline void le(execution_engine *engine) { binexpr(engine, leFunctions); }
 
   static inline std::shared_ptr<Type> getUndefinedType() {
     static std::shared_ptr<Type> undefinedType;

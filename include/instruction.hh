@@ -3,347 +3,414 @@
 #include "types.hh"
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <string>
+
+#include "type.hh"
 
 namespace plsm {
 
 class Type;
-class Engine;
-class Constant;
+class value;
+class execution_engine;
 
-class Instruction {
+typedef plsm_size_t (*inst_function)(execution_engine *, void *);
+typedef std::function<plsm_size_t(execution_engine *)> custom_inst_function;
+
+#define _DEF_INST_CONST(name, value)                                           \
+  static constexpr plsm_inst_t code_##name = value;
+
+class instruction {
+protected:
+  static const inst_function *functions;
+
 public:
-  virtual ~Instruction() = default;
-  virtual plsm_size_t execute(Engine *engine) = 0;
+  const plsm_inst_t code;
 
-  virtual inline std::string toString() = 0;
+  instruction(const plsm_inst_t code) : code(code) {}
+  virtual ~instruction() = default;
 
-  virtual bool isReturn() { return false; }
-  virtual bool isFunctionFinish() { return false; }
-};
+  virtual instruction *copy() { return new instruction(code); }
 
-class ReturnInstruction : public Instruction {
-public:
-  plsm_size_t execute(Engine *) override { return 1; }
-
-  static inline std::shared_ptr<ReturnInstruction> get() {
-    return std::make_shared<ReturnInstruction>();
+  virtual plsm_size_t execute(execution_engine *engine) {
+    return functions[code](engine, nullptr);
   }
 
-  inline std::string toString() override { return "RETURN"; }
+  _DEF_INST_CONST(return, 10)
 
-  bool isReturn() override { return true; }
+  _DEF_INST_CONST(jump, 20)
+  _DEF_INST_CONST(jump_cond, 21)
+
+  _DEF_INST_CONST(load_arg, 30)
+  _DEF_INST_CONST(load_const, 31)
+  _DEF_INST_CONST(load_global, 32)
+
+  _DEF_INST_CONST(cast, 40)
+
+  _DEF_INST_CONST(custom, 50)
+
+  _DEF_INST_CONST(add, 60)
+  _DEF_INST_CONST(sub, 61)
+  _DEF_INST_CONST(mul, 62)
+  _DEF_INST_CONST(div, 63)
+  _DEF_INST_CONST(mod, 64)
+
+  _DEF_INST_CONST(eq, 80)
+  _DEF_INST_CONST(ne, 81)
+  _DEF_INST_CONST(gt, 82)
+  _DEF_INST_CONST(ge, 83)
+  _DEF_INST_CONST(lt, 84)
+  _DEF_INST_CONST(le, 85)
+
+  _DEF_INST_CONST(call, 90)
+
+  _DEF_INST_CONST(func_start, 100)
+  _DEF_INST_CONST(func_finish, 101)
+
+  _DEF_INST_CONST(def_global, 110)
+
+  _DEF_INST_CONST(max, 110)
 };
 
-class JumpInstruction : public Instruction {
+} // namespace plsm
+
+#include "value.hh"
+
+namespace plsm {
+
+#define _VALUE_INST_BODY_NO_DESTRUCTOR(T)                                      \
+private:                                                                       \
+  T *t_value;                                                                  \
+                                                                               \
+public:                                                                        \
+  value_inst(const plsm_size_t code, T *t_value)                               \
+      : instruction(code), t_value(t_value) {}                                 \
+                                                                               \
+  virtual plsm_size_t execute(execution_engine *engine) override {             \
+    return functions[code](engine, (void *)t_value);                           \
+  }
+
+#define _VALUE_INST_BODY(T)                                                    \
+  _VALUE_INST_BODY_NO_DESTRUCTOR(T)                                            \
+public:                                                                        \
+  ~value_inst() { delete t_value; }
+
+template <typename T> class value_inst : public instruction {
+  _VALUE_INST_BODY(T)
+public:
+  value_inst<T> *copy() override {
+    std::cout << "value_inst<T>::copy() not defined properly" << std::endl;
+    std::exit(1);
+    return nullptr;
+  }
+};
+
+template <> class value_inst<std::string> : public instruction {
+  _VALUE_INST_BODY(std::string)
+public:
+  value_inst<std::string> *copy() override {
+    return new value_inst<std::string>(code, new std::string(*t_value));
+  }
+};
+
+template <> class value_inst<value> : public instruction {
+  _VALUE_INST_BODY(value)
+public:
+  value_inst<value> *copy() override {
+    return new value_inst<value>(code, t_value->copy());
+  }
+};
+
+template <> class value_inst<plsm_size_t> : public instruction {
+  _VALUE_INST_BODY(plsm_size_t)
+public:
+  value_inst<plsm_size_t> *copy() override {
+    plsm_size_t *__tmp = new plsm_size_t;
+    *__tmp = *t_value;
+    return new value_inst<plsm_size_t>(code, __tmp);
+  }
+};
+
+template <> class value_inst<Type> : public instruction {
+  _VALUE_INST_BODY_NO_DESTRUCTOR(Type)
+public:
+  virtual ~value_inst<Type>() = default;
+  value_inst<Type> *copy() override { return new value_inst(code, t_value); }
+};
+
+/*
+class instruction {
+public:
+  virtual ~instruction() = default;
+
+  virtual plsm_size_t execute(execution_engine *engine) = 0;
+
+  virtual instruction *copy() = 0;
+
+  virtual inline std::string to_string() = 0;
+
+  virtual inline bool is_return() { return false; }
+  virtual inline bool is_func_finish() { return false; }
+};
+
+class return_inst : public instruction {
+public:
+  return_inst *copy() override;
+
+  inline std::string to_string() override { return "RETURN"; }
+
+  plsm_size_t execute(execution_engine *) override;
+
+  virtual bool is_return() override { return true; }
+};
+
+class jump_inst : public instruction {
 private:
   plsm_size_t destination;
 
 public:
-  JumpInstruction(plsm_size_t destination) : destination(destination) {}
+  jump_inst(plsm_size_t destination) : destination(destination) {}
+  jump_inst *copy() override;
 
-  static inline std::shared_ptr<JumpInstruction> get(plsm_size_t destination) {
-    return std::make_shared<JumpInstruction>(destination);
-  }
-
-  inline std::string toString() override {
+  inline std::string to_string() override {
     return "JUMP " + std::to_string(destination);
   }
 
   plsm_size_t getDestination() { return destination; };
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class JumpCondInstruction : public Instruction {
+class jump_cond_inst : public instruction {
 private:
   plsm_size_t destination;
 
 public:
-  JumpCondInstruction(plsm_size_t destination) : destination(destination) {}
+  jump_cond_inst(plsm_size_t destination) : destination(destination) {}
 
-  static inline std::shared_ptr<JumpCondInstruction>
-  get(plsm_size_t destination) {
-    return std::make_shared<JumpCondInstruction>(destination);
-  }
+  jump_cond_inst *copy() override;
 
-  inline std::string toString() override {
+  inline std::string to_string() override {
     return "JUMP_COND " + std::to_string(destination);
   }
 
   inline plsm_size_t getDestination() { return destination; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class LoadConstInstruction : public Instruction {
+class load_const_inst : public instruction {
 private:
-  std::shared_ptr<Constant> value;
+  constant *value;
 
 public:
-  LoadConstInstruction(std::shared_ptr<Constant> value) : value(value) {}
+  load_const_inst(constant *value) : value(value) {}
+  ~load_const_inst();
 
-  static inline std::shared_ptr<LoadConstInstruction>
-  get(std::shared_ptr<Constant> value) {
-    return std::make_shared<LoadConstInstruction>(value);
-  }
+  load_const_inst *copy() override;
 
-  inline std::string toString() override { return "LOAD_CONST"; }
+  inline std::string to_string() override { return "LOAD_CONST"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class LoadArgInstruction : public Instruction {
+class load_arg_inst : public instruction {
 private:
   plsm_size_t back;
 
 public:
-  LoadArgInstruction(plsm_size_t back) : back(back) {}
+  load_arg_inst(plsm_size_t back) : back(back) {}
 
-  static inline std::shared_ptr<LoadArgInstruction> get(plsm_size_t back) {
-    return std::make_shared<LoadArgInstruction>(back);
-  }
+  load_arg_inst *copy() override;
 
-  inline std::string toString() override { return "LOAD_ARG"; }
+  inline std::string to_string() override { return "LOAD_ARG"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class LoadGlobalInstruction : public Instruction {
+class load_global_inst : public instruction {
 private:
   std::string id;
 
 public:
-  LoadGlobalInstruction(const std::string &id) : id(id) {}
+  load_global_inst(const std::string &id) : id(id) {}
 
-  static inline std::shared_ptr<LoadGlobalInstruction>
-  get(const std::string &id) {
-    return std::make_shared<LoadGlobalInstruction>(id);
-  }
+  load_global_inst *copy() override;
 
-  inline std::string toString() override { return "LOAD_GLOBAL"; }
+  inline std::string to_string() override { return "LOAD_GLOBAL"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class CastInstruction : public Instruction {
+class cast_inst : public instruction {
 private:
   std::shared_ptr<Type> type;
 
 public:
-  CastInstruction(std::shared_ptr<Type> type) : type(type) {}
+  cast_inst(std::shared_ptr<Type> type) : type(type) {}
 
-  static inline std::shared_ptr<CastInstruction>
-  get(std::shared_ptr<Type> type) {
-    return std::make_shared<CastInstruction>(type);
-  }
+  cast_inst *copy() override;
 
-  inline std::string toString() override { return "CAST"; }
+  inline std::string to_string() override { return "CAST"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class CustomInstruction : public Instruction {
+class custom_inst : public instruction {
 private:
-  std::function<plsm_size_t(Engine *)> executeFunction;
+  std::function<plsm_size_t(execution_engine *)> executeFunction;
 
 public:
-  CustomInstruction(const std::function<plsm_size_t(Engine *)> &executeFunction)
+  custom_inst(
+      const std::function<plsm_size_t(execution_engine *)> &executeFunction)
       : executeFunction(executeFunction) {}
 
-  static inline std::shared_ptr<CustomInstruction>
-  get(const std::function<plsm_size_t(Engine *)> &executeFunction) {
-    return std::make_shared<CustomInstruction>(executeFunction);
-  }
+  custom_inst *copy() override;
 
-  inline std::string toString() override { return "CUSTOM"; }
+  inline std::string to_string() override { return "CUSTOM"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class AddInstruction : public Instruction {
+class add_inst : public instruction {
 public:
-  inline std::string toString() override { return "ADD"; }
+  inline std::string to_string() override { return "ADD"; }
+  add_inst *copy() override;
 
-  static inline std::shared_ptr<AddInstruction> get() {
-    return std::make_shared<AddInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class SubInstruction : public Instruction {
+class sub_inst : public instruction {
 public:
-  inline std::string toString() override { return "SUB"; }
+  inline std::string to_string() override { return "SUB"; }
+  sub_inst *copy() override;
 
-  static inline std::shared_ptr<SubInstruction> get() {
-    return std::make_shared<SubInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class MulInstruction : public Instruction {
+class mul_inst : public instruction {
 public:
-  inline std::string toString() override { return "MUL"; }
+  inline std::string to_string() override { return "MUL"; }
+  mul_inst *copy() override;
 
-  static inline std::shared_ptr<MulInstruction> get() {
-    return std::make_shared<MulInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class DivInstruction : public Instruction {
+class div_inst : public instruction {
 public:
-  inline std::string toString() override { return "DIV"; }
+  inline std::string to_string() override { return "DIV"; }
+  div_inst *copy() override;
 
-  static inline std::shared_ptr<DivInstruction> get() {
-    return std::make_shared<DivInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class ModInstruction : public Instruction {
+class mod_inst : public instruction {
 public:
-  inline std::string toString() override { return "MOD"; }
+  inline std::string to_string() override { return "MOD"; }
+  mod_inst *copy() override;
 
-  static inline std::shared_ptr<ModInstruction> get() {
-    return std::make_shared<ModInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class EQInstruction : public Instruction {
+class eq_inst : public instruction {
 public:
-  inline std::string toString() override { return "EQ"; }
+  inline std::string to_string() override { return "EQ"; }
+  eq_inst *copy() override;
 
-  static inline std::shared_ptr<EQInstruction> get() {
-    return std::make_shared<EQInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class NEInstruction : public Instruction {
+class ne_inst : public instruction {
 public:
-  inline std::string toString() override { return "NE"; }
+  inline std::string to_string() override { return "NE"; }
+  ne_inst *copy() override;
 
-  static inline std::shared_ptr<NEInstruction> get() {
-    return std::make_shared<NEInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class GTInstruction : public Instruction {
+class gt_inst : public instruction {
 public:
-  inline std::string toString() override { return "GT"; }
+  inline std::string to_string() override { return "GT"; }
+  gt_inst *copy() override;
 
-  static inline std::shared_ptr<GTInstruction> get() {
-    return std::make_shared<GTInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class GEInstruction : public Instruction {
+class ge_inst : public instruction {
 public:
-  inline std::string toString() override { return "GE"; }
+  inline std::string to_string() override { return "GE"; }
+  ge_inst *copy() override;
 
-  static inline std::shared_ptr<GEInstruction> get() {
-    return std::make_shared<GEInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class LTInstruction : public Instruction {
+class lt_inst : public instruction {
 public:
-  inline std::string toString() override { return "LT"; }
+  inline std::string to_string() override { return "LT"; }
+  lt_inst *copy() override;
 
-  static inline std::shared_ptr<LTInstruction> get() {
-    return std::make_shared<LTInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class LEInstruction : public Instruction {
+class le_inst : public instruction {
 public:
-  inline std::string toString() override { return "LE"; }
+  inline std::string to_string() override { return "LE"; }
+  le_inst *copy() override;
 
-  static inline std::shared_ptr<LEInstruction> get() {
-    return std::make_shared<LEInstruction>();
-  }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class CallInstruction : public Instruction {
+class call_inst : public instruction {
 private:
   plsm_size_t argc;
 
 public:
-  CallInstruction(plsm_size_t argc) : argc(argc) {}
+  call_inst(plsm_size_t argc) : argc(argc) {}
 
-  static inline std::shared_ptr<CallInstruction> get(plsm_size_t argc) {
-    return std::make_shared<CallInstruction>(argc);
-  }
+  call_inst *copy() override;
 
-  inline std::string toString() override { return "CALL"; }
+  inline std::string to_string() override { return "CALL"; }
 
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class FunctionStartInstruction : public Instruction {
+class func_start_inst : public instruction {
 private:
   plsm_size_t argc;
 
 public:
-  FunctionStartInstruction(plsm_size_t argc) : argc(argc) {}
+  func_start_inst(plsm_size_t argc) : argc(argc) {}
+  func_start_inst *copy() override;
 
-  static inline std::shared_ptr<FunctionStartInstruction>
-  get(plsm_size_t argc) {
-    return std::make_shared<FunctionStartInstruction>(argc);
-  }
+  inline std::string to_string() override { return "FUNC_START"; }
 
-  inline std::string toString() override { return "FUNC_START"; }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
 
-class FunctionFinishInstruction : public Instruction {
+class func_finish_inst : public instruction {
 public:
-  inline std::string toString() override { return "FUNC_FINISH"; }
+  inline std::string to_string() override { return "FUNC_FINISH"; }
 
-  static inline std::shared_ptr<FunctionFinishInstruction> get() {
-    return std::make_shared<FunctionFinishInstruction>();
-  }
+  func_finish_inst *copy() override;
 
-  plsm_size_t execute(Engine *) override { return 1; }
+  plsm_size_t execute(execution_engine *) override;
 
-  bool isFunctionFinish() override { return true; }
+  virtual bool is_func_finish() override { return true; }
 };
 
-class DefineGlobalInstruction : public Instruction {
+class def_global_inst : public instruction {
 private:
   std::string id;
 
 public:
-  DefineGlobalInstruction(const std::string &id) : id(id) {}
+  def_global_inst(const std::string &id) : id(id) {}
+  def_global_inst *copy() override;
 
-  static inline std::shared_ptr<DefineGlobalInstruction>
-  get(const std::string &id) {
-    return std::make_shared<DefineGlobalInstruction>(id);
-  }
+  inline std::string to_string() override { return "DEF_GLOBAL"; }
 
-  inline std::string toString() override { return "DEF_GLOBAL"; }
-
-  plsm_size_t execute(Engine *engine) override;
+  plsm_size_t execute(execution_engine *engine) override;
 };
+*/
 
 } // namespace plsm

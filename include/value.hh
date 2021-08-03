@@ -5,149 +5,136 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "type.hh"
 
 namespace plsm {
 
-class Engine;
-class Instruction;
+class instruction;
+class execution_engine;
 
-class Value {
+class value {
 public:
   std::shared_ptr<Type> type;
 
-  Value(std::shared_ptr<Type> type) : type(type) {}
+  value(std::shared_ptr<Type> type) : type(type) {}
 
-  virtual ~Value() = default;
+  virtual ~value() = default;
 
-  virtual inline std::string toString() = 0;
+  virtual inline std::string to_string() = 0;
 
-  plsm_float_t asFloat();
-  plsm_int_t asInteger();
-  plsm_bool_t asBoolean();
+  plsm_int_t as_integer();
+  plsm_bool_t as_boolean();
+  plsm_float_t as_floating_point();
 
-  virtual inline bool isTruthy() = 0;
-  virtual inline bool isConstant() { return false; };
+  virtual value *copy() = 0;
 
-  virtual inline bool isFloat() { return false; }
-  virtual inline bool isInteger() { return false; }
-  virtual inline bool isBoolean() { return false; }
-  virtual inline bool isFunction() { return false; }
+  virtual inline bool is_truthy() = 0;
+  virtual inline bool is_constant() { return false; };
+
+  virtual inline bool is_floating_point() { return false; }
+  virtual inline bool is_integer() { return false; }
+  virtual inline bool is_boolean() { return false; }
+  virtual inline bool is_function() { return false; }
 };
 
-class Constant : public Value {
+class constant : public value {
 public:
-  Constant(std::shared_ptr<Type> type) : Value(type) {}
+  constant(std::shared_ptr<Type> type) : value(type) {}
+  virtual ~constant() = default;
 
-  virtual ~Constant() = default;
-
-  virtual inline bool isConstant() { return true; }
+  virtual inline bool is_constant() { return true; }
 };
 
-class UndefinedValue : public Constant {
+class undefined : public constant {
 public:
-  UndefinedValue() : Constant(Type::getUndefinedType()) {}
+  undefined() : constant(Type::getUndefinedType()) {}
 
-  static inline std::shared_ptr<UndefinedValue> get() {
-    return std::make_shared<UndefinedValue>();
-  }
+  undefined *copy() override;
 
-  inline std::string toString() override { return "Undefined"; }
+  inline std::string to_string() override { return "Undefined"; }
 
-  inline bool isTruthy() override { return false; }
+  inline bool is_truthy() override { return false; }
 };
 
-class IntegerValue : public Constant {
+class integer : public constant {
 private:
-  plsm_int_t value;
+  plsm_int_t int_v;
 
 public:
-  IntegerValue(plsm_int_t value)
-      : Constant(Type::getIntegerType()), value(value) {}
+  integer(plsm_int_t int_v)
+      : constant(Type::getIntegerType()), int_v(int_v) {}
 
-  static inline std::shared_ptr<IntegerValue> get(plsm_int_t value) {
-    return std::make_shared<IntegerValue>(value);
-  }
+  integer *copy() override;
 
-  inline plsm_int_t getValue() { return value; }
+  inline plsm_int_t getValue() { return int_v; }
 
-  inline std::string toString() override { return std::to_string(value); }
+  inline std::string to_string() override { return std::to_string(int_v); }
 
-  inline bool isTruthy() override { return value != 0; }
-  inline bool isInteger() override { return true; }
+  inline bool is_truthy() override { return int_v != 0; }
+  inline bool is_integer() override { return true; }
 };
 
-class FloatValue : public Constant {
+class floating_point : public constant {
 private:
-  plsm_float_t value;
+  plsm_float_t float_v;
 
 public:
-  FloatValue(plsm_float_t value)
-      : Constant(Type::getFloatType()), value(value) {}
+  floating_point(plsm_float_t float_v)
+      : constant(Type::getFloatType()), float_v(float_v) {}
 
-  static inline std::shared_ptr<FloatValue> get(plsm_float_t value) {
-    return std::make_shared<FloatValue>(value);
-  }
+  floating_point *copy() override;
 
-  inline plsm_float_t getValue() { return value; }
+  inline plsm_float_t getValue() { return float_v; }
 
-  inline std::string toString() override { return std::to_string(value); }
+  inline std::string to_string() override { return std::to_string(float_v); }
 
-  inline bool isTruthy() override { return value != 0.0; }
-  inline bool isFloat() override { return true; }
+  inline bool is_truthy() override { return float_v != 0.0; }
+  inline bool is_floating_point() override { return true; }
 };
 
-class BooleanValue : public Constant {
+class boolean : public constant {
 private:
-  plsm_bool_t value;
+  plsm_bool_t bool_v;
 
 public:
-  BooleanValue(plsm_bool_t value)
-      : Constant(Type::getBooleanType()), value(value) {}
+  boolean(plsm_bool_t bool_v)
+      : constant(Type::getBooleanType()), bool_v(bool_v) {}
 
-  static inline std::shared_ptr<BooleanValue> get(plsm_bool_t value) {
-    return std::make_shared<BooleanValue>(value);
-  }
+  boolean *copy() override;
 
-  inline plsm_bool_t getValue() { return value; }
+  inline plsm_bool_t getValue() { return bool_v; }
 
-  inline std::string toString() override { return value ? "True" : "False"; }
+  inline std::string to_string() override { return bool_v ? "True" : "False"; }
 
-  inline bool isTruthy() override { return value == true; }
-  inline bool isBoolean() override { return true; }
+  inline bool is_truthy() override { return bool_v == true; }
+  inline bool is_boolean() override { return true; }
 };
 
-class FunctionValue : public Constant {
+class function : public constant {
 private:
   plsm_size_t argc;
-  std::vector<std::shared_ptr<Instruction>> instructions;
+  std::vector<instruction *> instructions;
 
 public:
-  FunctionValue(plsm_size_t argc,
-                const std::vector<std::shared_ptr<Instruction>> &instructions)
-      : Constant(Type::getFunctionType()), argc(argc),
-        instructions(instructions) {}
+  function(plsm_size_t argc, const std::vector<instruction *> &instructions)
+      : constant(Type::getFunctionType()), argc(argc), instructions(instructions) {}
+  ~function();
 
-  static inline std::shared_ptr<FunctionValue>
-  get(plsm_size_t argc,
-      const std::vector<std::shared_ptr<Instruction>> &instructions) {
-    return std::make_shared<FunctionValue>(argc, instructions);
+  function *copy() override;
+
+  inline plsm_size_t get_argc() { return argc; }
+  inline instruction * get_instruction(plsm_size_t index) {
+    return instructions[index];
   }
 
-  inline plsm_size_t getArgc() { return argc; }
+  void call(execution_engine *engine);
 
-  inline std::shared_ptr<Instruction> getInstruction(plsm_size_t index) {
-    return index >= instructions.size() ? nullptr : instructions[index];
-  }
+  inline std::string to_string() override { return "function"; }
 
-  void call(Engine *engine);
-
-  inline std::string toString() override { return "Function Value"; }
-
-  inline bool isTruthy() override { return true; }
-
-  inline bool isFunction() override { return true; }
+  inline bool is_truthy() override { return true; }
+  inline bool is_function() override { return true; }
 };
 
 } // namespace plsm

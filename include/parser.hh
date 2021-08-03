@@ -19,8 +19,8 @@ inline bool isIdChar(char32_t c) {
   return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_');
 }
 
-class Constant;
-class Instruction;
+class constant;
+class instruction;
 
 class Parser {
 protected:
@@ -65,8 +65,8 @@ protected:
     }
   }
 
-  virtual plsm_int_t parseInteger();
-  virtual std::string parseIdentifer();
+  virtual plsm_size_t *parseSize();
+  virtual std::string *parseIdentifer();
 
 public:
   virtual ~Parser() = default;
@@ -74,7 +74,8 @@ public:
 
 class LLParser : public Parser {
 public:
-  LLParser(const std::u32string &text, const std::string &fname = "") : Parser(text, fname) {}
+  LLParser(const std::u32string &text, const std::string &fname = "")
+      : Parser(text, fname) {}
 
   static inline std::shared_ptr<LLParser> get(const std::u32string &text) {
     return std::make_shared<LLParser>(text);
@@ -86,16 +87,17 @@ public:
 
 private:
   std::string parseInstructionLabel();
-  std::shared_ptr<Constant> parseConstantValue();
+  constant *parseConstantValue();
 
 public:
-  std::shared_ptr<Instruction> parseNext();
-  std::vector<std::shared_ptr<Instruction>> parse();
+  instruction *parseNext();
+  std::vector<instruction *> parse();
 };
 
 class HLParser : public Parser {
 public:
-  HLParser(const std::u32string &text, const std::string &fname = "") : Parser(text, fname) {}
+  HLParser(const std::u32string &text, const std::string &fname = "")
+      : Parser(text, fname) {}
 
   static inline std::shared_ptr<HLParser> get(const std::u32string &text) {
     return std::make_shared<HLParser>(text);
