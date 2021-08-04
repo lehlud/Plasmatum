@@ -80,7 +80,7 @@ std::map<std::string, Type *> Type::getStandardTypes() {
                     engine->stack_push(result);                                \
                                                                                \
                     delete v1;                                                 \
-                    /* delete v2; */                                           \
+                    delete v2;                                                 \
                                                                                \
                     return 1;                                                  \
                   })),                                                         \

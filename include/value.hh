@@ -45,6 +45,8 @@ public:
   constant(Type *type) : value(type) {}
   virtual ~constant() = default;
 
+  virtual constant *copy() = 0;
+
   virtual inline bool is_constant() { return true; }
 };
 

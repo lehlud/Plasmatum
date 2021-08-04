@@ -17,7 +17,7 @@ namespace plsm {
 
 #define _DEF_EXECUTE_BINEXPR(name)                                             \
   plsm_size_t execute_##name(execution_engine *engine, void *) {               \
-    engine->stack_peek(1)->type->name(engine);                                  \
+    engine->stack_peek(1)->type->name(engine);                                 \
     return 1;                                                                  \
   }
 
@@ -35,9 +35,9 @@ plsm_size_t execute_jump_cond(execution_engine *engine, void *index) {
   return result;
 }
 
-_DEF_EXECUTE_ARG(load_arg,
-                 engine->stack_push(engine->argument_peek(*((plsm_size_t *)arg))))
-_DEF_EXECUTE_ARG(load_const, engine->stack_push((constant *)arg))
+_DEF_EXECUTE_ARG(
+    load_arg, engine->stack_push(engine->argument_peek(*((plsm_size_t *)arg))))
+_DEF_EXECUTE_ARG(load_const, engine->stack_push(((constant *)arg)->copy()))
 _DEF_EXECUTE_ARG(load_global, engine->stack_push_global(*((std::string *)arg)))
 
 _DEF_EXECUTE_ARG(cast, ((Type *)arg)->cast(engine, (Type *)arg))
