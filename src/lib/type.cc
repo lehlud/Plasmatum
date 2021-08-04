@@ -15,21 +15,21 @@ void Type::cast(execution_engine *engine, Type *type) {
   if (cast_function) {
     cast_function->call(engine);
   } else {
-    engine->stackPop();
-    engine->stackPush(new undefined());
+    engine->stack_pop();
+    engine->stack_push(new undefined());
   }
 }
 
 #define _DEF_TYPE_BINEXPR(name, default)                                       \
   void Type::name(execution_engine *engine) {                                  \
-    Type *type = engine->stackPeek()->type;                                    \
+    Type *type = engine->stack_peek()->type;                                   \
                                                                                \
     if (name##_functions.count(type)) {                                        \
       name##_functions[type]->call(engine);                                    \
     } else {                                                                   \
-      engine->stackPop();                                                      \
-      engine->stackPop();                                                      \
-      engine->stackPush(default);                                              \
+      engine->stack_pop();                                                     \
+      engine->stack_pop();                                                     \
+      engine->stack_push(default);                                             \
     }                                                                          \
   }
 
@@ -71,13 +71,13 @@ std::map<std::string, Type *> Type::getStandardTypes() {
           2, {new value_inst<custom_inst_function>(                            \
                   instruction::code_custom,                                    \
                   new custom_inst_function([](execution_engine *engine) {      \
-                    value *v2 = engine->stackPeek();                           \
-                    engine->stackPop(false);                                   \
+                    value *v2 = engine->stack_peek();                          \
+                    engine->stack_pop_no_delete();                             \
                                                                                \
-                    value *v1 = engine->stackPeek();                           \
-                    engine->stackPop(false);                                   \
+                    value *v1 = engine->stack_peek();                          \
+                    engine->stack_pop_no_delete();                             \
                                                                                \
-                    engine->stackPush(result);                                 \
+                    engine->stack_push(result);                                \
                                                                                \
                     delete v1;                                                 \
                     /* delete v2; */                                           \

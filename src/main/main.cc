@@ -14,8 +14,8 @@ function *printFunc() {
   instruction *tmpInst = new value_inst<custom_inst_function>(
       instruction::code_custom,
       new custom_inst_function([](execution_engine *engine) {
-        std::cout << engine->argumentPeek()->to_string() << std::endl;
-        engine->stackPush(new undefined());
+        std::cout << engine->argument_peek()->to_string() << std::endl;
+        engine->stack_push(new undefined());
         return 1;
       }));
   return new function(1, {tmpInst, new instruction(instruction::code_return)});
@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   auto types = Type::getStandardTypes();
 
   execution_engine *engine = new execution_engine(insts, {});
-  engine->defineGlobal("print", new function_pointer(printFunc()));
+  engine->define_global("print", new function_pointer(printFunc()));
 
   return engine->execute({});
 }

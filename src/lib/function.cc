@@ -17,8 +17,8 @@ void function::call(execution_engine *engine) {
 
   instruction *ip = get_instruction(*indexPointer);
 
-  plsm_size_t *prevJumpIndexPointer = engine->getJumpIndexPointer();
-  engine->setJumpIndexPointer(indexPointer);
+  plsm_size_t *prevJumpIndexPointer = engine->jump_index_ptr();
+  engine->set_jump_index_ptr(indexPointer);
 
   while ((ip = get_instruction(*indexPointer))->code !=
          instruction::code_return) {
@@ -29,7 +29,7 @@ void function::call(execution_engine *engine) {
   }
 
   delete indexPointer;
-  engine->setJumpIndexPointer(prevJumpIndexPointer);
+  engine->set_jump_index_ptr(prevJumpIndexPointer);
 }
 
 }

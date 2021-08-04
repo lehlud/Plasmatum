@@ -17,7 +17,7 @@ namespace plsm {
 
 #define _DEF_EXECUTE_BINEXPR(name)                                             \
   plsm_size_t execute_##name(execution_engine *engine, void *) {               \
-    engine->stackPeek(1)->type->name(engine);                                  \
+    engine->stack_peek(1)->type->name(engine);                                  \
     return 1;                                                                  \
   }
 
@@ -27,18 +27,18 @@ _DEF_EXECUTE_ARG(jump, engine->jump(*((plsm_size_t *)arg)))
 
 plsm_size_t execute_jump_cond(execution_engine *engine, void *index) {
   plsm_size_t result = 1;
-  if (engine->stackPeek()->is_truthy()) {
+  if (engine->stack_peek()->is_truthy()) {
     engine->jump(*((plsm_size_t *)index));
     result = 0;
   }
-  engine->stackPop();
+  engine->stack_pop();
   return result;
 }
 
 _DEF_EXECUTE_ARG(load_arg,
-                 engine->stackPush(engine->argumentPeek(*((plsm_size_t *)arg))))
-_DEF_EXECUTE_ARG(load_const, engine->stackPush((constant *)arg))
-_DEF_EXECUTE_ARG(load_global, engine->stackPushGlobal(*((std::string *)arg)))
+                 engine->stack_push(engine->argument_peek(*((plsm_size_t *)arg))))
+_DEF_EXECUTE_ARG(load_const, engine->stack_push((constant *)arg))
+_DEF_EXECUTE_ARG(load_global, engine->stack_push_global(*((std::string *)arg)))
 
 _DEF_EXECUTE_ARG(cast, ((Type *)arg)->cast(engine, (Type *)arg))
 
@@ -62,7 +62,7 @@ _DEF_EXECUTE_ARG(call, engine->call(*((plsm_size_t *)arg)))
 plsm_size_t execute_func_start(execution_engine *engine, void *argc) {
   std::vector<instruction *> body;
 
-  plsm_size_t index = engine->getIndex() + 1;
+  plsm_size_t index = engine->index() + 1;
 
   instruction *ip;
   while ((ip = engine->get_instruction(index++))->code !=
@@ -72,8 +72,8 @@ plsm_size_t execute_func_start(execution_engine *engine, void *argc) {
 
   function *func = new function(*((plsm_size_t *)argc), body);
 
-  engine->registerFunction(func);
-  engine->stackPush(new function_pointer(func));
+  engine->register_function(func);
+  engine->stack_push(new function_pointer(func));
 
   return 1 + body.size();
 }
@@ -81,8 +81,8 @@ plsm_size_t execute_func_start(execution_engine *engine, void *argc) {
 _DEF_EXECUTE_SKIP(func_finish)
 
 _DEF_EXECUTE_ARG(def_global, {
-  engine->defineGlobal(*((std::string *)arg), engine->stackPeek());
-  engine->stackPop(false);
+  engine->define_global(*((std::string *)arg), engine->stack_peek());
+  engine->stack_pop_no_delete();
 })
 
 #define _SET_INST(name)                                                        \
@@ -147,12 +147,12 @@ jump_cond_inst *jump_cond_inst::copy() {
 
 plsm_size_t jump_cond_inst::execute(execution_engine *engine) {
   plsm_size_t result = 1;
-  if (engine->stackPeek()->is_truthy()) {
+  if (engine->stack_peek()->is_truthy()) {
     engine->jump(destination);
     result = 0;
   }
 
-  engine->stackPop();
+  engine->stack_pop();
   return result;
 }
 
@@ -160,25 +160,25 @@ load_const_inst::~load_const_inst() { delete value; }
 load_const_inst *load_const_inst::copy() { return new load_const_inst(value); }
 
 plsm_size_t load_const_inst::execute(execution_engine *engine) {
-  engine->stackPush(value);
+  engine->stack_push(value);
   return 1;
 }
 
 load_arg_inst *load_arg_inst::copy() { return new load_arg_inst(back); }
 plsm_size_t load_arg_inst::execute(execution_engine *engine) {
-  engine->stackPush(engine->argumentPeek(back));
+  engine->stack_push(engine->argument_peek(back));
   return 1;
 }
 
 load_global_inst *load_global_inst::copy() { return new load_global_inst(id); }
 plsm_size_t load_global_inst::execute(execution_engine *engine) {
-  engine->stackPushGlobal(id);
+  engine->stack_push_global(id);
   return 1;
 }
 
 cast_inst *cast_inst::copy() { return new cast_inst(type); }
 plsm_size_t cast_inst::execute(execution_engine *engine) {
-  type->cast(engine, engine->stackPeek()->type);
+  type->cast(engine, engine->stack_peek()->type);
   return 1;
 }
 
@@ -189,67 +189,67 @@ plsm_size_t custom_inst::execute(execution_engine *engine) {
 
 add_inst *add_inst::copy() { return new add_inst(); }
 plsm_size_t add_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->add(engine);
+  engine->stack_peek(1)->type->add(engine);
   return 1;
 }
 
 sub_inst *sub_inst::copy() { return new sub_inst(); }
 plsm_size_t sub_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->sub(engine);
+  engine->stack_peek(1)->type->sub(engine);
   return 1;
 }
 
 mul_inst *mul_inst::copy() { return new mul_inst(); }
 plsm_size_t mul_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->mul(engine);
+  engine->stack_peek(1)->type->mul(engine);
   return 1;
 }
 
 div_inst *div_inst::copy() { return new div_inst(); }
 plsm_size_t div_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->div(engine);
+  engine->stack_peek(1)->type->div(engine);
   return 1;
 }
 
 mod_inst *mod_inst::copy() { return new mod_inst(); }
 plsm_size_t mod_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->mod(engine);
+  engine->stack_peek(1)->type->mod(engine);
   return 1;
 }
 
 eq_inst *eq_inst::copy() { return new eq_inst(); }
 plsm_size_t eq_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->eq(engine);
+  engine->stack_peek(1)->type->eq(engine);
   return 1;
 }
 
 ne_inst *ne_inst::copy() { return new ne_inst(); }
 plsm_size_t ne_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->ne(engine);
+  engine->stack_peek(1)->type->ne(engine);
   return 1;
 }
 
 gt_inst *gt_inst::copy() { return new gt_inst(); }
 plsm_size_t gt_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->gt(engine);
+  engine->stack_peek(1)->type->gt(engine);
   return 1;
 }
 
 ge_inst *ge_inst::copy() { return new ge_inst(); }
 plsm_size_t ge_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->ge(engine);
+  engine->stack_peek(1)->type->ge(engine);
   return 1;
 }
 
 lt_inst *lt_inst::copy() { return new lt_inst(); }
 plsm_size_t lt_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->lt(engine);
+  engine->stack_peek(1)->type->lt(engine);
   return 1;
 }
 
 le_inst *le_inst::copy() { return new le_inst(); }
 plsm_size_t le_inst::execute(execution_engine *engine) {
-  engine->stackPeek(1)->type->le(engine);
+  engine->stack_peek(1)->type->le(engine);
   return 1;
 }
 
@@ -263,14 +263,14 @@ func_start_inst *func_start_inst::copy() { return new func_start_inst(argc); }
 plsm_size_t func_start_inst::execute(execution_engine *engine) {
   std::vector<instruction *> body;
 
-  plsm_size_t index = engine->getIndex() + 1;
+  plsm_size_t index = engine->index() + 1;
 
   instruction *ip;
   while (!(ip = engine->get_instruction(index++))->is_func_finish()) {
     body.push_back(ip);
   }
 
-  engine->stackPush(new function(argc, body));
+  engine->stack_push(new function(argc, body));
 
   return 1 + body.size();
 }
@@ -280,8 +280,8 @@ plsm_size_t func_finish_inst::execute(execution_engine *) { return 1; }
 
 def_global_inst *def_global_inst::copy() { return new def_global_inst(id); }
 plsm_size_t def_global_inst::execute(execution_engine *engine) {
-  engine->defineGlobal(id, engine->stackPeek());
-  engine->stackPop(false);
+  engine->define_global(id, engine->stack_peek());
+  engine->stack_pop_no_delete();
   return 1;
 }
 */

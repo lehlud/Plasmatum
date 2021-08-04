@@ -15,20 +15,20 @@ execution_engine::~execution_engine() {
   }
 }
 
-void execution_engine::stackPushGlobal(const std::string &id) {
-  stack.push_back(globals.count(id) ? globals[id]->copy() : new undefined());
+void execution_engine::stack_push_global(const std::string &id) {
+  _stack.push_back(_globals.count(id) ? _globals[id]->copy() : new undefined());
 }
 
 void execution_engine::call(plsm_size_t argc) {
-  value *stack_top = stackPeek();
-  stackPop(false);
+  value *stack_top = stack_peek();
+  stack_pop_no_delete();
 
   if (!stack_top->is_function()) {
     while (argc > 0) {
-      stackPop();
+      stack_pop();
       argc -= 1;
     }
-    stackPush(new undefined());
+    stack_push(new undefined());
     delete stack_top;
     return;
   }
@@ -41,33 +41,33 @@ void execution_engine::call(plsm_size_t argc) {
     plsm_size_t iterationMin = callArgcBigger ? argc - calleeArgc : 0;
 
     for (plsm_size_t i = argc; i > iterationMin; i--) {
-      argumentPush(stackPeek(i - 1));
+      argument_push(stack_peek(i - 1));
     }
 
     if (callArgcBigger) {
       for (plsm_size_t i = 0; i < calleeArgc - argc; i++) {
-        argumentPush(new undefined());
+        argument_push(new undefined());
       }
     }
   }
 
   for (plsm_size_t i = 0; i < argc; i++) {
-    stackPop();
+    stack_pop();
   }
 
   callee->call(this);
 
   for (plsm_size_t i = 0; i < calleeArgc; i++) {
-    argumentPop();
+    argument_pop();
   }
 
   delete stack_top;
 }
 
 int execution_engine::execute(const std::vector<std::string> &args) {
-  while ((ip = get_instruction(index))) {
+  while ((_ip = get_instruction(_index))) {
     /*std::cout << "engine: executing " << ip->code << std::endl;*/
-    index += ip->execute(this);
+    _index += _ip->execute(this);
   }
 
   return args.size();
