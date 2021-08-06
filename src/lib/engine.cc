@@ -10,7 +10,7 @@
 namespace plsm {
 
 execution_engine::~execution_engine() {
-  for (auto &function : functions) {
+  for (auto &function : _functions) {
     delete function;
   }
 }
@@ -32,7 +32,7 @@ void execution_engine::call(plsm_size_t argc) {
     delete stack_top;
     return;
   }
-  
+
   function *callee = ((function_pointer *)stack_top)->get_function();
 
   plsm_size_t calleeArgc = callee->get_argc();
@@ -65,7 +65,7 @@ void execution_engine::call(plsm_size_t argc) {
 }
 
 int execution_engine::execute(const std::vector<std::string> &args) {
-  while ((_ip = get_instruction(_index))) {
+  while ((_ip = get_instruction(_index))->code != instruction::code_halt) {
     /*std::cout << "engine: executing " << ip->code << std::endl;*/
     _index += _ip->execute(this);
   }
@@ -73,4 +73,4 @@ int execution_engine::execute(const std::vector<std::string> &args) {
   return args.size();
 }
 
-}
+} // namespace plsm

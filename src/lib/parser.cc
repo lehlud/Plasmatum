@@ -262,6 +262,8 @@ std::vector<instruction *> LLParser::parse() {
     result.push_back(inst);
   }
 
+  result.push_back(new instruction(instruction::code_halt));
+
   return result;
 }
 

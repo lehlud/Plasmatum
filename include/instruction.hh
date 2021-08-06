@@ -37,6 +37,8 @@ public:
     return functions[code](engine, nullptr);
   }
 
+  _DEF_INST_CONST(halt, 0)
+
   _DEF_INST_CONST(return, 10)
 
   _DEF_INST_CONST(jump, 20)

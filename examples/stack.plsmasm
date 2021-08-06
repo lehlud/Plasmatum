@@ -47,7 +47,7 @@ CALL            1
 LOAD_GLOBAL     print
 CALL            1
 
--- print(fib(25))
+-- print(fib(30))
 LOAD_CONST      30
 LOAD_GLOBAL     fib
 CALL            1

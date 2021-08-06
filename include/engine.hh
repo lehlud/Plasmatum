@@ -26,7 +26,7 @@ private:
 
   std::vector<Type *> _types;
 
-  std::vector<function *> functions;
+  std::vector<function *> _functions;
 
   std::vector<value *> _stack;
   std::vector<value *> _argument_stack;
@@ -39,8 +39,8 @@ public:
 
   ~execution_engine();
 
-  inline void register_function(function *_function) {
-    functions.push_back(_function);
+  inline void register_function(function *__function) {
+    _functions.push_back(__function);
   }
 
   inline void stack_push(value *value) { _stack.push_back(value); }
