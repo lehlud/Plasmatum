@@ -11,10 +11,10 @@ int main() {
   auto a = new Assignment("f", f);
   stmts.push_back(new ExprStmt(a));
   auto b = new CallExpr(new VarRef("f"), {new Number(10.5), new Number(4)});
-  auto c = new CallExpr(new VarRef("__builtin__num_print"), {b});
+  auto c = new CallExpr(new VarRef("__builtin__num_println"), {b});
   stmts.push_back(new ExprStmt(c));
 
-  compile(stmts);
+  compileAndExecute(stmts);
 
   return 0;
 }

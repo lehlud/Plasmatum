@@ -121,14 +121,13 @@ llvm::Value *Function::genCode(Context &context) {
 }
 
 llvm::Value *CallExpr::genCode(Context &context) {
-  context.module.print(llvm::errs(), nullptr);
   auto calleeV = callee->genCode(context);
-  std::cout << "generated callee" << std::endl;
   auto type = calleeV->getType();
   assert(type->isPointerTy() && type->getPointerElementType()->isFunctionTy());
 
-  auto function = (llvm::Function *)calleeV;
-  auto functionType = function->getFunctionType();
+  auto functionType = (llvm::FunctionType *)type->getPointerElementType();
+
+  auto function = llvm::FunctionCallee(functionType, calleeV);
   auto functionArgs = functionType->params();
   assert(functionArgs.size() == args.size());
 

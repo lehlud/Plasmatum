@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-void compile(std::vector<Stmt *> stmts) {
+void compileAndExecute(std::vector<Stmt *> stmts) {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -17,7 +17,9 @@ void compile(std::vector<Stmt *> stmts) {
   context.createMain(stmts);
 
   context.optimizeIR();
-  context.print();
+  // context.print();
+
+  execute(context);
 }
 
 void execute(Context &context) {

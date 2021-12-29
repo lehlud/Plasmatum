@@ -2,4 +2,5 @@
 
 #include "ast.hh"
 
-void compile(std::vector<Stmt *> stmts);
+void compileAndExecute(std::vector<Stmt *> stmts);
+void execute(Context &context);
