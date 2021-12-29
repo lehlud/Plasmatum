@@ -1,270 +1,92 @@
 #pragma once
 
 #include <stdint.h>
-
 #include <string>
 #include <vector>
 
-#include "utils.hh"
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Value.h>
 
-namespace plsm {
+#include "context.hh"
 
-class PlsmContext;
+#define _VIRTUAL_LLVM_TYPE virtual llvm::Type *llvmType(Context &) = 0;
+#define _OVERRIDE_LLVM_TYPE llvm::Type *llvmType(Context &) override;
+class Type {
+public:
+  virtual ~Type() = default;
+  _VIRTUAL_LLVM_TYPE
+};
 
+class StructType : public Type {
+public:
+  std::string name;
+  std::vector<Type *> fields;
+  StructType(std::string name, std::vector<Type *> fields);
+  ~StructType() override;
+  _OVERRIDE_LLVM_TYPE
+};
+
+#define _VIRTUAL_GEN_CODE virtual llvm::Value *genCode(Context &) = 0;
+#define _OVERRIDE_GEN_CODE llvm::Value *genCode(Context &) override;
 class Expr {
 public:
   virtual ~Expr() = default;
+  _VIRTUAL_GEN_CODE
+};
 
-  virtual Expr *optimize() { return this; }
+class NumExpr : public Expr {
+public:
+  virtual ~NumExpr() = default;
+};
 
-  virtual bool isCallExpr() { return false; }
-  virtual bool isConstantExpr() { return false; }
+class Integer : public NumExpr {
+public:
+  int64_t value;
+  Integer(int64_t value) : value(value) {}
+  _OVERRIDE_GEN_CODE
+};
 
-  virtual std::u32string to_string() = 0;
+class Fraction : public NumExpr {
+public:
+  NumExpr *num, *denom;
+  Fraction(NumExpr *num, NumExpr *denom) : num(num), denom(denom) {}
+  ~Fraction() override;
+  _OVERRIDE_GEN_CODE
+};
+
+#define _FARG_TYPE std::pair<std::string, Type *>
+class Function : public Expr {
+public:
+  std::string name;
+  std::vector<_FARG_TYPE> args;
+  Function(std::string name, std::vector<_FARG_TYPE> args)
+      : name(name), args(args) {}
+  ~Function() override;
+  _OVERRIDE_GEN_CODE
+};
+
+class FunctionCall : public Expr {
+public:
+  std::string calleeName;
+  std::vector<Expr *> args;
+  FunctionCall(std::string calleeName, std::vector<Expr *> args)
+      : calleeName(calleeName), args(args) {}
+  ~FunctionCall() override;
+  _OVERRIDE_GEN_CODE
+};
+
+class Assignment : public Expr {
+public:
+  std::string name;
+  Expr *value;
+  Assignment(std::string name, Expr *value) : name(name), value(value) {}
+  ~Assignment() override;
+  _OVERRIDE_GEN_CODE
 };
 
 class Stmt {
 public:
-  virtual ~Stmt() = default;
-
-  virtual Stmt *optimize() { return this; }
-
-  virtual bool isReturning() { return false; }
-
-  virtual std::u32string to_string() = 0;
+  virtual ~Stmt() {}
+  _VIRTUAL_GEN_CODE
 };
-
-class NullExpr : public Expr {
-public:
-  bool isConstantExpr() override { return true; }
-
-  std::u32string to_string() override { return U"None"; }
-};
-
-class IntExpr : public Expr {
-public:
-  const uint64_t value;
-
-  IntExpr(uint64_t value) : value(value) {}
-
-  bool isConstantExpr() override { return true; }
-
-  std::u32string to_string() override { return to_u32(std::to_string(value)); }
-};
-
-class FloatExpr : public Expr {
-public:
-  const double value;
-
-  FloatExpr(double value) : value(value) {}
-
-  bool isConstantExpr() override { return true; }
-
-  std::u32string to_string() override { return to_u32(std::to_string(value)); }
-};
-
-class StringExpr : public Expr {
-private:
-  std::u32string value;
-
-public:
-  StringExpr(const std::u32string &value) : value(value) {}
-
-  bool isConstantExpr() override { return true; }
-
-  std::u32string to_string() override { return U"'" + value + U"'"; }
-};
-
-class VarExpr : public Expr {
-private:
-  std::string id;
-
-public:
-  VarExpr(const std::string &id) : id(id) {}
-
-  std::u32string to_string() override { return U"var: '" + to_u32(id) + U"'"; }
-};
-
-class BinExpr : public Expr {
-protected:
-  Expr *left, *right;
-
-public:
-  BinExpr(Expr *left, Expr *right) : left(left), right(right) {}
-
-  ~BinExpr() {
-    delete left;
-    delete right;
-  }
-
-  std::u32string to_string() override {
-    return U"binexpr: { left: " + left->to_string() + U", right: " +
-           right->to_string() + U" }";
-  }
-
-  bool isConstantExpr() override {
-    return left->isConstantExpr() && right->isConstantExpr();
-  }
-};
-
-class AddBinExpr : public BinExpr {
-public:
-  AddBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class SubBinExpr : public BinExpr {
-public:
-  SubBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class MulBinExpr : public BinExpr {
-public:
-  MulBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class DivBinExpr : public BinExpr {
-public:
-  DivBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class ModBinExpr : public BinExpr {
-public:
-  ModBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class EQBinExpr : public BinExpr {
-public:
-  EQBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class NEBinExpr : public BinExpr {
-public:
-  NEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class GTBinExpr : public BinExpr {
-public:
-  GTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class LTBinExpr : public BinExpr {
-public:
-  LTBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class GEBinExpr : public BinExpr {
-public:
-  GEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class LEBinExpr : public BinExpr {
-public:
-  LEBinExpr(Expr *left, Expr *right) : BinExpr(left, right) {}
-};
-
-class IfExpr : public Expr {
-private:
-  Expr *cond, *trueExpr, *falseExpr;
-
-public:
-  IfExpr(Expr *cond, Expr *trueExpr, Expr *falseExpr)
-      : cond(cond), trueExpr(trueExpr), falseExpr(falseExpr) {}
-
-  ~IfExpr() {
-    delete cond;
-    delete trueExpr;
-    delete falseExpr;
-  }
-
-  std::u32string to_string() override {
-    return U"ifexpr: { cond: " + cond->to_string() + U", true: " +
-           trueExpr->to_string() + U", false: " + falseExpr->to_string() +
-           U" }";
-  }
-};
-
-class CallExpr : public Expr {
-private:
-  std::string callee;
-  std::vector<Expr *> args;
-
-public:
-  CallExpr(const std::string &callee, const std::vector<Expr *> &args)
-      : callee(callee), args(args) {}
-
-  ~CallExpr() {
-    for (auto &expr : args) {
-      delete expr;
-    }
-  }
-
-  std::u32string to_string() override;
-
-  bool isCallExpr() override { return true; }
-};
-
-class ExprStmt : public Stmt {
-private:
-  Expr *expr;
-
-public:
-  ExprStmt(Expr *expr) : expr(expr) {}
-
-  ~ExprStmt() { delete expr; }
-
-  std::u32string to_string() override {
-    return U"ExprStmt: " + expr->to_string();
-  }
-
-  Stmt *optimize() override;
-};
-
-class ReturnStmt : public Stmt {
-private:
-  Expr *value;
-
-public:
-  ReturnStmt(Expr *value) : value(value) {}
-
-  ~ReturnStmt() { delete value; }
-
-  std::u32string to_string() override {
-    return U"ReturnStmt: " + value->to_string();
-  }
-
-  bool isReturning() override { return true; }
-};
-
-class FunctionStmt : public Stmt {
-private:
-  std::string id;
-  std::vector<Stmt *> body;
-  std::vector<std::string> args;
-
-public:
-  FunctionStmt(const std::string &id, const std::vector<Stmt *> &body,
-               const std::vector<std::string> &args)
-      : id(id), body(body), args(args) {
-    optimize();
-  }
-
-  ~FunctionStmt() {
-    for (auto &stmt : body) {
-      delete stmt;
-    }
-  }
-
-  std::u32string to_string() override;
-
-  Stmt *optimize() override;
-
-  bool isReturning() override {
-    for (auto &stmt : body) {
-      if (stmt->isReturning())
-        return true;
-    }
-    return false;
-  }
-};
-
-}
