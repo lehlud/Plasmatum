@@ -18,12 +18,31 @@ public:
   _VIRTUAL_LLVM_TYPE
 };
 
+class IntegerType : public Type {
+public:
+  _OVERRIDE_LLVM_TYPE
+};
+
+class FractionType : public Type {
+public:
+  _OVERRIDE_LLVM_TYPE
+};
+
+class NumberType : public Type {
+public:
+  _OVERRIDE_LLVM_TYPE
+};
+
 class StructType : public Type {
 public:
   std::string name;
   std::vector<Type *> fields;
   StructType(std::string name, std::vector<Type *> fields);
-  ~StructType() override;
+  ~StructType() override {
+    for (auto field : fields) {
+      delete field;
+    }
+  }
   _OVERRIDE_LLVM_TYPE
 };
 
@@ -33,47 +52,85 @@ class Expr {
 public:
   virtual ~Expr() = default;
   _VIRTUAL_GEN_CODE
+
+  virtual bool isNumber() { return false; }
+  virtual bool isVarRef() { return false; }
+  virtual bool isBinExpr() { return false; }
+  virtual bool isString() { return false; }
+  virtual bool isFunction() { return false; }
+  virtual bool isFunctionCall() { return false; }
+  virtual bool isAssignment() { return false; }
 };
 
-class NumExpr : public Expr {
+class Number : public Expr {
 public:
-  virtual ~NumExpr() = default;
-};
-
-class Integer : public NumExpr {
-public:
-  int64_t value;
-  Integer(int64_t value) : value(value) {}
+  double value;
+  Number(double value) : value(value){};
   _OVERRIDE_GEN_CODE
+  bool isNumber() override { return true; }
 };
 
-class Fraction : public NumExpr {
+class VarRef : public Expr {
 public:
-  NumExpr *num, *denom;
-  Fraction(NumExpr *num, NumExpr *denom) : num(num), denom(denom) {}
-  ~Fraction() override;
+  std::string name;
+  VarRef(std::string name) : name(name) {}
+  _OVERRIDE_GEN_CODE
+  bool isVarRef() override { return true; }
+};
+
+#define _OP_ADD 0
+#define _OP_SUB 1
+#define _OP_MUL 2
+#define _OP_DIV 3
+class BinExpr : public Expr {
+public:
+  int8_t op;
+  Expr *lhs, *rhs;
+  BinExpr(int8_t op, Expr *lhs, Expr *rhs) : op(op), lhs(lhs), rhs(rhs) {}
+  ~BinExpr() override {
+    delete lhs;
+    delete rhs;
+  }
+  _OVERRIDE_GEN_CODE
+  bool isBinExpr() override { return true; }
+};
+
+class String : public Expr {
+public:
+  std::u32string value;
+  String(std::u32string value) : value(value) {}
   _OVERRIDE_GEN_CODE
 };
 
 #define _FARG_TYPE std::pair<std::string, Type *>
 class Function : public Expr {
 public:
-  std::string name;
   std::vector<_FARG_TYPE> args;
-  Function(std::string name, std::vector<_FARG_TYPE> args)
-      : name(name), args(args) {}
-  ~Function() override;
+  Expr *body;
+  Function(std::vector<_FARG_TYPE> args, Expr *body) : args(args), body(body) {}
+  ~Function() override {
+    delete body;
+    for (auto arg : args) {
+      delete arg.second;
+    }
+  }
   _OVERRIDE_GEN_CODE
+  virtual bool isFunction() override { return true; }
 };
 
-class FunctionCall : public Expr {
+class CallExpr : public Expr {
 public:
-  std::string calleeName;
+  Expr *callee;
   std::vector<Expr *> args;
-  FunctionCall(std::string calleeName, std::vector<Expr *> args)
-      : calleeName(calleeName), args(args) {}
-  ~FunctionCall() override;
+  CallExpr(Expr *callee, std::vector<Expr *> args)
+      : callee(callee), args(args) {}
+  ~CallExpr() override {
+    for (auto arg : args) {
+      delete arg;
+    }
+  }
   _OVERRIDE_GEN_CODE
+  virtual bool isFunctionCall() override { return true; }
 };
 
 class Assignment : public Expr {
@@ -81,12 +138,21 @@ public:
   std::string name;
   Expr *value;
   Assignment(std::string name, Expr *value) : name(name), value(value) {}
-  ~Assignment() override;
+  ~Assignment() override { delete value; }
   _OVERRIDE_GEN_CODE
+  virtual bool isAssignment() override { return true; }
 };
 
 class Stmt {
 public:
-  virtual ~Stmt() {}
+  virtual ~Stmt() = default;
   _VIRTUAL_GEN_CODE
+};
+
+class ExprStmt : public Stmt {
+public:
+  Expr *expr;
+  ExprStmt(Expr *expr) : expr(expr) {}
+  ~ExprStmt() override { delete expr; }
+  _OVERRIDE_GEN_CODE
 };

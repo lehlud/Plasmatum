@@ -5,29 +5,46 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+
+#include <vector>
+
+class Stmt;
+
+#define _VAR_VALUE_TYPE std::pair<llvm::Type *, llvm::Value *>
+#define _VAR_SCOPE_TYPE std::map<std::string, _VAR_VALUE_TYPE>
 class Context {
 public:
+  llvm::DataLayout dataLayout;
+  llvm::LLVMContext llvmContext;
   llvm::Module module;
   llvm::IRBuilder<> builder;
-  llvm::LLVMContext llvmContext;
 
   std::map<std::string, llvm::Type *> namedTypes;
-  std::map<std::string, llvm::Value *> namedValues;
+  std::map<std::string, llvm::Function *> builtins;
+  _VAR_SCOPE_TYPE namedValues;
 
-  Context() : module("", llvmContext), builder(llvmContext) { initTypes(); }
+  Context();
 
-  llvm::Type *getIntegerType() { return integerType; }
-  llvm::Type *getFractionType() { return fractionType; }
-  llvm::Type *getGenericPointerType() { return genericPointerType; }
+  auto getNumberType() { return numberType; }
+  auto getCharType() { return charType; }
+  auto getPointerType() { return pointerType; }
+  auto getDummyFunctionType() { return dummyFunctionType; }
+
+  void store(llvm::Value *value, std::string name);
+
+  void optimizeIR();
+  void print();
+  void createMain(std::vector<Stmt *> stmts);
+
+  llvm::ExecutionEngine &getExecutionEngine();
 
 private:
-  void initTypes() {
-    integerType = builder.getInt64Ty();
-    fractionType = llvm::StructType::create({integerType, integerType});
-    genericPointerType = llvm::PointerType::get(builder.getVoidTy(), 0);
-  }
+  void initTypes();
+  void initFunctions();
 
-  llvm::Type *integerType;
-  llvm::Type *fractionType;
-  llvm::Type *genericPointerType;
+  llvm::Type *numberType;
+  llvm::IntegerType *charType;
+  llvm::PointerType *pointerType;
+  llvm::FunctionType *dummyFunctionType;
 };
