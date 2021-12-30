@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "ast.hh"
+#include "natives.hh"
 #include "runtime_functions.hh"
 
 Context::Context()
@@ -15,14 +16,9 @@ Context::Context()
   auto targetTriple = llvm::EngineBuilder().selectTarget()->getTargetTriple();
   module.setTargetTriple(targetTriple.str());
 
+  initNatives();
   initTypes();
   initFunctions();
-}
-
-void Context::store(llvm::Value *value, std::string name) {
-  auto alloca = builder.CreateAlloca(value->getType());
-  builder.CreateStore(value, alloca);
-  namedValues[name] = {value->getType(), alloca};
 }
 
 void Context::createMain(std::vector<Stmt *> stmts) {
@@ -39,11 +35,24 @@ void Context::createMain(std::vector<Stmt *> stmts) {
   builder.CreateRetVoid();
 }
 
+void Context::initNatives() {
+  natives["add"] = &nativeAdd;
+  natives["sub"] = &nativeSub;
+  natives["mul"] = &nativeMul;
+  natives["div"] = &nativeDiv;
+}
+
 void Context::initTypes() {
-  numberType = builder.getDoubleTy();
-  charType = builder.getInt32Ty();
-  pointerType = llvm::PointerType::get(builder.getVoidTy(), 0);
+  pointerType = builder.getInt8PtrTy();
+  classTypeNameType = builder.getInt8PtrTy();
   dummyFunctionType = llvm::FunctionType::get(builder.getInt8Ty(), false);
+
+  nativeFloatType = llvm::Type::getFP128Ty(llvmContext);
+  nativeIntType = builder.getInt128Ty();
+  nativeCharType = builder.getInt32Ty();
+
+  builtinIntType = createClassType("Int", {{"value", nativeIntType}});
+  builtinFloatType = createClassType("Float", {{"value", nativeFloatType}});
 }
 
 constexpr auto numPrint = "__builtin__num_print";
@@ -51,19 +60,40 @@ constexpr auto numPrintln = "__builtin__num_println";
 constexpr auto strPrint = "__builtin__str_print";
 constexpr auto strPrintln = "__builtin__str_println";
 void Context::initFunctions() {
-  auto numType = llvm::FunctionType::get(numberType, {numberType}, false);
-  auto strType = llvm::FunctionType::get(numberType, {pointerType}, false);
-  
-  auto p = module.getOrInsertFunction(numPrint, numType);
-  auto pln = module.getOrInsertFunction(numPrintln, numType);
-  builtins[numPrint] = (llvm::Function *)p.getCallee();
-  builtins[numPrintln] = (llvm::Function *)pln.getCallee();
-  
-  p = module.getOrInsertFunction(strPrint, strType);
-  pln = module.getOrInsertFunction(strPrintln, strType);
-  builtins[strPrint] = (llvm::Function *)p.getCallee();
-  builtins[strPrintln] = (llvm::Function *)pln.getCallee();
+  // auto numType = llvm::FunctionType::get(numberType, {numberType}, false);
+  // auto strType = llvm::FunctionType::get(numberType, {pointerType}, false);
+
+  // auto p = module.getOrInsertFunction(numPrint, numType);
+  // auto pln = module.getOrInsertFunction(numPrintln, numType);
+  // builtins[numPrint] = (llvm::Function *)p.getCallee();
+  // builtins[numPrintln] = (llvm::Function *)pln.getCallee();
+
+  // p = module.getOrInsertFunction(strPrint, strType);
+  // pln = module.getOrInsertFunction(strPrintln, strType);
+  // builtins[strPrint] = (llvm::Function *)p.getCallee();
+  // builtins[strPrintln] = (llvm::Function *)pln.getCallee();
 }
+
+llvm::Type *Context::createClassType(std::string name,
+                                     std::map<std::string, llvm::Type *> attrs) {
+  assert(namedTypes.count(name) != 0);
+  assert(attrs.size() > 0);
+
+  std::vector<llvm::Type *> fields;
+  std::map<std::string, unsigned long> indexedAttrs;
+  unsigned long i = 0;
+  for (auto &attr : attrs) {
+    fields.push_back(attr.second);
+    indexedAttrs[attr.first] = i++;
+  }
+
+  auto namePointer = builder.CreateGlobalStringPtr(name);
+  auto classType = llvm::StructType::create(llvmContext, fields, name);
+  namedTypes[name] = {namePointer, {classType, indexedAttrs}};
+  return classType;
+}
+
+void Context::print() { module.print(llvm::errs(), nullptr); }
 
 void Context::optimizeIR() {
   llvm::PassBuilder passBuilder;
@@ -95,8 +125,6 @@ void Context::optimizeIR() {
   fam.clear();
   lam.clear();
 }
-
-void Context::print() { module.print(llvm::errs(), nullptr); }
 
 llvm::ExecutionEngine &Context::getExecutionEngine() {
   auto &result = *(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(&module))

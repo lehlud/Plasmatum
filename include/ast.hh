@@ -53,7 +53,8 @@ public:
   virtual ~Expr() = default;
   _VIRTUAL_GEN_CODE
 
-  virtual bool isNumber() { return false; }
+  virtual bool isFloat() { return false; }
+  virtual bool isInteger() { return false; }
   virtual bool isVarRef() { return false; }
   virtual bool isBinExpr() { return false; }
   virtual bool isString() { return false; }
@@ -62,12 +63,19 @@ public:
   virtual bool isAssignment() { return false; }
 };
 
-class Number : public Expr {
+class Float : public Expr {
 public:
-  double value;
-  Number(double value) : value(value){};
+  __float128 value;
+  Float(__float128 value) : value(value) {}
   _OVERRIDE_GEN_CODE
-  bool isNumber() override { return true; }
+};
+
+class Integer : public Expr {
+public:
+  __int128_t value;
+  Integer(__int128_t value) : value(value) {}
+  _OVERRIDE_GEN_CODE
+  bool isInteger() override { return true; }
 };
 
 class VarRef : public Expr {
