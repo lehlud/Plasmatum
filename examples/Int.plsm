@@ -1,8 +1,10 @@
+import Float;
+include "Float.plsm";
 
 class Int => {
     Int(this.value);
     value: @int;
-    
+
     operators => {
         add(other: Int) = Int(value + other.value);
         add(other: Float) = Float(value + other.value);

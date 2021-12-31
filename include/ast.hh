@@ -18,17 +18,12 @@ public:
   _VIRTUAL_LLVM_TYPE
 };
 
-class IntegerType : public Type {
+class IntType : public Type {
 public:
   _OVERRIDE_LLVM_TYPE
 };
 
-class FractionType : public Type {
-public:
-  _OVERRIDE_LLVM_TYPE
-};
-
-class NumberType : public Type {
+class FloatType : public Type {
 public:
   _OVERRIDE_LLVM_TYPE
 };
@@ -53,8 +48,8 @@ public:
   virtual ~Expr() = default;
   _VIRTUAL_GEN_CODE
 
+  virtual bool isInt() { return false; }
   virtual bool isFloat() { return false; }
-  virtual bool isInteger() { return false; }
   virtual bool isVarRef() { return false; }
   virtual bool isBinExpr() { return false; }
   virtual bool isString() { return false; }
@@ -63,19 +58,19 @@ public:
   virtual bool isAssignment() { return false; }
 };
 
+class Int : public Expr {
+public:
+  __int128_t value;
+  Int(__int128_t value) : value(value) {}
+  _OVERRIDE_GEN_CODE
+  bool isInt() override { return true; }
+};
+
 class Float : public Expr {
 public:
   __float128 value;
   Float(__float128 value) : value(value) {}
   _OVERRIDE_GEN_CODE
-};
-
-class Integer : public Expr {
-public:
-  __int128_t value;
-  Integer(__int128_t value) : value(value) {}
-  _OVERRIDE_GEN_CODE
-  bool isInteger() override { return true; }
 };
 
 class VarRef : public Expr {

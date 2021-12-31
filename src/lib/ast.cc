@@ -4,8 +4,12 @@
 
 #include <iostream>
 
-llvm::Type *NumberType::llvmType(Context &context) {
-  return context.getNumberType();
+llvm::Type *IntType::llvmType(Context &context) {
+  return context.getBuiltinIntType();
+}
+
+llvm::Type *FloatType::llvmType(Context &context) {
+  return context.getBuiltinFloatType();
 }
 
 llvm::Type *StructType::llvmType(Context &context) {
@@ -16,8 +20,12 @@ llvm::Type *StructType::llvmType(Context &context) {
   return llvm::StructType::create(fieldTypes);
 }
 
-llvm::Value *Number::genCode(Context &context) {
-  return llvm::ConstantFP::get(context.getNumberType(), value);
+llvm::Value *Int::genCode(Context &context) {
+  return llvm::ConstantInt::get(context.getBuiltinIntType(), value);
+}
+
+llvm::Value *Float::genCode(Context &context) {
+  return llvm::ConstantFP::get(context.getNativeFloatType(), value);
 }
 
 llvm::Value *VarRef::genCode(Context &context) {

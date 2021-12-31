@@ -48,6 +48,9 @@ public:
   auto getNativeIntType() { return nativeFloatType; }
   auto getNativeCharType() { return nativeCharType; }
 
+  auto getBuiltinIntType() { return builtinIntType; }
+  auto getBuiltinFloatType() { return builtinFloatType; }
+
   llvm::Type *createClassType(std::string, std::map<std::string, llvm::Type *>);
 
   void print();
@@ -56,6 +59,7 @@ public:
 
   llvm::ExecutionEngine &getExecutionEngine();
 
+private:
   llvm::Type *pointerType;
   llvm::Type *classTypeNameType;
   llvm::FunctionType *dummyFunctionType;
