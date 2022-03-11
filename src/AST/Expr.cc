@@ -1,5 +1,7 @@
 #include "Expr.h"
 
+#include "Stmt.h"
+
 #include <iostream>
 
 void IdExpr::print() {
@@ -44,7 +46,11 @@ void FunctionExpr::print() {
     std::cout << "FunctionExpr: { ";
     std::cout << "args: [";
     for (auto arg : args) {
-        std::cout << "'" << arg << "'";
+        std::cout << "{ id: '" << arg.first << "', type: ";
+        if (arg.second.length() > 0) std::cout << "'" << arg.second << "'";
+        else std::cout << "none";
+        std::cout << " }";
+        
         if (arg != args.back()) std::cout << ", ";
     }
     std::cout << "], ";

@@ -68,7 +68,9 @@
 
     std::vector<Stmt *> *stmts;
     std::vector<Expr *> *call_params;
-    std::vector<std::string> *definition_params;
+
+    std::pair<std::string, std::string> *identifier_with_type;
+    std::vector<std::pair<std::string, std::string>> *definition_params;
 }
 
 %token <text> IDENTIFIER   "identifier"
@@ -93,11 +95,14 @@
 ;
 
 %type <call_params> call_params "call parameters"
+
+%type <identifier_with_type> identifier_with_type "identifier with type"
 %type <definition_params> definition_params "definition parameters"
 
 %start program
 
 // https://en.wikipedia.org/wiki/Order_of_operations#Programming_languages
+%left DOUBLE_ARROW
 %left ADD SUB
 %left MUL DIV MOD
 
@@ -153,9 +158,14 @@ call_params
     | call_params COMMA expr                {$1->push_back($3); $$ = $1;}
     ;
 
+identifier_with_type
+    : IDENTIFIER                            {$$ = new std::pair(*$1, std::string("")); delete $1;}
+    | IDENTIFIER COLON IDENTIFIER           {$$ = new std::pair(*$1, *$3); delete $1; delete $3;}
+    ;
+
 definition_params
-    : IDENTIFIER                            {$$ = new std::vector({*$1}); delete $1;}
-    | definition_params COMMA IDENTIFIER    {$1->push_back(*$3); $$ = $1; delete $3;}
+    : identifier_with_type                            {$$ = new std::vector({*$1}); delete $1;}
+    | definition_params COMMA identifier_with_type    {$1->push_back(*$3); $$ = $1; delete $3;}
     ;
 
 function_expr

@@ -21,6 +21,11 @@ define f as (x) => x ** 2;
 ../ steeper quadratic function
 define k as 2;
 define g as (x) => k * f(x);
+
+../ Why the double arrow though?
+ .. Well, the function not only points
+ .. to the result, but the result follows
+ .. from x. /..
 ```
 
 

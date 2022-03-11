@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Stmt.h"
-
+#include <map>
 #include <string>
 #include <vector>
+
+class Stmt;
 
 class Expr {
 public:
@@ -76,11 +77,11 @@ public:
 
 class FunctionExpr : public Expr {
 private:
-    std::vector<std::string> args;
+    std::vector<std::pair<std::string, std::string>> args;
     Expr *result;
 
 public:
-    FunctionExpr(const std::vector<std::string> &args, Expr *result)
+    FunctionExpr(const std::vector<std::pair<std::string, std::string>> &args, Expr *result)
         : args(args), result(result) {}
     ~FunctionExpr();
 
