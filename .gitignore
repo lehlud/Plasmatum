@@ -1,7 +1,5 @@
 .vscode
-*.out
+
 *.o
-*tmp*
-
-build
-
+*.yy.*
+*.tab.*
