@@ -5,6 +5,7 @@
 
     #include "AST/Expr.h"
     #include "AST/Stmt.h"
+    #include "AST/Type.h"
 
     extern int errors;
     extern std::vector<Stmt *> program;
@@ -43,15 +44,6 @@
     GREATER_EQUAL       ">="
     EQUAL_EQUAL         "=="
     NOT_EQUAL           "!="
-    PLUS_PLUS           "++"
-    MINUS_MINUS         "--"
-    PLUS_EQUAL          "+="
-    MINUS_EQUAL         "-="
-    MULTIPLY_EQUAL      "*="
-    DIVIDE_EQUAL        "/="
-    MODULO_EQUAL        "%="
-    AND_EQUAL           "&&="
-    OR_EQUAL            "||="
     SINGLE_ARROW        "->"
     DOUBLE_ARROW        "=>"
     AS                  "as"
@@ -69,8 +61,10 @@
     std::vector<Stmt *> *stmts;
     std::vector<Expr *> *call_params;
 
-    std::pair<std::string, std::string> *identifier_with_type;
-    std::vector<std::pair<std::string, std::string>> *definition_params;
+    TypeRef *type_ref;
+
+    std::pair<std::string, TypeRef *> *identifier_with_type;
+    std::vector<std::pair<std::string, TypeRef *>> *definition_params;
 }
 
 %token <text> IDENTIFIER   "identifier"
@@ -78,7 +72,8 @@
 
 %type <expr>
     expr            "expression"
-    binexpr         "binary expression"
+    bin_expr        "binary expression"
+    call_expr       "call expression"
     block_expr      "block expression"
     function_expr   "function expression"
 ;
@@ -96,6 +91,8 @@
 
 %type <call_params> call_params "call parameters"
 
+%type <type_ref> type_ref "type reference"
+
 %type <identifier_with_type> identifier_with_type "identifier with type"
 %type <definition_params> definition_params "definition parameters"
 
@@ -105,11 +102,12 @@
 %left DOUBLE_ARROW
 %left ADD SUB
 %left MUL DIV MOD
+%left PAREN_OPEN PAREN_CLOSE
 
 %%
 
 program
-    : top_stmts END                         {program = *$1; delete $1;}
+    : top_stmts                             {program = *$1; delete $1;}
     ;
 
 stmt: top_stmt                              {$$ = $1;}
@@ -126,45 +124,54 @@ block
     ;
 
 stmts
-    : stmt                                  {$$ = new std::vector({$1});}
+    : stmt                                  {$$ = new std::vector<Stmt *>({$1});}
     | stmts stmt                            {$1->push_back($2); $$ = $1;}
     ;
 
 top_stmts
-    : top_stmt                              {$$ = new std::vector({$1});}
+    : top_stmt                              {$$ = new std::vector<Stmt *>({$1});}
     | top_stmts top_stmt                    {$1->push_back($2); $$ = $1;}
     ;
 
 expr: IDENTIFIER                            {$$ = new IdExpr(*$1); delete $1;}
     | LITERAL_EXPR                          {$$ = $1;}
-    | binexpr                               {$$ = $1;}
+    | call_expr                             {$$ = $1;}
+    | bin_expr                              {$$ = $1;}
     | block_expr                            {$$ = $1;}
     | function_expr                         {$$ = $1;}
     ;
 
-binexpr
+bin_expr
     : expr ADD expr                         {$$ = new BinExpr(BinExpr::Op::ADD, $1, $3);}
     | expr SUB expr                         {$$ = new BinExpr(BinExpr::Op::SUB, $1, $3);}
     | expr MUL expr                         {$$ = new BinExpr(BinExpr::Op::MUL, $1, $3);}
     | expr DIV expr                         {$$ = new BinExpr(BinExpr::Op::DIV, $1, $3);}
+    | expr MOD expr                         {$$ = new BinExpr(BinExpr::Op::MOD, $1, $3);}
+    | PAREN_OPEN expr PAREN_CLOSE           {$$ = $2;}
     ;
+
+call_expr
+    : expr PAREN_OPEN call_params PAREN_CLOSE     {$$ = new CallExpr($1, *$3); delete $3;}
 
 block_expr
     : PAREN_OPEN stmts PAREN_CLOSE DOUBLE_ARROW expr    {$$ = new BlockExpr(*$2, $5); delete $2;}
     ;
 
 call_params
-    : expr                                  {$$ = new std::vector({$1});}
+    : expr                                  {$$ = new std::vector<Expr *>({$1});}
     | call_params COMMA expr                {$1->push_back($3); $$ = $1;}
     ;
 
+type_ref
+    : IDENTIFIER                            {$$ = new TypeRef(std::string(*$1)); delete $1;}
+    ;
+
 identifier_with_type
-    : IDENTIFIER                            {$$ = new std::pair(*$1, std::string("")); delete $1;}
-    | IDENTIFIER COLON IDENTIFIER           {$$ = new std::pair(*$1, *$3); delete $1; delete $3;}
+    : IDENTIFIER COLON type_ref             {$$ = new std::pair<std::string, TypeRef *>(*$1, $3); delete $1;}
     ;
 
 definition_params
-    : identifier_with_type                            {$$ = new std::vector({*$1}); delete $1;}
+    : identifier_with_type                            {$$ = new std::vector<std::pair<std::string, TypeRef *>>({*$1}); delete $1;}
     | definition_params COMMA identifier_with_type    {$1->push_back(*$3); $$ = $1; delete $3;}
     ;
 

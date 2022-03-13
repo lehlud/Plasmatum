@@ -1,5 +1,7 @@
 ../ asdf asdf /..
-define a as (a, b) => '42';
+define a as (a: Int, b: Num) => '42';
 
-define a as b * c + a;
-define a as a + b * c;
+define x as b * c + a;
+define y as a + b * c;
+
+define f as (x: Int) => 2 * g(x);

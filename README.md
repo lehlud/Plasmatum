@@ -28,4 +28,7 @@ define g as (x) => k * f(x);
  .. from x. /..
 ```
 
-
+### Type management
+Every value has a type. This type contains information about the value such
+as existing operators and getter attributes. Every operator must be explicitly
+defined for the interaction with another type.

@@ -52,15 +52,6 @@
 ">="                            {return GREATER_EQUAL   ;}
 "=="                            {return EQUAL_EQUAL     ;}
 "!="                            {return NOT_EQUAL       ;}
-"++"                            {return PLUS_PLUS       ;}
-"--"                            {return MINUS_MINUS     ;}
-"+="                            {return PLUS_EQUAL      ;}
-"-="                            {return MINUS_EQUAL     ;}
-"*="                            {return MULTIPLY_EQUAL  ;}
-"/="                            {return DIVIDE_EQUAL    ;}
-"%="                            {return MODULO_EQUAL    ;}
-"&&="                           {return AND_EQUAL       ;}
-"||="                           {return OR_EQUAL        ;}
 "->"                            {return SINGLE_ARROW    ;}
 "=>"                            {return DOUBLE_ARROW    ;}
 

@@ -3,7 +3,12 @@
 #include <sstream>
 #include <iostream>
 
+#include "Context.h"
 #include "AST/Stmt.h"
+#include "AST/Expr.h"
+#include "AST/Type.h"
+
+#include <llvm/Support/TargetSelect.h>
 
 int errors = 0;
 extern int yyparse();
@@ -19,6 +24,15 @@ std::string readFile(std::string name) {
     return sstream.str();
 }
 
+void initLLVM() {
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllTargetMCs();
+    llvm::InitializeAllTargetInfos();
+
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllAsmPrinters();
+}
+
 int main(int argc, char **argv) {
     if (argc > 1) {
         std::string tmp = readFile(argv[1]).c_str();
@@ -32,6 +46,14 @@ int main(int argc, char **argv) {
             stmt->print();
             std::cout << std::endl;
         }
+
+        initLLVM();
+
+        Context context;
+        auto function = new FunctionExpr({std::make_pair("x", new TypeRef("Num"))}, new NumExpr(42));
+        function->codegen(&context);
+
+        context.module.print(llvm::errs(), 0);
 
         return 0;
     } else {
