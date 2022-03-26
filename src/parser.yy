@@ -151,7 +151,9 @@ bin_expr
     ;
 
 call_expr
-    : expr PAREN_OPEN call_params PAREN_CLOSE     {$$ = new CallExpr($1, *$3); delete $3;}
+    : expr PAREN_OPEN PAREN_CLOSE               {$$ = new CallExpr($1, std::vector<Expr *>());}
+    | expr PAREN_OPEN call_params PAREN_CLOSE   {$$ = new CallExpr($1, *$3); delete $3;}
+    ;
 
 block_expr
     : PAREN_OPEN stmts PAREN_CLOSE DOUBLE_ARROW expr    {$$ = new BlockExpr(*$2, $5); delete $2;}
@@ -176,7 +178,8 @@ definition_params
     ;
 
 function_expr
-    : PAREN_OPEN definition_params PAREN_CLOSE DOUBLE_ARROW expr   {$$ = new FunctionExpr(*$2, $5); delete $2;}
+    : PAREN_OPEN PAREN_CLOSE DOUBLE_ARROW expr                      {$$ = new FunctionExpr(std::vector<std::pair<std::string, TypeRef *>>(), $4);}
+    | PAREN_OPEN definition_params PAREN_CLOSE DOUBLE_ARROW expr    {$$ = new FunctionExpr(*$2, $5); delete $2;}
     ;
 
 %%

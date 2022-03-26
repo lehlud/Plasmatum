@@ -19,10 +19,6 @@ Context::Context() : dataLayout(llvm::EngineBuilder().selectTarget()->createData
 }
 
 Context::~Context() {
-    for (auto type : types) {
-        delete type.second;
-    }
-
     for (auto valueScope : valueScopes) {
         for (auto value : valueScope) {
             delete value.second;
@@ -53,6 +49,10 @@ void Context::initBuiltins() {
 
     auto freeFT = llvm::FunctionType::get(builder.getVoidTy(), {builder.getInt8PtrTy()}, false);
     freeFunction = (llvm::Function *)module.getOrInsertFunction("free", freeFT).getCallee();
+
+    auto numPtrType = numType->getPointerTo();
+    auto addNumNumFT = llvm::FunctionType::get(numPtrType, {numPtrType, numPtrType}, false);
+    module.getOrInsertFunction("__plsm_add_Num_Num", addNumNumFT);
 }
 
 void Context::setupMain() {

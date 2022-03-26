@@ -15,11 +15,11 @@ $(shell mkdir -p output)
 all: output/plasmatum output/libplsm.so
 
 output/libplsm.so: $(LIB_OBJECT_FILES)
-	gcc $(LIB_OBJECT_FILES) -shared -o output/libplsm.so -flto -lm
+	clang $(LIB_OBJECT_FILES) -shared -o output/libplsm.so -flto -lm
 	strip output/libplsm.so
 
 output/plasmatum: $(OBJECT_FILES)
-	g++ $(OBJECT_FILES) -o output/plasmatum $(LLVM_LD_FLAGS)
+	clang++ $(OBJECT_FILES) -o output/plasmatum $(LLVM_LD_FLAGS)
 	strip output/plasmatum
 
 %.o: %.c
@@ -41,3 +41,4 @@ clean:
 	rm -f $(LEX_BISON_SRC_FILES)
 	rm -f $(OBJECT_FILES)
 	rm -rf output/
+	mkdir -p output

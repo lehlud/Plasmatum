@@ -82,6 +82,7 @@ llvm::Value *IdExpr::codegen(Context *context) {
     auto store = context->getValue(id);
     auto value = store->getValue();
     auto type = value->getType()->getPointerElementType();
+
     return context->builder.CreateLoad(type, value);
 }
 
@@ -103,8 +104,8 @@ llvm::Value *BinExpr::codegen(Context *context) {
     auto left = this->left->codegen(context);
     auto right = this->right->codegen(context);
 
-    auto leftName = ((llvm::StructType *)left->getType())->getName().str();
-    auto rightName = ((llvm::StructType *)right->getType())->getName().str();
+    auto leftName = ((llvm::StructType *)left->getType()->getPointerElementType())->getName().str();
+    auto rightName = ((llvm::StructType *)right->getType()->getPointerElementType())->getName().str();
 
     auto opName = this->opName();
     auto functionName = opName + "_" + leftName + "_" + rightName;

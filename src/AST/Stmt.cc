@@ -53,7 +53,11 @@ llvm::Value *BlockStmt::codegen(Context *context) {
 
 llvm::Value *DefineStmt::codegen(Context *context) {
     auto value = expr->codegen(context);
-    auto global = new llvm::GlobalVariable(value->getType(), false, llvm::GlobalValue::InternalLinkage);
+
+    auto global = new llvm::GlobalVariable(
+        context->module, value->getType(), false,
+        llvm::GlobalValue::InternalLinkage,
+        llvm::UndefValue::get(value->getType()));
 
     context->builder.CreateStore(value, global);
 

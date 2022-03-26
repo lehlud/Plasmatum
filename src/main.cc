@@ -42,22 +42,25 @@ int main(int argc, char **argv) {
 
         if (errors) return errors;
 
-        for (auto &stmt : program) {
-            stmt->print();
-            std::cout << std::endl;
-        }
-
         initLLVM();
 
         Context context;
-        auto function = new FunctionExpr({std::make_pair("x", new TypeRef("Num"))}, new NumExpr(42));
-        function->codegen(&context);
+
+        for (auto &stmt : program) {
+            stmt->print();
+            std::cout << std::endl;
+
+            stmt->codegen(&context);
+        }
+
+        // auto function = new FunctionExpr({std::make_pair("x", new TypeRef("Num"))}, new NumExpr(42));
+        // function->codegen(&context);
 
         context.module.print(llvm::errs(), 0);
 
         return 0;
     } else {
-        std::cout << "Please specify a name of a file!" << std::endl;
+        std::cerr << "Please specify a name of a file!" << std::endl;
         return 1;
     }
 }
