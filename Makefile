@@ -23,10 +23,10 @@ output/plasmatum: $(OBJECT_FILES)
 	strip output/plasmatum
 
 %.o: %.c
-	gcc -c -o $@ $< $(C_FLAGS)
+	clang -c -o $@ $< $(C_FLAGS)
 
 %.o: %.cc
-	g++ -c $< -o $@ $(CXX_FLAGS)
+	clang++ -c $< -o $@ $(CXX_FLAGS)
 
 src/lex.yy.cc: src/lexer.ll src/parser.tab.hh
 	flex --outfile=src/lex.yy.cc src/lexer.ll

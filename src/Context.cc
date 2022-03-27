@@ -5,6 +5,27 @@
 #include <vector>
 #include <iostream>
 
+ValueScope::~ValueScope() {
+    for (auto value : createdValues) delete value;
+}
+
+StoredValue* ValueScope::getValue(const std::string &id) {
+    if (values.count(id)) return values[id];
+    return nullptr;
+}
+
+void ValueScope::setValue(const std::string &id, StoredValue *value) {
+    values[id] = value;
+    createdValues.push_back(value);
+}
+
+void ValueScope::dispose(Context *context) {
+    for (auto value : createdValues) {
+        auto store = context->builder.CreateBitCast(value->getValue(), context->builder.getInt8PtrTy());
+        context->builder.CreateCall(context->freeFunction, {store});
+    }
+}
+
 Context::Context() : dataLayout(llvm::EngineBuilder().selectTarget()->createDataLayout()),
         llvmContext(), module("", llvmContext), builder(llvmContext) {
     module.setDataLayout(dataLayout);
@@ -19,10 +40,9 @@ Context::Context() : dataLayout(llvm::EngineBuilder().selectTarget()->createData
 }
 
 Context::~Context() {
-    for (auto valueScope : valueScopes) {
-        for (auto value : valueScope) {
-            delete value.second;
-        }
+    for (auto scope : valueScopes) {
+        scope->dispose(this);
+        delete scope;
     }
 }
 
@@ -51,8 +71,12 @@ void Context::initBuiltins() {
     freeFunction = (llvm::Function *)module.getOrInsertFunction("free", freeFT).getCallee();
 
     auto numPtrType = numType->getPointerTo();
-    auto addNumNumFT = llvm::FunctionType::get(numPtrType, {numPtrType, numPtrType}, false);
-    module.getOrInsertFunction("__plsm_add_Num_Num", addNumNumFT);
+    auto NumNumFT = llvm::FunctionType::get(numPtrType, {numPtrType, numPtrType}, false);
+    module.getOrInsertFunction("__plsm_add_Num_Num", NumNumFT);
+    module.getOrInsertFunction("__plsm_sub_Num_Num", NumNumFT);
+    module.getOrInsertFunction("__plsm_mul_Num_Num", NumNumFT);
+    module.getOrInsertFunction("__plsm_div_Num_Num", NumNumFT);
+    module.getOrInsertFunction("__plsm_mod_Num_Num", NumNumFT);
 }
 
 void Context::setupMain() {
@@ -79,37 +103,41 @@ void Context::registerType(llvm::StructType* type, const std::vector<std::string
 
 StoredValue* Context::getValue(const std::string &id) {
     for (auto scope : valueScopes) {
-        auto it = scope.find(id);
-        if (it != scope.end()) return it->second;
+        auto value = scope->getValue(id);
+        if (value) return value;
     }
 
     return nullptr;
 }
 
-void Context::setValue(const std::string &id, StoredValue *value) {
-    if (valueScopes.back().count(id)) {
-        auto current = valueScopes.back()[id];
-        if (current->isDefinition) {
-            std::cout << "Redefinition of variable '" << id << "'" << std::endl;
-            std::exit(1);
-        } else {
-            delete current;
+void Context::setValue(const std::string &id, StoredValue *value, bool overwrite) {
+    if (valueScopes.size() > 0) {
+        for (size_t i = valueScopes.size() - 1; i > 0 ; i--) {
+            auto scope = valueScopes[i];
+            auto value = scope->getValue(id);
+            if (value) {
+                if (value->isDefinition && scope == valueScopes.back()) {
+                    std::cout << "Redefinition of constant '" << id << "'" << std::endl;
+                    std::exit(1);
+                } else if (overwrite) {
+                    scope->setValue(id, value);
+                    return;
+                }
+            }
         }
     }
 
-    valueScopes.back()[id] = value;
+    valueScopes.back()->setValue(id, value);
 }
 
 void Context::initNewValueScope() {
-    valueScopes.push_back(ValueScope());
+    valueScopes.push_back(new ValueScope());
 }
 
 void Context::disposeLastValueScope() {
-    for (auto valueScope : valueScopes.back()) {
-        auto store = builder.CreateBitCast(valueScope.second->getValue(), builder.getInt8PtrTy());
-        builder.CreateCall(freeFunction, {store});
-        delete valueScope.second;
-    }
+    auto scope = valueScopes.back();
+    scope->dispose(this);
+    delete scope;
 
     valueScopes.pop_back();
 }

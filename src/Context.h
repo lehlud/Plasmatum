@@ -30,11 +30,25 @@ public:
     llvm::Value *getValue() { return value; }
 };
 
-typedef std::map<std::string, StoredValue *> ValueScope;
+class Context;
+
+class ValueScope {
+private:
+    std::vector<StoredValue *> createdValues;
+    std::map<std::string, StoredValue *> values;
+
+public:
+    ~ValueScope();
+
+    StoredValue* getValue(const std::string &id);
+    void setValue(const std::string &id, StoredValue *value);
+
+    void dispose(Context *context);
+};
 
 class Context {
 private:
-    std::vector<ValueScope> valueScopes;
+    std::vector<ValueScope *> valueScopes;
 
     std::map<std::string, llvm::StructType *> types;
     std::map<llvm::StructType *, std::vector<std::string>> structFields;
@@ -65,7 +79,7 @@ public:
     void registerType(llvm::StructType* type, const std::vector<std::string> &fields);
 
     StoredValue* getValue(const std::string &id);
-    void setValue(const std::string &id, StoredValue *value);
+    void setValue(const std::string &id, StoredValue *value, bool overwrite = false);
 
     void initNewValueScope();
     void disposeLastValueScope();

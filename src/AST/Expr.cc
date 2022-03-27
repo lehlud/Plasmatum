@@ -89,6 +89,7 @@ llvm::Value *IdExpr::codegen(Context *context) {
 llvm::Value *NumExpr::codegen(Context *context) {
     auto value = llvm::ConstantFP::get(context->builder.getDoubleTy(), this->value);
     auto store = context->createMalloc(context->numType);
+
     context->builder.CreateStore(value, store);
     return store;
 }

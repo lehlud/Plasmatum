@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-num_t *__plsm_construct_Num(double value) {
+num_t *__plsm_construct_Num(_Float64 value) {
     num_t *num = (num_t *)malloc(sizeof(num_t));
     num->value = value;
 
