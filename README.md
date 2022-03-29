@@ -32,3 +32,34 @@ define g as (x) => k * f(x);
 Every value has a type. This type contains information about the value such
 as existing operators and getter attributes. Every operator must be explicitly
 defined for the interaction with another type.
+
+
+# Thoughts
+## Structs
+```c
+typedef void (*destructor)(void *);
+typedef void *(*binop_func)(void *);
+
+struct type {
+    // name of the type
+    int8_t *name;
+
+    // names of the attributes
+    int8_t **attrs;
+
+    // recursive free included
+    destructor destructor;
+
+    // binary operator handlers
+    binop_func add;
+    binop_func sub;
+    binop_func mul;
+    binop_func div;
+    binop_func mod;
+};
+
+typedef struct example {
+    struct type *type_info;
+    struct { ... } *value;
+} example;
+```
